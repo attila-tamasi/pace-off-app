@@ -1,0 +1,133 @@
+# ============================================================================
+# Pace Off — .gitignore
+# Based on github/gitignore Swift + Xcode templates, with notes for this repo.
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# macOS
+# ----------------------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Thumbnails
+Thumbs.db
+ehthumbs.db
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# ----------------------------------------------------------------------------
+# Xcode — user-specific state (always ignore)
+# ----------------------------------------------------------------------------
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+*.xcscmblueprint
+*.xccheckout
+
+# Xcode workspace user data
+*.xcworkspace/xcuserdata/
+*.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+*.xcworkspace/xcshareddata/swiftpm/
+
+# Xcode project user data — keep the project file itself, drop per-user bits
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+
+# ----------------------------------------------------------------------------
+# Build artifacts
+# ----------------------------------------------------------------------------
+build/
+DerivedData/
+*.hmap
+*.ipa
+*.xcarchive
+*.dSYM.zip
+*.dSYM
+*.log
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Packages/
+Package.pins
+Package.resolved
+*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+
+# Playground state
+timeline.xctimeline
+playground.xcworkspace
+
+# ----------------------------------------------------------------------------
+# Code signing — never commit your team's signing material
+# ----------------------------------------------------------------------------
+*.mobileprovision
+*.provisionprofile
+*.cer
+*.p12
+*.p8
+*.key
+
+# ----------------------------------------------------------------------------
+# Dependency managers (none in use today, but ignore proactively)
+# ----------------------------------------------------------------------------
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+Carthage/Checkouts/
+
+# Accio
+Dependencies/
+.accio/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output/
+
+# ----------------------------------------------------------------------------
+# Editors / IDEs
+# ----------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+*~
+.netrwhist
+
+# ----------------------------------------------------------------------------
+# Project-specific
+# ----------------------------------------------------------------------------
+# Local environment overrides for the bundle prefix / team ID, if you keep one
+.env
+.env.*
+
+# Quick-look cache produced when previewing the PRD docx
+~$*.docx
+
+# ----------------------------------------------------------------------------
+# Notes
+# ----------------------------------------------------------------------------
+# - PaceOff.xcodeproj/project.pbxproj IS tracked. It's regenerable from
+#   project.yml via XcodeGen, but tracking it lets collaborators open the
+#   project without installing anything.
+# - PaceOff.xcodeproj/project.xcworkspace/contents.xcworkspacedata IS tracked
+#   for the same reason.
+# - All "Preview Content" folders ARE tracked — they're SwiftUI preview assets,
+#   not user state.

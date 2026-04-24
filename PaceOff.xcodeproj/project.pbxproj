@@ -124,6 +124,8 @@
 		82BDC057083015101B1E193D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		84B54EC06446159F25246014 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		92ED6E156A6562B097BCDF24 /* VO2MaxSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VO2MaxSnapshot.swift; sourceTree = "<group>"; };
+		9A1483062F9BE34C005C9216 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		9A1483072F9BE34F005C9216 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		A16055B88F40FC03BF4E72C3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A2423B4D58965EA517FB7665 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A93BE2C372C1F5CBDCF4BD34 /* PushTargetEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushTargetEngine.swift; sourceTree = "<group>"; };
@@ -325,6 +327,8 @@
 				392F9C92BE1EC63E9232DFD1 /* PaceOffTests */,
 				3BD040E73E6B117A0431A6B4 /* Frameworks */,
 				43931CF8D8FF624E4C75AE32 /* Products */,
+				9A1483062F9BE34C005C9216 /* README.md */,
+				9A1483072F9BE34F005C9216 /* .gitignore */,
 			);
 			sourceTree = "<group>";
 		};

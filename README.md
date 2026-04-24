@@ -11,12 +11,14 @@ iOS 26 / watchOS 26 minimum. Swift 6, SwiftUI. No accounts. No servers. Privacy 
 ```
 Pace Off/
 ├── project.yml                      ← XcodeGen spec (defines all targets)
+├── PaceOff.xcodeproj/               ← Generated Xcode project — open this in Xcode
 ├── PaceOff/                         ← iPhone app
 │   ├── PaceOffApp.swift
 │   ├── Info.plist  ·  PaceOff.entitlements
 │   ├── Services/   (HealthKitService, NotificationScheduler)
 │   ├── ViewModels/ (TodayViewModel)
-│   ├── Views/      (Today, History, Trends, Settings, Onboarding, RunDetail, Root)
+│   ├── Views/      (Today, History, Trends, Settings, Onboarding, RunDetail,
+│   │                Root, VO2MaxDetail)
 │   └── Assets.xcassets/
 ├── PaceOffWatch Watch App/          ← Apple Watch app
 │   ├── PaceOffWatchApp.swift
@@ -29,58 +31,52 @@ Pace Off/
 │   └── Assets.xcassets/
 ├── PaceOffShared/                   ← shared by all targets
 │   ├── PushTargetEngine.swift       ← the core algorithm (PRD §7)
-│   ├── VoiceCopy.swift              ← drill sergeant voice library (PRD §8)
+│   ├── VoiceCopy.swift              ← drill-sergeant voice library (PRD §8)
 │   ├── RunTarget.swift  ·  Tone.swift  ·  RunRecord.swift  ·  VO2MaxSnapshot.swift
 │   └── AppGroup.swift               ← shared App Group + UserDefaults keys
 ├── PaceOffTests/
 │   └── PushTargetEngineTests.swift  ← full coverage of PRD §7.3 worked example
-└── Pace Off - PRD.docx              ← full product spec
+├── Pace Off - PRD.docx              ← full product spec
+├── README.md
+└── .gitignore
 ```
 
 ---
 
-## Build & run — recommended path (XcodeGen)
+## Build & run — quick path
 
-XcodeGen generates the `.xcodeproj` from `project.yml`. It handles all the multi-target wiring (iOS app + watchOS app + widget extension + tests) correctly the first time.
+The `.xcodeproj` is already generated and committed. Just open it.
 
 ```bash
-cd "/path/to/Pace Off"
-brew install xcodegen
-xcodegen
-open PaceOff.xcodeproj
+open "PaceOff.xcodeproj"
 ```
 
 In Xcode:
 
 1. Select the **PaceOff** target → **Signing & Capabilities** → set your **Team** (Apple ID).
 2. Repeat for **PaceOff Watch App** and **PaceOffWidget** targets.
-3. The bundle identifiers (`com.paceoff.app`, `com.paceoff.app.watchkitapp`, `com.paceoff.app.widget`) and the App Group (`group.com.paceoff.app`) are already configured. If you don't own that prefix, change them in `project.yml` and re-run `xcodegen`.
-4. Plug in your iPhone (or use the simulator) and ⌘R.
+3. The bundle identifiers (`com.paceoff.app`, `com.paceoff.app.watchkitapp`, `com.paceoff.app.widget`) and the App Group (`group.com.paceoff.app`) are pre-configured.
+4. Pick a destination (iPhone 17 Pro simulator, or a real iPhone with a paired Watch) and ⌘R.
 
-The Watch app builds and installs alongside the iPhone app when both are deployed to a paired Watch.
+The Watch app and widget extension build and install alongside the iPhone app automatically.
 
-### Re-generate after editing `project.yml`
+### If you don't own the `com.paceoff.app` bundle prefix
 
-```bash
-xcodegen
-```
+Search-and-replace `com.paceoff.app` across `project.yml`, the three `*.entitlements` files, and `PaceOffShared/AppGroup.swift`, then either re-run XcodeGen or edit the bundle IDs directly in Xcode → Signing & Capabilities for each target.
 
 ---
 
-## Build & run — manual Xcode path (no XcodeGen)
+## Build & run — XcodeGen path (regenerate the project)
 
-If you'd rather not install XcodeGen:
+[XcodeGen](https://github.com/yonaskolb/XcodeGen) generates the `.xcodeproj` from `project.yml`. Use it if you change targets, add capabilities, or just prefer not to commit the `.xcodeproj`.
 
-1. **File → New → Project → iOS → App**. Name it `PaceOff`, language Swift, interface SwiftUI, set **Organization Identifier** to `com.paceoff.app`.
-2. Drag the `PaceOff/`, `PaceOffShared/`, `PaceOffTests/` folders into the project navigator. Choose **Create groups**.
-3. **File → New → Target → watchOS → App** (note: not "Watch App for iOS App" if Xcode 26 has separated this). Name it `PaceOff Watch App`. Drag in the contents of `PaceOffWatch Watch App/` plus the `PaceOffShared/` folder reference.
-4. **File → New → Target → iOS → Widget Extension**. Name it `PaceOffWidget`. Replace the generated files with the contents of `PaceOffWidget/`, plus `PaceOffShared/`.
-5. For **all three app targets** (iPhone, Watch, Widget), in Signing & Capabilities:
-   - Add **App Groups** capability with `group.com.paceoff.app`.
-6. For the iPhone and Watch targets only:
-   - Add **HealthKit** capability (enable Background Delivery on iPhone).
-   - Add **Background Modes** → Background processing (iPhone) and Workout processing (Watch).
-7. Use the provided `Info.plist` files as reference (especially the `NSHealthShareUsageDescription` strings — Apple will reject the build without them).
+```bash
+brew install xcodegen
+xcodegen
+open PaceOff.xcodeproj
+```
+
+Re-run `xcodegen` any time you edit `project.yml`.
 
 ---
 
@@ -97,10 +93,22 @@ The `PushTargetEngineTests` suite covers the worked example from PRD §7.3 plus 
 ## Architecture at a glance
 
 - **`PushTargetEngine`** is pure Swift, no HealthKit imports — fully testable. Inputs: 90 days of runs, 90 days of VO₂ max, 14 days of resting HR. Output: distance, tone, reasoning.
-- **`HealthKitService`** lives on `@MainActor` and exposes async methods. All reads are `HKSampleQuery` / `HKStatisticsQuery`. Background updates via `HKObserverQuery` + `enableBackgroundDelivery`.
+- **`HealthKitService`** lives on `@MainActor` and exposes async methods. All reads are `HKSampleQuery` / `HKStatisticsQuery`. Background updates via `HKObserverQuery` + `enableBackgroundDelivery`. Reads the user's age from the `dateOfBirth` characteristic.
 - **`NotificationScheduler`** uses `UNUserNotificationCenter` with calendar triggers. Three pushes max per day per PRD §9.1.
+- **`TodayView`** shows today's target, an inline "you ran today" card (when applicable), and a supporting stat grid. Tap the VO₂ MAX card for a 12-month chart.
 - **iOS app + Watch app + Widget** share state via the `group.com.paceoff.app` App Group's `UserDefaults`. The widget reads the cached `RunTarget` JSON written by the iPhone app on each refresh.
 - **Watch workout** uses `HKWorkoutSession` + `HKLiveWorkoutBuilder` with a running configuration. Running dynamics (power, stride, vertical oscillation, ground contact) are surfaced live.
+
+---
+
+## Where data lives
+
+Pace Off has no database. Everything boils down to two stores:
+
+- **Apple Health** (via HealthKit) is the source of truth for runs, VO₂ max, heart rate, running dynamics, and the user's age. Re-fetched on every refresh; never cached to disk.
+- **App Group `UserDefaults`** (`group.com.paceoff.app`) holds a tiny set of values: the latest computed `RunTarget` (JSON), the current voice line, notification times, the chosen voice tone, and a couple of flags (onboarding complete, ran today). This is what the Watch app and widget read so they can render instantly without re-running the algorithm.
+
+Delete the app and you lose nothing — your runs and VO₂ max stay in Health.
 
 ---
 
@@ -110,6 +118,7 @@ The `PushTargetEngineTests` suite covers the worked example from PRD §7.3 plus 
 - **Algorithm tuning:** constants at the top of `PaceOffShared/PushTargetEngine.swift`
 - **Notification times:** defaults in `PaceOffShared/AppGroup.swift`, overridable in Settings
 - **Visual design:** `PaceOff/Views/TodayView.swift` (the hero card)
+- **VO₂ max explainer copy:** `PaceOff/Views/VO2MaxDetailView.swift`
 - **App icon:** drop a 1024×1024 PNG into `PaceOff/Assets.xcassets/AppIcon.appiconset/` and reference it from `Contents.json`
 
 ---
@@ -117,7 +126,7 @@ The `PushTargetEngineTests` suite covers the worked example from PRD §7.3 plus 
 ## Known gaps (intentional for MVP)
 
 - App Icon is empty — drop a PNG in to ship.
-- WatchConnectivity bridge for "Start Run from iPhone" is stubbed in `TodayView.startRun()`. Wire up `WCSession` in v1.1.
+- WatchConnectivity bridge for "Start Run from iPhone" is not wired. The Start Run button was intentionally removed from `TodayView` in this milestone — start the run on the Watch.
 - Live Activity for in-progress run is not yet implemented.
 - The widget shows status colors (green/amber/red) based on time-of-day only; it doesn't currently know if a run is "in progress" — that requires the WatchConnectivity bridge above.
 - No localization yet (English only).
