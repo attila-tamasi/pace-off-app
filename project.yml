@@ -1,0 +1,123 @@
+# Pace Off — XcodeGen project spec
+# Generate the .xcodeproj with: `xcodegen`
+# Install xcodegen with: `brew install xcodegen`
+
+name: PaceOff
+
+options:
+  bundleIdPrefix: com.paceoff.app
+  deploymentTarget:
+    iOS: "26.0"
+    watchOS: "26.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    DEVELOPMENT_TEAM: "" # Set your Apple Developer team ID here, or leave blank and set in Xcode
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    SWIFT_STRICT_CONCURRENCY: minimal  # Relaxed for MVP scaffold; tighten to "targeted" or "complete" later
+
+# ---------- Targets ----------
+
+targets:
+
+  # ===== iOS App =====
+  PaceOff:
+    type: application
+    platform: iOS
+    sources:
+      - path: PaceOff
+      - path: PaceOffShared
+    resources:
+      - path: PaceOff/Resources
+        optional: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.paceoff.app
+        INFOPLIST_FILE: PaceOff/Info.plist
+        CODE_SIGN_ENTITLEMENTS: PaceOff/PaceOff.entitlements
+        TARGETED_DEVICE_FAMILY: "1,2" # iPhone, iPad
+        SUPPORTS_MACCATALYST: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_PREVIEWS: YES
+        DEVELOPMENT_ASSET_PATHS: "\"PaceOff/Preview Content\""
+    dependencies:
+      - target: PaceOffWatch Watch App
+      - target: PaceOffWidget
+
+  # ===== watchOS App =====
+  "PaceOff Watch App":
+    type: application
+    platform: watchOS
+    sources:
+      - path: PaceOffWatch Watch App
+      - path: PaceOffShared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.paceoff.app.watchkitapp
+        INFOPLIST_FILE: "PaceOffWatch Watch App/Info.plist"
+        CODE_SIGN_ENTITLEMENTS: "PaceOffWatch Watch App/PaceOffWatch.entitlements"
+        TARGETED_DEVICE_FAMILY: "4"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        WATCHOS_DEPLOYMENT_TARGET: "26.0"
+        SDKROOT: watchos
+
+  # ===== Lock Screen Widget =====
+  PaceOffWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: PaceOffWidget
+      - path: PaceOffShared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.paceoff.app.widget
+        INFOPLIST_FILE: PaceOffWidget/Info.plist
+        CODE_SIGN_ENTITLEMENTS: PaceOffWidget/PaceOffWidget.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SKIP_INSTALL: YES
+
+  # ===== Unit Tests (PushTargetEngine, etc.) =====
+  PaceOffTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: PaceOffTests
+      - path: PaceOffShared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.paceoff.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: PaceOff
+
+# ---------- Schemes ----------
+
+schemes:
+  PaceOff:
+    build:
+      targets:
+        PaceOff: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - PaceOffTests
+    archive:
+      config: Release
+
+  "PaceOff Watch App":
+    build:
+      targets:
+        "PaceOff Watch App": all
+    run:
+      config: Debug
