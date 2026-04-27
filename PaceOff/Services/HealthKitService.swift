@@ -4,6 +4,7 @@
 
 import Foundation
 import HealthKit
+import CoreLocation
 
 @MainActor
 public final class HealthKitService: ObservableObject {
@@ -29,6 +30,7 @@ public final class HealthKitService: ObservableObject {
             HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
             HKObjectType.quantityType(forIdentifier: .stepCount)!,
             HKObjectType.characteristicType(forIdentifier: .dateOfBirth)!,
+            HKSeriesType.workoutRoute(),
         ]
         // Running dynamics — guarded because identifiers vary by SDK version
         if let power = HKObjectType.quantityType(forIdentifier: .runningPower) { types.insert(power) }
@@ -211,6 +213,115 @@ public final class HealthKitService: ObservableObject {
             }
             store.execute(query)
         }
+    }
+
+    // MARK: - Workout routes
+
+    /// Fetch the GPS route for today's longest running workout, if one exists.
+    /// Returns an empty array when: (a) no run happened today, (b) route
+    /// permission wasn't granted, or (c) the run was indoors/treadmill and
+    /// therefore has no route attached.
+    public func fetchTodayRunRoute() async -> [CLLocationCoordinate2D] {
+        let cal = Calendar.current
+        let startOfDay = cal.startOfDay(for: Date())
+        guard let endOfDay = cal.date(byAdding: .day, value: 1, to: startOfDay) else { return [] }
+
+        let runPred = HKQuery.predicateForWorkouts(with: .running)
+        let datePred = HKQuery.predicateForSamples(withStart: startOfDay, end: endOfDay, options: .strictStartDate)
+        let combined = NSCompoundPredicate(andPredicateWithSubpredicates: [runPred, datePred])
+
+        // 1) Find today's running workouts (pick the longest)
+        let workout: HKWorkout? = await withCheckedContinuation { continuation in
+            let q = HKSampleQuery(
+                sampleType: .workoutType(),
+                predicate: combined,
+                limit: 10,
+                sortDescriptors: nil
+            ) { _, samples, _ in
+                let workouts = (samples as? [HKWorkout]) ?? []
+                let longest = workouts.max {
+                    ($0.totalDistance?.doubleValue(for: .meter()) ?? 0) <
+                    ($1.totalDistance?.doubleValue(for: .meter()) ?? 0)
+                }
+                continuation.resume(returning: longest)
+            }
+            store.execute(q)
+        }
+        guard let workout else { return [] }
+        return await routeCoordinates(for: workout)
+    }
+
+    /// Fetch the GPS route for an arbitrary RunRecord (used by RunDetailView).
+    /// We look up the matching HKWorkout by its start date — runs are uniquely
+    /// keyed by start time within a tight tolerance. Returns an empty array
+    /// when the run has no attached route (treadmill, permission denied, or
+    /// the workout was already evicted from HealthKit).
+    public func fetchRunRoute(for record: RunRecord) async -> [CLLocationCoordinate2D] {
+        // Look up workouts in a ±60s window around the record's start date.
+        // HealthKit queries are exclusive of `end`, so we widen by one second.
+        let windowStart = record.startDate.addingTimeInterval(-60)
+        let windowEnd = record.endDate.addingTimeInterval(60)
+
+        let runPred = HKQuery.predicateForWorkouts(with: .running)
+        let datePred = HKQuery.predicateForSamples(withStart: windowStart, end: windowEnd, options: [])
+        let combined = NSCompoundPredicate(andPredicateWithSubpredicates: [runPred, datePred])
+
+        let workout: HKWorkout? = await withCheckedContinuation { continuation in
+            let q = HKSampleQuery(
+                sampleType: .workoutType(),
+                predicate: combined,
+                limit: 20,
+                sortDescriptors: nil
+            ) { _, samples, _ in
+                let workouts = (samples as? [HKWorkout]) ?? []
+                // Match by start-date proximity (within 2s) — covers any drift
+                // between the record we surfaced and HealthKit's stored sample.
+                let match = workouts.min { lhs, rhs in
+                    abs(lhs.startDate.timeIntervalSince(record.startDate)) <
+                    abs(rhs.startDate.timeIntervalSince(record.startDate))
+                }
+                continuation.resume(returning: match)
+            }
+            store.execute(q)
+        }
+        guard let workout else { return [] }
+        return await routeCoordinates(for: workout)
+    }
+
+    /// Stream all `CLLocationCoordinate2D` samples out of every workout-route
+    /// series attached to the given workout, sorted by timestamp.
+    private func routeCoordinates(for workout: HKWorkout) async -> [CLLocationCoordinate2D] {
+        let routeType = HKSeriesType.workoutRoute()
+        let routePred = HKQuery.predicateForObjects(from: workout)
+        let routes: [HKWorkoutRoute] = await withCheckedContinuation { continuation in
+            let q = HKAnchoredObjectQuery(
+                type: routeType,
+                predicate: routePred,
+                anchor: nil,
+                limit: HKObjectQueryNoLimit
+            ) { _, samples, _, _, _ in
+                continuation.resume(returning: (samples as? [HKWorkoutRoute]) ?? [])
+            }
+            store.execute(q)
+        }
+        guard !routes.isEmpty else { return [] }
+
+        var all: [CLLocation] = []
+        for route in routes {
+            let locations: [CLLocation] = await withCheckedContinuation { continuation in
+                var collected: [CLLocation] = []
+                let q = HKWorkoutRouteQuery(route: route) { _, batch, done, _ in
+                    if let batch { collected.append(contentsOf: batch) }
+                    if done { continuation.resume(returning: collected) }
+                }
+                store.execute(q)
+            }
+            all.append(contentsOf: locations)
+        }
+
+        return all
+            .sorted { $0.timestamp < $1.timestamp }
+            .map(\.coordinate)
     }
 
     // MARK: - User profile (read-only characteristics)

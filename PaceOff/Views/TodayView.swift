@@ -1,54 +1,184 @@
 // TodayView.swift
-// The single most important screen in the app.
-// Hero target card, "what you did today" card (when applicable), supporting data grid.
+// Home screen — single ScrollView:
+//   • Map at the top (today's route, or empty placeholder centered on Berlin)
+//   • Content below it (date, hero target, today's run card, supporting grid)
+//   • Scroll up and the map naturally disappears above the content.
 
 import SwiftUI
+import MapKit
+import CoreLocation
 
 struct TodayView: View {
 
     @EnvironmentObject private var todayVM: TodayViewModel
+    @State private var cameraPosition: MapCameraPosition = .region(TodayView.berlinRegion)
+
+    /// Map height as a fraction of the available screen height.
+    private let mapHeightFraction: CGFloat = 0.46
+
+    /// Default region used when there's no run today — centered on Berlin.
+    private static let berlinRegion = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 52.5200, longitude: 13.4050),
+        span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+    )
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+        GeometryReader { geo in
+            ScrollView {
+                VStack(spacing: 0) {
+                    mapLayer
+                        .frame(height: geo.size.height * mapHeightFraction)
+                        .clipped()
 
-                // Date header
-                Text(Date().formatted(.dateTime.weekday(.wide).month().day()).uppercased())
-                    .font(.system(.caption, design: .rounded, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .kerning(1.2)
-                    .padding(.horizontal, 4)
-
-                // Hero target card
-                heroCard
-
-                // What you actually did today (only when there's a run)
-                if let run = todayVM.todayRun {
-                    todayRunCard(run)
+                    contentSection
+                        .padding(.horizontal, 20)
+                        .padding(.top, 18)
+                        .padding(.bottom, 40)
                 }
-
-                // Below-the-fold supporting data
-                supportingGrid
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            .padding(.bottom, 40)
+            .scrollIndicators(.hidden)
+            .ignoresSafeArea(edges: .top)
+            .background(Color(.systemGroupedBackground))
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle("Pace Off")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     Task { await todayVM.refresh() }
                 } label: {
                     Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .padding(10)
                 }
                 .disabled(todayVM.isRefreshing)
             }
         }
-        .refreshable { await todayVM.refresh() }
+        .navigationDestination(for: TodayDestination.self) { dest in
+            switch dest {
+            case .vo2Max: VO2MaxDetailView()
+            }
+        }
+        .onChange(of: routeCoordinateSnapshot) { _, _ in
+            updateCamera(for: todayVM.todayRouteCoordinates)
+        }
+        .onAppear { updateCamera(for: todayVM.todayRouteCoordinates) }
     }
+
+    private var routeCoordinateSnapshot: [RouteCoordinateSnapshot] {
+        todayVM.todayRouteCoordinates.map(RouteCoordinateSnapshot.init)
+    }
+
+    // MARK: - Map
+
+    @ViewBuilder
+    private var mapLayer: some View {
+        if todayVM.todayRouteCoordinates.isEmpty {
+            emptyMapPlaceholder
+        } else {
+            Map(position: $cameraPosition, interactionModes: [.pan, .zoom]) {
+                MapPolyline(coordinates: todayVM.todayRouteCoordinates)
+                    .stroke(
+                        .blue.gradient,
+                        style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round)
+                    )
+                if let start = todayVM.todayRouteCoordinates.first {
+                    Annotation("Start", coordinate: start) {
+                        Circle()
+                            .fill(.green)
+                            .frame(width: 14, height: 14)
+                            .overlay(Circle().stroke(.white, lineWidth: 2))
+                    }
+                }
+                if let end = todayVM.todayRouteCoordinates.last,
+                   todayVM.todayRouteCoordinates.count > 1 {
+                    Annotation("Finish", coordinate: end) {
+                        Circle()
+                            .fill(.red)
+                            .frame(width: 14, height: 14)
+                            .overlay(Circle().stroke(.white, lineWidth: 2))
+                    }
+                }
+            }
+            .mapStyle(.standard(elevation: .realistic, pointsOfInterest: .excludingAll))
+        }
+    }
+
+    /// Stylized placeholder shown when there's no recorded run today — the map
+    /// itself is rendered, but parked over Berlin so the user always sees a
+    /// real-looking map instead of an empty grey rectangle.
+    private var emptyMapPlaceholder: some View {
+        ZStack {
+            Map(position: $cameraPosition, interactionModes: [.pan, .zoom])
+                .mapStyle(.standard(elevation: .realistic, pointsOfInterest: .excludingAll))
+
+            VStack(spacing: 10) {
+                Image(systemName: "figure.run.circle")
+                    .font(.system(size: 40, weight: .light))
+                    .foregroundStyle(.primary)
+                Text("No run today")
+                    .font(.system(.title3, design: .rounded, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Text("Your route will appear here once you run.")
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .padding(.horizontal, 24)
+        }
+    }
+
+    /// Fit the camera to the full route plus a little padding. When the route is
+    /// empty (no run today), fall back to the Berlin region so the map still
+    /// shows something recognizable.
+    private func updateCamera(for coords: [CLLocationCoordinate2D]) {
+        guard !coords.isEmpty else {
+            cameraPosition = .region(TodayView.berlinRegion)
+            return
+        }
+        var minLat = coords[0].latitude, maxLat = coords[0].latitude
+        var minLng = coords[0].longitude, maxLng = coords[0].longitude
+        for c in coords {
+            minLat = min(minLat, c.latitude); maxLat = max(maxLat, c.latitude)
+            minLng = min(minLng, c.longitude); maxLng = max(maxLng, c.longitude)
+        }
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLng + maxLng) / 2
+        )
+        let span = MKCoordinateSpan(
+            latitudeDelta: max((maxLat - minLat) * 1.6, 0.005),
+            longitudeDelta: max((maxLng - minLng) * 1.6, 0.005)
+        )
+        cameraPosition = .region(MKCoordinateRegion(center: center, span: span))
+    }
+
+    // MARK: - Content section (scrolls below the map)
+
+    private var contentSection: some View {
+        VStack(alignment: .leading, spacing: 22) {
+
+            Text(Date().formatted(.dateTime.weekday(.wide).month().day()).uppercased())
+                .font(.system(.caption, design: .rounded, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .kerning(1.2)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            heroCard
+
+            if let run = todayVM.todayRun {
+                todayRunCard(run)
+            }
+
+            supportingGrid
+        }
+    }
+
+    // MARK: - Hero card (today's target)
 
     private var heroCard: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -59,7 +189,7 @@ struct TodayView: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(todayVM.target?.formattedDistance.replacingOccurrences(of: " km", with: "") ?? "—")
-                    .font(.system(size: 96, weight: .bold, design: .rounded))
+                    .font(.system(size: 88, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
                 Text("km")
@@ -73,12 +203,12 @@ struct TodayView: View {
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(24)
+        .padding(22)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .fill(.background)
-                .shadow(color: .black.opacity(0.06), radius: 12, x: 0, y: 4)
+                .shadow(color: .black.opacity(0.08), radius: 14, x: 0, y: 6)
         }
         .overlay(alignment: .topTrailing) { toneBadge }
     }
@@ -93,7 +223,7 @@ struct TodayView: View {
                     .padding(.vertical, 5)
                     .background(toneColor(t.tone).opacity(0.15), in: Capsule())
                     .foregroundStyle(toneColor(t.tone))
-                    .padding(20)
+                    .padding(18)
             }
         }
     }
@@ -108,73 +238,8 @@ struct TodayView: View {
         }
     }
 
-    private var supportingGrid: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 12) {
-                statCard(
-                    label: "YESTERDAY",
-                    value: todayVM.yesterday.map { String(format: "%.1f km", $0.distanceKm) } ?? "—",
-                    icon: "calendar"
-                )
-                NavigationLink(value: TodayDestination.vo2Max) {
-                    statCard(
-                        label: "VO₂ MAX",
-                        value: todayVM.currentVO2Max.map { String(format: "%.1f", $0) } ?? "—",
-                        icon: "lungs.fill",
-                        showsChevron: true
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-            HStack(spacing: 12) {
-                statCard(
-                    label: "STREAK",
-                    value: todayVM.currentStreak == 0 ? "0" : "\(todayVM.currentStreak) day\(todayVM.currentStreak == 1 ? "" : "s")",
-                    icon: "flame.fill"
-                )
-                statCard(
-                    label: "DAYS SKIPPED",
-                    value: todayVM.target.map { "\($0.daysSinceLastRun)" } ?? "—",
-                    icon: "exclamationmark.triangle.fill"
-                )
-            }
-        }
-        .navigationDestination(for: TodayDestination.self) { dest in
-            switch dest {
-            case .vo2Max: VO2MaxDetailView()
-            }
-        }
-    }
+    // MARK: - Today's run card
 
-    private func statCard(label: String, value: String, icon: String, showsChevron: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(label)
-                    .font(.system(.caption2, design: .rounded, weight: .semibold))
-                    .kerning(0.8)
-                    .foregroundStyle(.secondary)
-                Spacer(minLength: 0)
-                if showsChevron {
-                    Image(systemName: "chevron.right")
-                        .font(.system(.caption2, weight: .semibold))
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            Text(value)
-                .font(.system(.title2, design: .rounded, weight: .semibold))
-                .foregroundStyle(.primary)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.background, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-    }
-
-    /// "You did this today" card. Shown only when `todayVM.todayRun != nil`.
-    /// Compares actual distance to the asked-for target so the user can see
-    /// at a glance whether they hit it, beat it, or fell short.
     private func todayRunCard(_ run: RunRecord) -> some View {
         let askedKm = (todayVM.target?.distanceMeters ?? 0) / 1000
         let actualKm = run.distanceKm
@@ -208,7 +273,7 @@ struct TodayView: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(String(format: "%.2f", actualKm))
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
+                    .font(.system(size: 44, weight: .bold, design: .rounded))
                 Text("km")
                     .font(.system(.title3, design: .rounded, weight: .medium))
                     .foregroundStyle(.secondary)
@@ -227,7 +292,7 @@ struct TodayView: View {
         .background {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(.background)
-                .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 3)
+                .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 3)
         }
     }
 
@@ -241,8 +306,79 @@ struct TodayView: View {
                 .font(.system(.headline, design: .rounded, weight: .semibold))
         }
     }
+
+    // MARK: - Supporting stat grid
+
+    private var supportingGrid: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                statCard(
+                    label: "YESTERDAY",
+                    value: todayVM.yesterday.map { String(format: "%.1f km", $0.distanceKm) } ?? "—",
+                    icon: "calendar"
+                )
+                NavigationLink(value: TodayDestination.vo2Max) {
+                    statCard(
+                        label: "VO₂ MAX",
+                        value: todayVM.currentVO2Max.map { String(format: "%.1f", $0) } ?? "—",
+                        icon: "lungs.fill",
+                        showsChevron: true
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            HStack(spacing: 12) {
+                statCard(
+                    label: "STREAK",
+                    value: todayVM.currentStreak == 0 ? "0" : "\(todayVM.currentStreak) day\(todayVM.currentStreak == 1 ? "" : "s")",
+                    icon: "flame.fill"
+                )
+                statCard(
+                    label: "DAYS SKIPPED",
+                    value: todayVM.target.map { "\($0.daysSinceLastRun)" } ?? "—",
+                    icon: "exclamationmark.triangle.fill"
+                )
+            }
+        }
+    }
+
+    private func statCard(label: String, value: String, icon: String, showsChevron: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(label)
+                    .font(.system(.caption2, design: .rounded, weight: .semibold))
+                    .kerning(0.8)
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+                if showsChevron {
+                    Image(systemName: "chevron.right")
+                        .font(.system(.caption2, weight: .semibold))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            Text(value)
+                .font(.system(.title2, design: .rounded, weight: .semibold))
+                .foregroundStyle(.primary)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.background, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
 }
 
 private enum TodayDestination: Hashable {
     case vo2Max
+}
+
+private struct RouteCoordinateSnapshot: Equatable {
+    let latitude: Double
+    let longitude: Double
+
+    init(_ coordinate: CLLocationCoordinate2D) {
+        latitude = coordinate.latitude
+        longitude = coordinate.longitude
+    }
 }

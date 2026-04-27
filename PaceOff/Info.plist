@@ -27,7 +27,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Pace Off reads your VO₂ max, runs, heart rate, and running dynamics from Apple Health to compute today's push target. Nothing leaves your device.</string>
+	<string>Pace Off reads your VO₂ max, runs, heart rate, running dynamics, and workout routes from Apple Health to compute today's push target and visualize your runs on a map. Nothing leaves your device.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Pace Off saves running workouts you start in the app to Apple Health.</string>
 	<key>NSMotionUsageDescription</key>

@@ -3,6 +3,7 @@
 
 import Foundation
 import SwiftUI
+import CoreLocation
 
 @MainActor
 public final class TodayViewModel: ObservableObject {
@@ -15,6 +16,7 @@ public final class TodayViewModel: ObservableObject {
     @Published public private(set) var currentVO2Max: Double?
     @Published public private(set) var currentStreak: Int = 0
     @Published public private(set) var userAge: Int?
+    @Published public private(set) var todayRouteCoordinates: [CLLocationCoordinate2D] = []
     @Published public private(set) var isRefreshing: Bool = false
 
     private let engine = PushTargetEngine()
@@ -46,6 +48,12 @@ public final class TodayViewModel: ObservableObject {
 
         // Mark "ran today" so the notification scheduler can suppress the evening push.
         AppGroup.sharedDefaults?.set(self.todayRun != nil, forKey: AppGroup.Keys.runCompletedToday)
+
+        // Pull today's GPS route for the hero map. Empty array when no run today
+        // or when the workout had no location data (treadmill, permission denied).
+        self.todayRouteCoordinates = (self.todayRun != nil)
+            ? await HealthKitService.shared.fetchTodayRunRoute()
+            : []
 
         let state = VoiceState(target: computed, yesterday: yesterday, currentStreak: currentStreak)
         self.voiceLine = voice.todayCard(for: state)

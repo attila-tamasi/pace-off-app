@@ -1,24 +1,130 @@
 // RunDetailView.swift
-// Full breakdown of a single run including running dynamics.
+// Full breakdown of a single run including the GPS route map and running dynamics.
 
 import SwiftUI
+import MapKit
+import CoreLocation
 
 struct RunDetailView: View {
     let run: RunRecord
 
+    @State private var routeCoordinates: [CLLocationCoordinate2D] = []
+    @State private var isLoadingRoute: Bool = true
+    @State private var cameraPosition: MapCameraPosition = .automatic
+
+    /// Map height as a fraction of the available screen height. Matches the
+    /// proportion used on the Today screen so the experience feels consistent.
+    private let mapHeightFraction: CGFloat = 0.42
+
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                header
-                metricsGrid
-                if hasDynamics { dynamicsSection }
+        GeometryReader { geo in
+            ScrollView {
+                VStack(spacing: 0) {
+                    mapSection
+                        .frame(height: geo.size.height * mapHeightFraction)
+                        .clipped()
+
+                    VStack(alignment: .leading, spacing: 24) {
+                        header
+                        metricsGrid
+                        if hasDynamics { dynamicsSection }
+                    }
+                    .padding(20)
+                }
             }
-            .padding(20)
+            .scrollIndicators(.hidden)
+            .ignoresSafeArea(edges: .top)
+            .background(Color(.systemGroupedBackground))
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle(run.startDate.formatted(.dateTime.month().day()))
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .task(id: run.id) { await loadRoute() }
     }
+
+    // MARK: - Map
+
+    @ViewBuilder
+    private var mapSection: some View {
+        if !routeCoordinates.isEmpty {
+            Map(position: $cameraPosition, interactionModes: [.pan, .zoom]) {
+                MapPolyline(coordinates: routeCoordinates)
+                    .stroke(
+                        .blue.gradient,
+                        style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round)
+                    )
+                if let start = routeCoordinates.first {
+                    Annotation("Start", coordinate: start) {
+                        Circle()
+                            .fill(.green)
+                            .frame(width: 14, height: 14)
+                            .overlay(Circle().stroke(.white, lineWidth: 2))
+                    }
+                }
+                if let end = routeCoordinates.last, routeCoordinates.count > 1 {
+                    Annotation("Finish", coordinate: end) {
+                        Circle()
+                            .fill(.red)
+                            .frame(width: 14, height: 14)
+                            .overlay(Circle().stroke(.white, lineWidth: 2))
+                    }
+                }
+            }
+            .mapStyle(.standard(elevation: .realistic, pointsOfInterest: .excludingAll))
+        } else {
+            ZStack {
+                Color(.systemGray6)
+                VStack(spacing: 10) {
+                    if isLoadingRoute {
+                        ProgressView()
+                        Text("Loading route…")
+                            .font(.system(.subheadline, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Image(systemName: "mappin.slash")
+                            .font(.system(size: 36, weight: .light))
+                            .foregroundStyle(.secondary)
+                        Text("No route recorded")
+                            .font(.system(.headline, design: .rounded, weight: .semibold))
+                        Text("This run was indoors, on a treadmill,\nor location wasn't shared.")
+                            .font(.system(.subheadline, design: .rounded))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .padding(.horizontal, 24)
+            }
+        }
+    }
+
+    private func loadRoute() async {
+        isLoadingRoute = true
+        let coords = await HealthKitService.shared.fetchRunRoute(for: run)
+        routeCoordinates = coords
+        isLoadingRoute = false
+        updateCamera(for: coords)
+    }
+
+    private func updateCamera(for coords: [CLLocationCoordinate2D]) {
+        guard !coords.isEmpty else { return }
+        var minLat = coords[0].latitude, maxLat = coords[0].latitude
+        var minLng = coords[0].longitude, maxLng = coords[0].longitude
+        for c in coords {
+            minLat = min(minLat, c.latitude); maxLat = max(maxLat, c.latitude)
+            minLng = min(minLng, c.longitude); maxLng = max(maxLng, c.longitude)
+        }
+        let center = CLLocationCoordinate2D(
+            latitude: (minLat + maxLat) / 2,
+            longitude: (minLng + maxLng) / 2
+        )
+        let span = MKCoordinateSpan(
+            latitudeDelta: max((maxLat - minLat) * 1.6, 0.005),
+            longitudeDelta: max((maxLng - minLng) * 1.6, 0.005)
+        )
+        cameraPosition = .region(MKCoordinateRegion(center: center, span: span))
+    }
+
+    // MARK: - Header & metrics
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
