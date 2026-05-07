@@ -26,11 +26,17 @@ public final class NotificationScheduler: ObservableObject {
     }
 
     /// Schedules today's three pushes based on the computed target. Replaces any prior daily notifications.
-    public func scheduleDailyPushes(target: RunTarget, yesterday: RunRecord?, currentStreak: Int) {
+    /// `overrideBody` lets the caller substitute an AI-rewritten line for the canned VoiceCopy text.
+    public func scheduleDailyPushes(
+        target: RunTarget,
+        yesterday: RunRecord?,
+        currentStreak: Int,
+        overrideBody: String? = nil
+    ) {
         center.removePendingNotificationRequests(withIdentifiers: [Self.morningId, Self.afternoonId, Self.eveningId])
 
         let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak)
-        let body = voice.notification(for: state)
+        let body = overrideBody ?? voice.notification(for: state)
 
         let defaults = AppGroup.sharedDefaults
         let morningHour = defaults?.integer(forKey: AppGroup.Keys.notificationMorningHour) ?? 0

@@ -27,6 +27,7 @@ public final class HealthKitService: ObservableObject {
             HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!,
             HKObjectType.quantityType(forIdentifier: .heartRate)!,
             HKObjectType.quantityType(forIdentifier: .restingHeartRate)!,
+            HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN)!,
             HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
             HKObjectType.quantityType(forIdentifier: .stepCount)!,
             HKObjectType.characteristicType(forIdentifier: .dateOfBirth)!,
@@ -134,6 +135,80 @@ public final class HealthKitService: ObservableObject {
                     RestingHeartRateSnapshot(date: $0.endDate, bpm: $0.quantity.doubleValue(for: unit))
                 }
                 continuation.resume(returning: snapshots)
+            }
+            store.execute(query)
+        }
+    }
+
+    // MARK: - Daily recovery snapshot
+
+    /// Average over all heart-rate samples for the calendar day containing
+    /// `referenceDate`. Returns nil if HealthKit has nothing recorded for
+    /// that day. Uses statistics aggregation so it's a single fast query.
+    public func fetchAverageHeartRate(on referenceDate: Date) async -> Double? {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .heartRate) else { return nil }
+        let cal = Calendar.current
+        let dayStart = cal.startOfDay(for: referenceDate)
+        guard let dayEnd = cal.date(byAdding: .day, value: 1, to: dayStart) else { return nil }
+        let predicate = HKQuery.predicateForSamples(withStart: dayStart, end: dayEnd, options: .strictStartDate)
+        let unit = HKUnit.count().unitDivided(by: .minute())
+
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsQuery(
+                quantityType: type,
+                quantitySamplePredicate: predicate,
+                options: .discreteAverage
+            ) { _, stats, _ in
+                continuation.resume(returning: stats?.averageQuantity()?.doubleValue(for: unit))
+            }
+            store.execute(query)
+        }
+    }
+
+    /// Average HRV (SDNN, in milliseconds) over the calendar day containing
+    /// `referenceDate`. Apple Watch typically records HRV during sleep, so
+    /// "yesterday's HRV" is usually a single overnight reading. Returns nil
+    /// when no samples exist or permission was denied.
+    public func fetchHRV(on referenceDate: Date) async -> Double? {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else { return nil }
+        let cal = Calendar.current
+        let dayStart = cal.startOfDay(for: referenceDate)
+        guard let dayEnd = cal.date(byAdding: .day, value: 1, to: dayStart) else { return nil }
+        let predicate = HKQuery.predicateForSamples(withStart: dayStart, end: dayEnd, options: .strictStartDate)
+        let unit = HKUnit.secondUnit(with: .milli)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsQuery(
+                quantityType: type,
+                quantitySamplePredicate: predicate,
+                options: .discreteAverage
+            ) { _, stats, _ in
+                continuation.resume(returning: stats?.averageQuantity()?.doubleValue(for: unit))
+            }
+            store.execute(query)
+        }
+    }
+
+    /// Most-recent resting heart rate before or on `referenceDate`. Apple
+    /// Watch updates RHR daily but not always on the same calendar day, so
+    /// we walk back up to 7 days to find the freshest reading rather than
+    /// querying a single day and showing "—" when it's a day stale.
+    public func fetchLatestRestingHeartRate(asOf referenceDate: Date) async -> Double? {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .restingHeartRate),
+              let start = Calendar.current.date(byAdding: .day, value: -7, to: referenceDate)
+        else { return nil }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: referenceDate, options: .strictStartDate)
+        let unit = HKUnit.count().unitDivided(by: .minute())
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: type,
+                predicate: predicate,
+                limit: 1,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]
+            ) { _, samples, _ in
+                let value = (samples?.first as? HKQuantitySample)?.quantity.doubleValue(for: unit)
+                continuation.resume(returning: value)
             }
             store.execute(query)
         }

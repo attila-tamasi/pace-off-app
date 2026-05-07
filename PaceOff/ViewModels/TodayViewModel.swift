@@ -19,6 +19,12 @@ public final class TodayViewModel: ObservableObject {
     @Published public private(set) var todayRouteCoordinates: [CLLocationCoordinate2D] = []
     @Published public private(set) var isRefreshing: Bool = false
 
+    // Yesterday's recovery snapshot — surfaced as the morning check-in card
+    // at the top of the Today screen.
+    @Published public private(set) var yesterdayHRV: Double?
+    @Published public private(set) var yesterdayAvgHeartRate: Double?
+    @Published public private(set) var latestRestingHeartRate: Double?
+
     private let engine = PushTargetEngine()
     private let voice = VoiceCopy()
 
@@ -55,9 +61,32 @@ public final class TodayViewModel: ObservableObject {
             ? await HealthKitService.shared.fetchTodayRunRoute()
             : []
 
+        // Yesterday's recovery — HRV is recorded overnight, average HR is the
+        // all-day average, RHR is whatever Apple Watch most recently published.
+        let cal = Calendar.current
+        let yesterdayDate = cal.date(byAdding: .day, value: -1, to: Date()) ?? Date()
+        self.yesterdayHRV = await HealthKitService.shared.fetchHRV(on: yesterdayDate)
+        self.yesterdayAvgHeartRate = await HealthKitService.shared.fetchAverageHeartRate(on: yesterdayDate)
+        self.latestRestingHeartRate = await HealthKitService.shared.fetchLatestRestingHeartRate(asOf: Date())
+
         let state = VoiceState(target: computed, yesterday: yesterday, currentStreak: currentStreak)
-        self.voiceLine = voice.todayCard(for: state)
-        self.notificationLine = voice.notification(for: state)
+        let cannedCard = voice.todayCard(for: state)
+        let cannedNotif = voice.notification(for: state)
+        self.voiceLine = cannedCard
+        self.notificationLine = cannedNotif
+
+        // Try Apple Intelligence for a creative rewrite. Returns nil on
+        // unsupported devices or when the model is busy — fall back silently.
+        if let aiCard = await AppleIntelligenceCopy.shared.rewrite(cannedCard, kind: .todayCard) {
+            self.voiceLine = aiCard
+        }
+        let notificationBody: String
+        if let aiNotif = await AppleIntelligenceCopy.shared.rewrite(cannedNotif, kind: .notification) {
+            self.notificationLine = aiNotif
+            notificationBody = aiNotif
+        } else {
+            notificationBody = cannedNotif
+        }
 
         // Cache for the widget
         if let data = try? JSONEncoder().encode(computed) {
@@ -65,11 +94,12 @@ public final class TodayViewModel: ObservableObject {
         }
         AppGroup.sharedDefaults?.set(self.voiceLine, forKey: AppGroup.Keys.lastTodayVoiceLine)
 
-        // Schedule today's notifications
+        // Schedule today's notifications using the (possibly AI-rewritten) body.
         NotificationScheduler.shared.scheduleDailyPushes(
             target: computed,
             yesterday: yesterday,
-            currentStreak: currentStreak
+            currentStreak: currentStreak,
+            overrideBody: notificationBody
         )
     }
 

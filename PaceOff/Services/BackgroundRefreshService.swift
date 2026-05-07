@@ -1,0 +1,187 @@
+// BackgroundRefreshService.swift
+// Periodic Apple-Health → today-target refresh while the app is suspended.
+//
+// We register a single BGAppRefreshTask identifier (`com.paceoff.app.refresh`,
+// declared in Info.plist's `BGTaskSchedulerPermittedIdentifiers`) and ask iOS
+// to run it every ~6 hours. iOS doesn't honor exact times — it bundles the
+// request with other system refresh windows and tries to fire it 3–4× per day
+// based on user habits, charging state, and network conditions.
+//
+// Each run:
+//   1. Pulls fresh runs / VO₂ max / RHR from HealthKit
+//   2. Recomputes the RunTarget and voice copy
+//   3. Persists both to App Group UserDefaults so the widget and the next
+//      app launch see them instantly
+//   4. Reschedules the next BGAppRefreshTask
+//
+// We intentionally use BGAppRefreshTask (not BGProcessingTask): app-refresh
+// has a ~30s wall-clock budget and runs frequently, which matches "fetch a
+// few HealthKit summaries and update a cache" perfectly.
+
+import Foundation
+import BackgroundTasks
+import os
+
+@MainActor
+public final class BackgroundRefreshService {
+
+    public static let shared = BackgroundRefreshService()
+
+    /// Must match the identifier in Info.plist → BGTaskSchedulerPermittedIdentifiers.
+    public static let taskIdentifier = "com.paceoff.app.refresh"
+
+    /// Earliest moment iOS may run the next refresh. ~6 hours gives the system
+    /// ~4 wake-up opportunities per day; iOS picks the actual moment.
+    private static let refreshInterval: TimeInterval = 6 * 60 * 60
+
+    private let log = Logger(subsystem: "com.paceoff.app", category: "BackgroundRefresh")
+
+    private init() {}
+
+    // MARK: - Registration
+
+    /// Register the BGTask handler. Must be called from `App.init()` —
+    /// BGTaskScheduler refuses registrations after the app finishes launching.
+    public nonisolated func register() {
+        BGTaskScheduler.shared.register(
+            forTaskWithIdentifier: Self.taskIdentifier,
+            using: nil
+        ) { task in
+            guard let refreshTask = task as? BGAppRefreshTask else {
+                task.setTaskCompleted(success: false)
+                return
+            }
+            Task { @MainActor in
+                await Self.shared.handle(refreshTask)
+            }
+        }
+    }
+
+    // MARK: - Scheduling
+
+    /// Ask iOS to run our refresh task again after `refreshInterval` has
+    /// elapsed. Safe to call multiple times — iOS coalesces requests.
+    public func scheduleNext() {
+        let request = BGAppRefreshTaskRequest(identifier: Self.taskIdentifier)
+        request.earliestBeginDate = Date(timeIntervalSinceNow: Self.refreshInterval)
+        do {
+            try BGTaskScheduler.shared.submit(request)
+            log.info("Scheduled next background refresh ≥ \(Self.refreshInterval/3600, privacy: .public)h from now")
+        } catch {
+            // Most common cause: running in the simulator (BGTaskScheduler is
+            // a no-op there) or BGTaskScheduler entitlement missing.
+            log.error("Failed to schedule background refresh: \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    // MARK: - Handler
+
+    private func handle(_ task: BGAppRefreshTask) async {
+        // Always queue the next refresh first — if our work overruns the
+        // wall-clock budget and gets killed, we still want another wake-up.
+        scheduleNext()
+
+        let work = Task { @MainActor in
+            await refreshHealthData()
+        }
+
+        // iOS gives us a hard deadline; if we get cancelled mid-flight, kill
+        // the work cleanly and report failure so iOS can back off.
+        task.expirationHandler = {
+            work.cancel()
+        }
+
+        let success = await work.value
+        task.setTaskCompleted(success: success)
+    }
+
+    /// The actual refresh. Returns true on success, false on cancellation/error.
+    /// Reused by `runOnceNow()` for "manual" foreground refreshes.
+    @discardableResult
+    public func refreshHealthData() async -> Bool {
+        let runs = await HealthKitService.shared.fetchRuns(daysBack: 90)
+        if Task.isCancelled { return false }
+
+        let vo2 = await HealthKitService.shared.fetchVO2Max(daysBack: 90)
+        if Task.isCancelled { return false }
+
+        let rhr = await HealthKitService.shared.fetchRestingHeartRate(daysBack: 14)
+        if Task.isCancelled { return false }
+
+        let inputs = PushTargetEngine.Inputs(
+            today: Date(),
+            runs: runs,
+            vo2Max: vo2,
+            restingHeartRate: rhr
+        )
+        let target = PushTargetEngine().compute(inputs)
+
+        let yesterday = mostRecentRunBefore(today: Date(), in: runs)
+        let todayRun = mostRecentRunOn(day: Date(), in: runs)
+        let streak = computeStreak(runs)
+
+        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: streak)
+        let voice = VoiceCopy()
+        var voiceLine = voice.todayCard(for: state)
+        var notificationLine = voice.notification(for: state)
+
+        // Optional Apple Intelligence pass — rewrites the canned line in a
+        // more creative voice on devices that support it. Time-boxed so we
+        // never blow our 30s budget.
+        if let aiCard = await AppleIntelligenceCopy.shared.rewrite(voiceLine, kind: .todayCard) {
+            voiceLine = aiCard
+        }
+        if let aiNotif = await AppleIntelligenceCopy.shared.rewrite(notificationLine, kind: .notification) {
+            notificationLine = aiNotif
+        }
+
+        // Cache for the widget + next app launch.
+        if let data = try? JSONEncoder().encode(target) {
+            AppGroup.sharedDefaults?.set(data, forKey: AppGroup.Keys.lastTodayTarget)
+        }
+        AppGroup.sharedDefaults?.set(voiceLine, forKey: AppGroup.Keys.lastTodayVoiceLine)
+        AppGroup.sharedDefaults?.set(todayRun != nil, forKey: AppGroup.Keys.runCompletedToday)
+
+        // Reschedule today's notifications with the freshly enriched body so
+        // the user gets the updated copy on the next push.
+        NotificationScheduler.shared.scheduleDailyPushes(
+            target: target,
+            yesterday: yesterday,
+            currentStreak: streak,
+            overrideBody: notificationLine
+        )
+
+        log.info("Background refresh completed — target=\(target.displayedDistanceKm)km")
+        return true
+    }
+
+    // MARK: - Helpers (mirror TodayViewModel)
+
+    private func mostRecentRunBefore(today: Date, in runs: [RunRecord]) -> RunRecord? {
+        let cal = Calendar.current
+        let startOfToday = cal.startOfDay(for: today)
+        return runs
+            .filter { $0.startDate < startOfToday }
+            .max(by: { $0.startDate < $1.startDate })
+    }
+
+    private func mostRecentRunOn(day: Date, in runs: [RunRecord]) -> RunRecord? {
+        let cal = Calendar.current
+        return runs
+            .filter { cal.isDate($0.startDate, inSameDayAs: day) }
+            .max(by: { $0.distanceMeters < $1.distanceMeters })
+    }
+
+    private func computeStreak(_ runs: [RunRecord]) -> Int {
+        let cal = Calendar.current
+        let dates = Set(runs.map { cal.startOfDay(for: $0.startDate) })
+        var streak = 0
+        var cursor = cal.startOfDay(for: Date())
+        while dates.contains(cursor) {
+            streak += 1
+            guard let prev = cal.date(byAdding: .day, value: -1, to: cursor) else { break }
+            cursor = prev
+        }
+        return streak
+    }
+}

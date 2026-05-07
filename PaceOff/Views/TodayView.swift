@@ -168,6 +168,8 @@ struct TodayView: View {
                 .kerning(1.2)
                 .frame(maxWidth: .infinity, alignment: .center)
 
+            recoveryCard
+
             heroCard
 
             if let run = todayVM.todayRun {
@@ -176,6 +178,78 @@ struct TodayView: View {
 
             supportingGrid
         }
+    }
+
+    // MARK: - Yesterday's recovery (morning check-in)
+
+    /// Shown at the top of the home screen so it's the first thing the user
+    /// reads when they open the app. Three numbers from yesterday/overnight:
+    /// HRV (SDNN), average heart rate, and most-recent resting heart rate.
+    private var recoveryCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("YESTERDAY'S RECOVERY")
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .kerning(1.2)
+                Spacer()
+                Image(systemName: "heart.text.square.fill")
+                    .font(.system(.caption, weight: .semibold))
+                    .foregroundStyle(.pink)
+            }
+
+            HStack(alignment: .top, spacing: 0) {
+                recoveryStat(
+                    label: "HRV",
+                    value: todayVM.yesterdayHRV.map { "\(Int($0.rounded()))" } ?? "—",
+                    unit: "ms"
+                )
+                divider
+                recoveryStat(
+                    label: "AVG HR",
+                    value: todayVM.yesterdayAvgHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
+                    unit: "bpm"
+                )
+                divider
+                recoveryStat(
+                    label: "RESTING",
+                    value: todayVM.latestRestingHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
+                    unit: "bpm"
+                )
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(.background)
+                .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 3)
+        }
+    }
+
+    private func recoveryStat(label: String, value: String, unit: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.system(.caption2, design: .rounded, weight: .semibold))
+                .kerning(0.8)
+                .foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text(value)
+                    .font(.system(.title2, design: .rounded, weight: .bold))
+                    .foregroundStyle(.primary)
+                Text(unit)
+                    .font(.system(.caption, design: .rounded, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(Color.secondary.opacity(0.15))
+            .frame(width: 1, height: 36)
+            .padding(.horizontal, 4)
     }
 
     // MARK: - Hero card (today's target)
@@ -241,7 +315,9 @@ struct TodayView: View {
     // MARK: - Today's run card
 
     private func todayRunCard(_ run: RunRecord) -> some View {
-        let askedKm = (todayVM.target?.distanceMeters ?? 0) / 1000
+        // Compare against the displayed (rounded-up) target, not the precise
+        // engine value, so the "TARGET HIT" badge matches what the user saw.
+        let askedKm = Double(todayVM.target?.displayedDistanceKm ?? 0)
         let actualKm = run.distanceKm
         let hit = askedKm > 0 && actualKm >= askedKm * 0.95
         let label: String

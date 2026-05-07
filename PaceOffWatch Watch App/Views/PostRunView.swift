@@ -9,7 +9,9 @@ struct PostRunView: View {
 
     private var hitTarget: Bool {
         guard let t = target else { return false }
-        return run.distanceMeters >= t.distanceMeters * 0.95
+        // Compare against the displayed (rounded-up) target so the "DONE" /
+        // "SHORT" badge matches the integer the user saw before the run.
+        return run.distanceMeters >= t.displayedDistanceMeters * 0.95
     }
 
     var body: some View {
@@ -24,7 +26,7 @@ struct PostRunView: View {
                     .font(.system(size: 44, weight: .bold, design: .rounded))
 
                 if let t = target {
-                    Text("Target was \(String(format: "%.1f", t.distanceKm)) km")
+                    Text("Target was \(t.displayedDistanceKm) km")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }

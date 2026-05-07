@@ -114,12 +114,12 @@ struct PaceOffWidgetView: View {
 
     private var distanceShort: String {
         guard let t = entry.target else { return "—" }
-        return String(format: "%.1f", t.distanceKm)
+        return "\(t.displayedDistanceKm)"
     }
 
     private var inlineText: String {
         guard let t = entry.target else { return "Pace Off: open me" }
-        return "Pace Off: \(String(format: "%.1f", t.distanceKm)) km"
+        return "Pace Off: \(t.displayedDistanceKm) km"
     }
 
     private var statusColor: Color {

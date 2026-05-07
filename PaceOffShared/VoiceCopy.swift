@@ -16,11 +16,14 @@ public enum VoiceState: Sendable {
     case fatigueGuard
 
     public init(target: RunTarget, yesterday: RunRecord?, currentStreak: Int) {
+        // Use the *displayed* (rounded-up) target so every voice line and
+        // notification matches the integer the user sees on the hero card.
+        let displayedKm = Double(target.displayedDistanceKm)
         // Order matters: most specific state first
         if let slope = target.vo2MaxSlope, slope < -0.05, target.daysSinceLastRun == 0 {
             // VO2Max declining wins over neutral streak
             let monthly = abs(slope) * 4.0
-            self = .vo2MaxDeclining(deltaPerMonth: monthly, todayKm: target.distanceKm)
+            self = .vo2MaxDeclining(deltaPerMonth: monthly, todayKm: displayedKm)
             return
         }
         if target.fatigueGuardActive {
@@ -32,16 +35,16 @@ public enum VoiceState: Sendable {
             if currentStreak >= 7 {
                 self = .streakDay7Plus(streakDays: currentStreak + 1)
             } else if let y = yesterday {
-                self = .streakDay1(yesterdayKm: y.distanceKm, todayKm: target.distanceKm)
+                self = .streakDay1(yesterdayKm: y.distanceKm, todayKm: displayedKm)
             } else {
-                self = .skipOneDay(todayKm: target.distanceKm)
+                self = .skipOneDay(todayKm: displayedKm)
             }
         case 1:
-            self = .skipOneDay(todayKm: target.distanceKm)
+            self = .skipOneDay(todayKm: displayedKm)
         case 2:
-            self = .skipTwoDays(todayKm: target.distanceKm)
+            self = .skipTwoDays(todayKm: displayedKm)
         default:
-            self = .skipThreePlusDays(todayKm: target.distanceKm)
+            self = .skipThreePlusDays(todayKm: displayedKm)
         }
     }
 }
@@ -98,6 +101,14 @@ public struct VoiceCopy: Sendable {
         }
     }
 
-    private func format(_ km: Double) -> String { String(format: "%.1f", km) }
+    /// Format kilometers as either a whole number (`"8"`) when the value is
+    /// integral or one decimal place (`"5.4"`) otherwise. Targets are always
+    /// integral after rounding-up; actual run distances keep their decimal.
+    private func format(_ km: Double) -> String {
+        if km == km.rounded() {
+            return String(format: "%.0f", km)
+        }
+        return String(format: "%.1f", km)
+    }
     private func formatDecimal(_ v: Double, places: Int) -> String { String(format: "%.\(places)f", v) }
 }

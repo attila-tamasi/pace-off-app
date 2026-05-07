@@ -44,8 +44,22 @@ public struct RunTarget: Codable, Sendable, Equatable {
     public var distanceKm: Double { distanceMeters / 1000 }
     public var baselineKm: Double { baselineMeters / 1000 }
 
-    /// Display string like "5.2 km".
+    /// The user-facing target — always rounded **up** to the next whole km.
+    /// 7.7 km → 8 km. 5.0 km → 5 km. The engine emits a precise number, but
+    /// the UX tells the user a clean integer, and "did I hit the target" is
+    /// judged against this rounded value to avoid mismatch.
+    public var displayedDistanceKm: Int {
+        Int(ceil(distanceKm))
+    }
+
+    /// `displayedDistanceKm` re-expressed in meters. Use this when comparing
+    /// against actual run distance for "target hit" checks.
+    public var displayedDistanceMeters: Double {
+        Double(displayedDistanceKm) * 1000.0
+    }
+
+    /// Display string — whole km, no decimal, e.g. "8 km".
     public var formattedDistance: String {
-        String(format: "%.1f km", distanceKm)
+        "\(displayedDistanceKm) km"
     }
 }

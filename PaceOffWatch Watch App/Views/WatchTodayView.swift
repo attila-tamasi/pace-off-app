@@ -24,7 +24,7 @@ struct WatchTodayView: View {
                     .foregroundStyle(.secondary)
 
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    Text(cachedTarget.map { String(format: "%.1f", $0.distanceKm) } ?? "—")
+                    Text(cachedTarget.map { "\($0.displayedDistanceKm)" } ?? "—")
                         .font(.system(size: 56, weight: .bold, design: .rounded))
                     Text("km")
                         .font(.system(.title3, design: .rounded, weight: .medium))
