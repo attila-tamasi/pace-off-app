@@ -9,6 +9,8 @@ struct PaceOffApp: App {
     @StateObject private var health = HealthKitService.shared
     @StateObject private var notifications = NotificationScheduler.shared
     @StateObject private var todayVM = TodayViewModel()
+    @StateObject private var profileStore = ProfileStore.shared
+    @StateObject private var appleSignIn = AppleSignInService.shared
 
     @AppStorage(AppGroup.Keys.onboardingComplete, store: AppGroup.sharedDefaults)
     private var onboardingComplete: Bool = false
@@ -29,13 +31,18 @@ struct PaceOffApp: App {
                         .environmentObject(health)
                         .environmentObject(notifications)
                         .environmentObject(todayVM)
+                        .environmentObject(profileStore)
+                        .environmentObject(appleSignIn)
                         .task {
                             await todayVM.refresh()
+                            await appleSignIn.refreshCredentialState()
                         }
                 } else {
                     OnboardingView(onComplete: { onboardingComplete = true })
                         .environmentObject(health)
                         .environmentObject(notifications)
+                        .environmentObject(profileStore)
+                        .environmentObject(appleSignIn)
                 }
             }
             .preferredColorScheme(.none) // respect system
