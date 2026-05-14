@@ -38,6 +38,9 @@
 		80C937596DD24C465284E559 /* RunDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74AD6A73BE659740953F5C2C /* RunDetailView.swift */; };
 		8862D5D70C68312EA7E1F331 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1FCBE6C52DC0E9940EF65B15 /* Assets.xcassets */; };
 		92F30B0BCBA9380AD8A8CC0F /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92ED6E156A6562B097BCDF24 /* VO2MaxSnapshot.swift */; };
+		9A6780052FB65439003D84FB /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6780042FB65439003D84FB /* UserProfile.swift */; };
+		9A6780062FB65439003D84FB /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6780042FB65439003D84FB /* UserProfile.swift */; };
+		9A6780072FB65439003D84FB /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6780042FB65439003D84FB /* UserProfile.swift */; };
 		9A81B35B2FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */; };
 		9A81B35D2FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */; };
 		9A81B35F2FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */; };
@@ -130,6 +133,7 @@
 		92ED6E156A6562B097BCDF24 /* VO2MaxSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VO2MaxSnapshot.swift; sourceTree = "<group>"; };
 		9A1483062F9BE34C005C9216 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		9A1483072F9BE34F005C9216 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		9A6780042FB65439003D84FB /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
 		9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceCopy.swift; sourceTree = "<group>"; };
 		9A81B35A2FA7BB9400F66DD8 /* BackgroundRefreshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshService.swift; sourceTree = "<group>"; };
 		A16055B88F40FC03BF4E72C3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -219,6 +223,7 @@
 		402F47257BAF7B56BBBD0CDC /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				9A6780042FB65439003D84FB /* UserProfile.swift */,
 				48E7550CAD9C4D79751C95EA /* AppGroup.swift */,
 				A93BE2C372C1F5CBDCF4BD34 /* PushTargetEngine.swift */,
 				7385B3E565CA63C5F8B9180D /* RunRecord.swift */,
@@ -503,6 +508,7 @@
 			files = (
 				6089FEE24EBE3804829E58B5 /* PaceOffWatchApp.swift in Sources */,
 				38869D705CD6A348D6109102 /* WorkoutSessionManager.swift in Sources */,
+				9A6780072FB65439003D84FB /* UserProfile.swift in Sources */,
 				AEDD36E044461085BFDC5766 /* PostRunView.swift in Sources */,
 				E226DC26A5AFD7DA8D0E9D9F /* RunningWorkoutView.swift in Sources */,
 				06BE5907FDC7E84DC70D680D /* WatchTodayView.swift in Sources */,
@@ -526,6 +532,7 @@
 				145CE6ED3EF794626D8AE087 /* PaceOffWidgetBundle.swift in Sources */,
 				CF488859E369A0601E50B9BF /* AppGroup.swift in Sources */,
 				C3F6C13FAF108C6A4C829143 /* PushTargetEngine.swift in Sources */,
+				9A6780062FB65439003D84FB /* UserProfile.swift in Sources */,
 				4DDAEB789C5E2230F3813401 /* RunRecord.swift in Sources */,
 				A5FDE5453A8109D8B6B2F74F /* RunTarget.swift in Sources */,
 				D50B1DF6EEAEFED96DEF2A10 /* Tone.swift in Sources */,
@@ -562,6 +569,7 @@
 				728663FD7308C17E74CDEC37 /* VO2MaxDetailView.swift in Sources */,
 				23826306BC67A54A72AC75BD /* AppGroup.swift in Sources */,
 				27A1D4A01DCFFACBC951800E /* PushTargetEngine.swift in Sources */,
+				9A6780052FB65439003D84FB /* UserProfile.swift in Sources */,
 				B69204D3081BCC6F50A00554 /* RunRecord.swift in Sources */,
 				632E81B0146984E038FF2CAC /* RunTarget.swift in Sources */,
 				B64D6F2E59E9BB4F4CE76A5E /* Tone.swift in Sources */,

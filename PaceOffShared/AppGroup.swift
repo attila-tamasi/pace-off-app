@@ -20,5 +20,15 @@ public enum AppGroup {
         public static let notificationMorningHour = "paceoff.notif.morning"
         public static let notificationAfternoonHour = "paceoff.notif.afternoon"
         public static let notificationEveningHour = "paceoff.notif.evening"
+        public static let userProfile = "paceoff.userProfile"
+    }
+
+    /// Filename of the profile photo JPEG, stored in the App Group container
+    /// (not UserDefaults — binary blobs don't belong there).
+    public static let profilePhotoFilename = "profile-photo.jpg"
+
+    /// URL of the shared App Group container directory, if available.
+    public static var containerURL: URL? {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)
     }
 }
