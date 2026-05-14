@@ -41,6 +41,10 @@
 		9A6780052FB65439003D84FB /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6780042FB65439003D84FB /* UserProfile.swift */; };
 		9A6780062FB65439003D84FB /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6780042FB65439003D84FB /* UserProfile.swift */; };
 		9A6780072FB65439003D84FB /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6780042FB65439003D84FB /* UserProfile.swift */; };
+		9A67800A2FB65912003D84FB /* AppleSignInService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6780082FB65912003D84FB /* AppleSignInService.swift */; };
+		9A67800B2FB65912003D84FB /* ProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6780092FB65912003D84FB /* ProfileStore.swift */; };
+		9A67800E2FB6591D003D84FB /* ProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A67800C2FB6591D003D84FB /* ProfileEditView.swift */; };
+		9A67800F2FB6591D003D84FB /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A67800D2FB6591D003D84FB /* ProfileView.swift */; };
 		9A81B35B2FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */; };
 		9A81B35D2FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */; };
 		9A81B35F2FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */; };
@@ -138,6 +142,10 @@
 		9A1483062F9BE34C005C9216 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		9A1483072F9BE34F005C9216 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		9A6780042FB65439003D84FB /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
+		9A6780082FB65912003D84FB /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
+		9A6780092FB65912003D84FB /* ProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStore.swift; sourceTree = "<group>"; };
+		9A67800C2FB6591D003D84FB /* ProfileEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEditView.swift; sourceTree = "<group>"; };
+		9A67800D2FB6591D003D84FB /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceCopy.swift; sourceTree = "<group>"; };
 		9A81B35A2FA7BB9400F66DD8 /* BackgroundRefreshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshService.swift; sourceTree = "<group>"; };
 		A16055B88F40FC03BF4E72C3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -279,8 +287,8 @@
 		4EAA3FDECAC6B664005F5FA5 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				CD6490B32FB6510E006E69CF /* AppleSignInService.swift */,
-				CD6490B42FB6510E006E69CF /* ProfileStore.swift */,
+				9A6780082FB65912003D84FB /* AppleSignInService.swift */,
+				9A6780092FB65912003D84FB /* ProfileStore.swift */,
 				9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */,
 				9A81B35A2FA7BB9400F66DD8 /* BackgroundRefreshService.swift */,
 				FDA87313DFA425D1345A5393 /* HealthKitService.swift */,
@@ -300,8 +308,8 @@
 		B64780532466C0821EAE5535 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				CD6490AF2FB650FD006E69CF /* ProfileEditView.swift */,
-				CD6490B02FB650FD006E69CF /* ProfileView.swift */,
+				9A67800C2FB6591D003D84FB /* ProfileEditView.swift */,
+				9A67800D2FB6591D003D84FB /* ProfileView.swift */,
 				84B54EC06446159F25246014 /* HistoryView.swift */,
 				C126EFA0AA92ABA55D2716B6 /* OnboardingView.swift */,
 				D0CBE1EC823560360FC3672F /* RootView.swift */,
@@ -573,6 +581,8 @@
 				771219521B5A771E43CB74C7 /* OnboardingView.swift in Sources */,
 				1E74F03CD2DA53BFC11ACFD4 /* RootView.swift in Sources */,
 				80C937596DD24C465284E559 /* RunDetailView.swift in Sources */,
+				9A67800E2FB6591D003D84FB /* ProfileEditView.swift in Sources */,
+				9A67800F2FB6591D003D84FB /* ProfileView.swift in Sources */,
 				4412C5DDAAA37C34C39B902D /* SettingsView.swift in Sources */,
 				0E2586C4B9088DCD2B493D55 /* TodayView.swift in Sources */,
 				D22A137180C4A2E96F15E64C /* TrendsView.swift in Sources */,
@@ -587,6 +597,8 @@
 				CD6490B62FB6510E006E69CF /* AppleSignInService.swift in Sources */,
 				632E81B0146984E038FF2CAC /* RunTarget.swift in Sources */,
 				B64D6F2E59E9BB4F4CE76A5E /* Tone.swift in Sources */,
+				9A67800A2FB65912003D84FB /* AppleSignInService.swift in Sources */,
+				9A67800B2FB65912003D84FB /* ProfileStore.swift in Sources */,
 				F434822A51BAAB2D0B3A3FCD /* VO2MaxSnapshot.swift in Sources */,
 				CD6490B12FB650FD006E69CF /* ProfileEditView.swift in Sources */,
 				CD6490B22FB650FD006E69CF /* ProfileView.swift in Sources */,
