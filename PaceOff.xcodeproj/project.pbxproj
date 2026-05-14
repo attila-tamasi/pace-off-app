@@ -51,6 +51,10 @@
 		BE23702015E49DE7EE9A5F63 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2DCD52BC910E9B4F6A825D2F /* Assets.xcassets */; };
 		C0F4D98A1EC1D36BFF9E079F /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB9CA2CEF907EDC03F2E90E /* Tone.swift */; };
 		C3F6C13FAF108C6A4C829143 /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A93BE2C372C1F5CBDCF4BD34 /* PushTargetEngine.swift */; };
+		CD6490B12FB650FD006E69CF /* ProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6490AF2FB650FD006E69CF /* ProfileEditView.swift */; };
+		CD6490B22FB650FD006E69CF /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6490B02FB650FD006E69CF /* ProfileView.swift */; };
+		CD6490B52FB6510E006E69CF /* ProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6490B42FB6510E006E69CF /* ProfileStore.swift */; };
+		CD6490B62FB6510E006E69CF /* AppleSignInService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6490B32FB6510E006E69CF /* AppleSignInService.swift */; };
 		CF488859E369A0601E50B9BF /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E7550CAD9C4D79751C95EA /* AppGroup.swift */; };
 		D22A137180C4A2E96F15E64C /* TrendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD50DC96C723A45DEF2F2E84 /* TrendsView.swift */; };
 		D23368B4BFAE33FD71245E7F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 82BDC057083015101B1E193D /* Assets.xcassets */; };
@@ -139,6 +143,10 @@
 		B53DF820D28123DA59768D65 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
 		BF31D94A4E0621E9FD66337D /* PaceOffApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffApp.swift; sourceTree = "<group>"; };
 		C126EFA0AA92ABA55D2716B6 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		CD6490AF2FB650FD006E69CF /* ProfileEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEditView.swift; sourceTree = "<group>"; };
+		CD6490B02FB650FD006E69CF /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		CD6490B32FB6510E006E69CF /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
+		CD6490B42FB6510E006E69CF /* ProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStore.swift; sourceTree = "<group>"; };
 		CD8F5A0E0CD5262B0AC94150 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		D0CBE1EC823560360FC3672F /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		D34453E5DF50D54376CC881C /* RunningWorkoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningWorkoutView.swift; sourceTree = "<group>"; };
@@ -266,6 +274,8 @@
 		4EAA3FDECAC6B664005F5FA5 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				CD6490B32FB6510E006E69CF /* AppleSignInService.swift */,
+				CD6490B42FB6510E006E69CF /* ProfileStore.swift */,
 				9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */,
 				9A81B35A2FA7BB9400F66DD8 /* BackgroundRefreshService.swift */,
 				FDA87313DFA425D1345A5393 /* HealthKitService.swift */,
@@ -285,6 +295,8 @@
 		B64780532466C0821EAE5535 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				CD6490AF2FB650FD006E69CF /* ProfileEditView.swift */,
+				CD6490B02FB650FD006E69CF /* ProfileView.swift */,
 				84B54EC06446159F25246014 /* HistoryView.swift */,
 				C126EFA0AA92ABA55D2716B6 /* OnboardingView.swift */,
 				D0CBE1EC823560360FC3672F /* RootView.swift */,
@@ -563,9 +575,13 @@
 				23826306BC67A54A72AC75BD /* AppGroup.swift in Sources */,
 				27A1D4A01DCFFACBC951800E /* PushTargetEngine.swift in Sources */,
 				B69204D3081BCC6F50A00554 /* RunRecord.swift in Sources */,
+				CD6490B52FB6510E006E69CF /* ProfileStore.swift in Sources */,
+				CD6490B62FB6510E006E69CF /* AppleSignInService.swift in Sources */,
 				632E81B0146984E038FF2CAC /* RunTarget.swift in Sources */,
 				B64D6F2E59E9BB4F4CE76A5E /* Tone.swift in Sources */,
 				F434822A51BAAB2D0B3A3FCD /* VO2MaxSnapshot.swift in Sources */,
+				CD6490B12FB650FD006E69CF /* ProfileEditView.swift in Sources */,
+				CD6490B22FB650FD006E69CF /* ProfileView.swift in Sources */,
 				6D9DE30A02179420FED9B2C2 /* VoiceCopy.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
