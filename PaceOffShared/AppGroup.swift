@@ -15,6 +15,7 @@ public enum AppGroup {
         public static let lastTodayTarget = "paceoff.lastTodayTarget"
         public static let lastTodayVoiceLine = "paceoff.lastTodayVoiceLine"
         public static let runCompletedToday = "paceoff.runCompletedToday"
+        public static let authComplete = "paceoff.authComplete"
         public static let onboardingComplete = "paceoff.onboardingComplete"
         public static let preferredVoiceTone = "paceoff.preferredVoiceTone"
         public static let notificationMorningHour = "paceoff.notif.morning"

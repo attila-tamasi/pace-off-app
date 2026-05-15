@@ -16,7 +16,7 @@ options:
 
 settings:
   base:
-    SWIFT_VERSION: "6.0"
+    SWIFT_VERSION: "5.0"
     DEVELOPMENT_TEAM: "" # Set your Apple Developer team ID here, or leave blank and set in Xcode
     MARKETING_VERSION: "1.0.0"
     CURRENT_PROJECT_VERSION: "1"
@@ -49,7 +49,7 @@ targets:
         ENABLE_PREVIEWS: YES
         DEVELOPMENT_ASSET_PATHS: "\"PaceOff/Preview Content\""
     dependencies:
-      - target: PaceOffWatch Watch App
+      - target: "PaceOff Watch App"
       - target: PaceOffWidget
 
   # ===== watchOS App =====
