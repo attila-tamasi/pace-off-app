@@ -28,11 +28,13 @@ public final class BackgroundRefreshService {
     public static let shared = BackgroundRefreshService()
 
     /// Must match the identifier in Info.plist → BGTaskSchedulerPermittedIdentifiers.
-    public static let taskIdentifier = "com.paceoff.app.refresh"
+    /// `nonisolated` because `register()` runs before any actor exists and
+    /// must read it from a non-MainActor context.
+    public nonisolated static let taskIdentifier = "com.paceoff.app.refresh"
 
     /// Earliest moment iOS may run the next refresh. ~6 hours gives the system
     /// ~4 wake-up opportunities per day; iOS picks the actual moment.
-    private static let refreshInterval: TimeInterval = 6 * 60 * 60
+    nonisolated private static let refreshInterval: TimeInterval = 6 * 60 * 60
 
     private let log = Logger(subsystem: "com.paceoff.app", category: "BackgroundRefresh")
 
@@ -51,8 +53,13 @@ public final class BackgroundRefreshService {
                 task.setTaskCompleted(success: false)
                 return
             }
+            // BGAppRefreshTask is an Obj-C class and not Sendable, but
+            // BGTask is documented to be thread-safe — Apple's whole design
+            // is that you hop off the system handler queue to do work.
+            // `nonisolated(unsafe)` is the right bridge here.
+            nonisolated(unsafe) let captured = refreshTask
             Task { @MainActor in
-                await Self.shared.handle(refreshTask)
+                await Self.shared.handle(captured)
             }
         }
     }

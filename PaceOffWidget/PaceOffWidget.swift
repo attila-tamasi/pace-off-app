@@ -129,3 +129,59 @@ struct PaceOffWidgetView: View {
         return .orange
     }
 }
+
+#if DEBUG
+private extension PaceOffEntry {
+    static var samplePending: PaceOffEntry {
+        PaceOffEntry(
+            date: Date(),
+            target: RunTarget(
+                distanceMeters: 7_700,
+                tone: .firm,
+                daysSinceLastRun: 1,
+                vo2MaxSlope: -0.05,
+                baselineMeters: 7_200,
+                ceilingClamped: false,
+                fatigueGuardActive: false,
+                computedAt: Date()
+            ),
+            voiceLine: "Easy 8K. Keep the pace conversational.",
+            runCompletedToday: false
+        )
+    }
+
+    static var sampleDone: PaceOffEntry {
+        PaceOffEntry(
+            date: Date(),
+            target: samplePending.target,
+            voiceLine: "Done. Recovery walk later if you can.",
+            runCompletedToday: true
+        )
+    }
+}
+
+#Preview("Widget — system small", as: .systemSmall) {
+    PaceOffWidget()
+} timeline: {
+    PaceOffEntry.samplePending
+    PaceOffEntry.sampleDone
+}
+
+#Preview("Widget — accessory rectangular", as: .accessoryRectangular) {
+    PaceOffWidget()
+} timeline: {
+    PaceOffEntry.samplePending
+}
+
+#Preview("Widget — accessory circular", as: .accessoryCircular) {
+    PaceOffWidget()
+} timeline: {
+    PaceOffEntry.samplePending
+}
+
+#Preview("Widget — accessory inline", as: .accessoryInline) {
+    PaceOffWidget()
+} timeline: {
+    PaceOffEntry.samplePending
+}
+#endif

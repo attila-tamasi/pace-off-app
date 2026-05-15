@@ -45,3 +45,53 @@ struct PostRunView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 }
+
+#if DEBUG
+#Preview("Post-run — done") {
+    NavigationStack {
+        PostRunView(
+            run: RunRecord(
+                startDate: Date().addingTimeInterval(-3600),
+                endDate: Date().addingTimeInterval(-300),
+                distanceMeters: 8_120,
+                durationSeconds: 45 * 60 + 22,
+                averageHeartRate: 154,
+                averagePace: 335
+            ),
+            target: RunTarget(
+                distanceMeters: 7_700,
+                tone: .firm,
+                daysSinceLastRun: 1,
+                vo2MaxSlope: -0.05,
+                baselineMeters: 7_200,
+                ceilingClamped: false,
+                fatigueGuardActive: false
+            )
+        )
+    }
+}
+
+#Preview("Post-run — short") {
+    NavigationStack {
+        PostRunView(
+            run: RunRecord(
+                startDate: Date().addingTimeInterval(-1800),
+                endDate: Date().addingTimeInterval(-100),
+                distanceMeters: 3_200,
+                durationSeconds: 18 * 60 + 4,
+                averageHeartRate: 148,
+                averagePace: 340
+            ),
+            target: RunTarget(
+                distanceMeters: 7_000,
+                tone: .firm,
+                daysSinceLastRun: 1,
+                vo2MaxSlope: 0,
+                baselineMeters: 6_800,
+                ceilingClamped: false,
+                fatigueGuardActive: false
+            )
+        )
+    }
+}
+#endif

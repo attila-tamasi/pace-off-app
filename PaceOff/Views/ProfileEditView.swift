@@ -285,3 +285,57 @@ struct PersonalBestEditor: View {
         personalBest = PersonalBest(durationSeconds: total, year: year)
     }
 }
+
+#if DEBUG
+#Preview("Edit Profile sheet") {
+    ProfileEditView(profile: .sample, photo: nil)
+        .environmentObject(PreviewProfileStore.populated)
+}
+
+#Preview("Photo picker — empty / set") {
+    VStack(spacing: 32) {
+        ProfilePhotoPicker(image: nil, photoItem: .constant(nil))
+        ProfilePhotoPicker(
+            image: UIImage(systemName: "person.crop.circle.fill"),
+            photoItem: .constant(nil)
+        )
+    }
+    .padding()
+}
+
+#Preview("Birthday picker") {
+    StatefulPreviewWrapper(Date?.none) { binding in
+        Form { BirthdayPicker(birthday: binding) }
+    }
+}
+
+#Preview("Goal grid") {
+    StatefulPreviewWrapper(RunningGoal.tenK) { binding in
+        Form {
+            GoalGridPicker(selection: binding)
+                .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+        }
+    }
+}
+
+#Preview("Personal best editor") {
+    StatefulPreviewWrapper(PersonalBest?.some(PersonalBest(durationSeconds: 5_482, year: 2024))) { binding in
+        Form {
+            PersonalBestEditor(goal: .halfMarathon, personalBest: binding)
+        }
+    }
+}
+
+/// Drives `@State`-flavoured bindings for previews that need mutable input.
+private struct StatefulPreviewWrapper<Value, Content: View>: View {
+    @State private var value: Value
+    private let content: (Binding<Value>) -> Content
+
+    init(_ initial: Value, @ViewBuilder content: @escaping (Binding<Value>) -> Content) {
+        _value = State(initialValue: initial)
+        self.content = content
+    }
+
+    var body: some View { content($value) }
+}
+#endif

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2640"
+   LastUpgradeVersion = "1430"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
       buildImplicitDependencies = "YES"
-      buildArchitectures = "Automatic">
+      runPostActionsOnFailure = "NO">
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "YES"
@@ -15,7 +15,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "C36EDF00769C180FFC5E76E5"
+               BlueprintIdentifier = "A2A2BE8A24028AD7932A0E7F"
                BuildableName = "PaceOff.app"
                BlueprintName = "PaceOff"
                ReferencedContainer = "container:PaceOff.xcodeproj">
@@ -28,7 +28,31 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
-      shouldAutocreateTestPlan = "YES">
+      onlyGenerateCoverageForSpecifiedTargets = "NO">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "A2A2BE8A24028AD7932A0E7F"
+            BuildableName = "PaceOff.app"
+            BlueprintName = "PaceOff"
+            ReferencedContainer = "container:PaceOff.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
+      <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "BFBA7F107BC6B6C0E1995419"
+               BuildableName = "PaceOffTests.xctest"
+               BlueprintName = "PaceOffTests"
+               ReferencedContainer = "container:PaceOff.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -39,18 +63,19 @@
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
-      allowLocationSimulation = "YES"
-      queueDebuggingEnableBacktraceRecording = "Yes">
+      allowLocationSimulation = "YES">
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C36EDF00769C180FFC5E76E5"
+            BlueprintIdentifier = "A2A2BE8A24028AD7932A0E7F"
             BuildableName = "PaceOff.app"
             BlueprintName = "PaceOff"
             ReferencedContainer = "container:PaceOff.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -62,7 +87,7 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "C36EDF00769C180FFC5E76E5"
+            BlueprintIdentifier = "A2A2BE8A24028AD7932A0E7F"
             BuildableName = "PaceOff.app"
             BlueprintName = "PaceOff"
             ReferencedContainer = "container:PaceOff.xcodeproj">

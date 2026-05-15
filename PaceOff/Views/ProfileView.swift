@@ -1,22 +1,43 @@
 // ProfileView.swift
-// The Profile tab — a read-only summary of the runner's identity, goal, and
-// personal best, with an Edit button that presents the ProfileEditView sheet.
+// The Profile tab — read-only identity summary on top, plus all the
+// configuration cards that used to live in the Settings tab.
 
 import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject private var profileStore: ProfileStore
     @EnvironmentObject private var appleSignIn: AppleSignInService
+    @EnvironmentObject private var health: HealthKitService
+
+    @AppStorage(AppGroup.Keys.notificationMorningHour, store: AppGroup.sharedDefaults)
+    private var morningHour: Int = 8
+    @AppStorage(AppGroup.Keys.notificationAfternoonHour, store: AppGroup.sharedDefaults)
+    private var afternoonHour: Int = 17
+    @AppStorage(AppGroup.Keys.notificationEveningHour, store: AppGroup.sharedDefaults)
+    private var eveningHour: Int = 21
 
     @State private var isEditing = false
+    @State private var legalDocument: LegalDocument?
+    @State private var confirmingSignOut = false
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: 20) {
                 header
                 goalCard
                 personalBestCard
                 accountCard
+
+                editProfileButton
+
+                notificationsCard
+                voiceCard
+                healthCard
+                legalCard
+                aboutCard
+
+                signOutButton
+                    .padding(.top, 4)
             }
             .padding(20)
         }
@@ -35,9 +56,22 @@ struct ProfileView: View {
             )
             .environmentObject(profileStore)
         }
+        .sheet(item: $legalDocument) { doc in
+            LegalView(document: doc)
+        }
+        .confirmationDialog("Sign out of Pace Off?",
+                            isPresented: $confirmingSignOut,
+                            titleVisibility: .visible) {
+            Button("Sign Out", role: .destructive) {
+                profileStore.signOut()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This clears your on-device profile and returns you to the sign-in screen. Apple Health data is not touched.")
+        }
     }
 
-    // MARK: - Header (photo + name + age)
+    // MARK: - Header
 
     private var header: some View {
         VStack(spacing: 12) {
@@ -136,7 +170,7 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: - Account (Sign in with Apple status)
+    // MARK: - Account
 
     private var accountCard: some View {
         card {
@@ -158,6 +192,175 @@ struct ProfileView: View {
                 }
             }
         }
+    }
+
+    private var editProfileButton: some View {
+        Button { isEditing = true } label: {
+            HStack {
+                Image(systemName: "pencil")
+                Text("Edit Profile")
+                    .font(.system(.body, design: .rounded, weight: .semibold))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(.footnote, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(.background)
+                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+            }
+            .foregroundStyle(.primary)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Notifications card
+
+    private var notificationsCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 14) {
+                cardLabel("NOTIFICATIONS", systemImage: "bell.badge.fill")
+                Stepper("Morning push: \(formatHour(morningHour))",
+                        value: $morningHour, in: 5...11)
+                Stepper("Afternoon reminder: \(formatHour(afternoonHour))",
+                        value: $afternoonHour, in: 12...19)
+                Stepper("Evening last call: \(formatHour(eveningHour))",
+                        value: $eveningHour, in: 19...23)
+                Text("The evening push only fires if you've already skipped at least one day this week.")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    // MARK: - Voice card
+
+    private var voiceCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 10) {
+                cardLabel("VOICE", systemImage: "waveform")
+                HStack {
+                    Text("Tone")
+                        .font(.system(.body, design: .rounded))
+                    Spacer()
+                    Text("Drill Sergeant")
+                        .font(.system(.body, design: .rounded, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                Text("More voice options arrive in v1.1.")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    // MARK: - Health card
+
+    private var healthCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 12) {
+                cardLabel("HEALTH", systemImage: "heart.text.square.fill")
+                HStack {
+                    Text("Age")
+                        .font(.system(.body, design: .rounded))
+                    Spacer()
+                    if let age = health.userAge() {
+                        Text("\(age)")
+                            .font(.system(.body, design: .rounded, weight: .medium))
+                    } else {
+                        Text("Set in Health app")
+                            .font(.system(.body, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                Button {
+                    Task { await health.requestAuthorization() }
+                } label: {
+                    Label("Re-request Health permissions", systemImage: "arrow.clockwise")
+                        .font(.system(.body, design: .rounded, weight: .medium))
+                }
+                Link(destination: URL(string: "x-apple-health://")!) {
+                    Label("Manage in Settings", systemImage: "arrow.up.right.square")
+                        .font(.system(.body, design: .rounded, weight: .medium))
+                }
+                Text("Age is read from your Apple Health profile. Open Health → tap your profile photo → Health Details to set or change your date of birth.")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    // MARK: - Legal card
+
+    private var legalCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 12) {
+                cardLabel("LEGAL", systemImage: "doc.text")
+                ForEach(LegalDocument.allCases) { doc in
+                    Button {
+                        legalDocument = doc
+                    } label: {
+                        HStack {
+                            Text(doc.title)
+                                .font(.system(.body, design: .rounded, weight: .medium))
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(.footnote, weight: .semibold))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .foregroundStyle(.primary)
+                    }
+                    .buttonStyle(.plain)
+                    if doc != LegalDocument.allCases.last {
+                        Divider()
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - About card
+
+    private var aboutCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 10) {
+                cardLabel("ABOUT", systemImage: "info.circle")
+                HStack {
+                    Text("Version")
+                    Spacer()
+                    Text(appVersion).foregroundStyle(.secondary)
+                }
+                .font(.system(.body, design: .rounded))
+                HStack {
+                    Text("Build")
+                    Spacer()
+                    Text(buildNumber).foregroundStyle(.secondary)
+                }
+                .font(.system(.body, design: .rounded))
+                Text("Pace Off does not collect any data. Everything stays in HealthKit and on your devices.")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    // MARK: - Sign out
+
+    private var signOutButton: some View {
+        Button(role: .destructive) {
+            confirmingSignOut = true
+        } label: {
+            Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                .font(.system(.body, design: .rounded, weight: .semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+        }
+        .buttonStyle(.bordered)
+        .tint(.red)
+        .controlSize(.large)
     }
 
     // MARK: - Card chrome
@@ -184,4 +387,32 @@ struct ProfileView: View {
                 .foregroundStyle(.secondary)
         }
     }
+
+    private func formatHour(_ h: Int) -> String {
+        var components = DateComponents(); components.hour = h; components.minute = 0
+        return Calendar.current.date(from: components)?.formatted(.dateTime.hour().minute()) ?? "\(h):00"
+    }
+
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+    }
+    private var buildNumber: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    }
 }
+
+#if DEBUG
+#Preview("Profile (signed in)") {
+    NavigationStack { ProfileView() }
+        .environmentObject(PreviewProfileStore.populated)
+        .environmentObject(PreviewAppleSignInService.signedIn)
+        .environmentObject(HealthKitService.shared)
+}
+
+#Preview("Profile (empty)") {
+    NavigationStack { ProfileView() }
+        .environmentObject(PreviewProfileStore.empty)
+        .environmentObject(PreviewAppleSignInService.notSignedIn)
+        .environmentObject(HealthKitService.shared)
+}
+#endif

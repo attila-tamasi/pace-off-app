@@ -200,3 +200,11 @@ struct RunDetailView: View {
         .background(.background, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
+
+#if DEBUG
+#Preview("Run detail") {
+    NavigationStack {
+        RunDetailView(run: .sample)
+    }
+}
+#endif

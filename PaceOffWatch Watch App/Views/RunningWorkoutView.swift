@@ -117,3 +117,12 @@ struct RunningWorkoutView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Running workout") {
+    NavigationStack {
+        RunningWorkoutView()
+            .environmentObject(WorkoutSessionManager())
+    }
+}
+#endif

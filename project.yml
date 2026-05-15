@@ -49,7 +49,7 @@ targets:
         ENABLE_PREVIEWS: YES
         DEVELOPMENT_ASSET_PATHS: "\"PaceOff/Preview Content\""
     dependencies:
-      - target: PaceOffWatch Watch App
+      - target: "PaceOff Watch App"
       - target: PaceOffWidget
 
   # ===== watchOS App =====

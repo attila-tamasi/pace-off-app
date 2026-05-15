@@ -1,12 +1,16 @@
 // RootView.swift
-// Tab bar — Today / History / Trends / Profile / Settings.
+// Tab bar — Today / History / Trends / Profile. Settings has been folded
+// into the Profile tab.
 
 import SwiftUI
 
 struct RootView: View {
-    @State private var selection: AppTab = .today
+    @EnvironmentObject private var profileStore: ProfileStore
 
-    enum AppTab: Hashable { case today, history, trends, profile, settings }
+    @State private var selection: AppTab = .today
+    @State private var presentingProfileSetup = false
+
+    enum AppTab: Hashable { case today, history, trends, profile }
 
     var body: some View {
         TabView(selection: $selection) {
@@ -22,9 +26,33 @@ struct RootView: View {
             SwiftUI.Tab("Profile", systemImage: "person.crop.circle", value: AppTab.profile) {
                 NavigationStack { ProfileView() }
             }
-            SwiftUI.Tab("Settings", systemImage: "gearshape", value: AppTab.settings) {
-                NavigationStack { SettingsView() }
+        }
+        .onAppear {
+            // Defensive: if we reached the main tab bar without a complete
+            // profile (e.g. mid-flow flag drift), force the setup sheet.
+            if !profileStore.isSetUp {
+                presentingProfileSetup = true
             }
+        }
+        .sheet(isPresented: $presentingProfileSetup) {
+            ProfileSetupSheetView(
+                initialProfile: profileStore.profile,
+                initialPhoto: profileStore.photo,
+                onComplete: { presentingProfileSetup = false }
+            )
+            .environmentObject(profileStore)
+            .interactiveDismissDisabled()
         }
     }
 }
+
+#if DEBUG
+#Preview("Root tab bar") {
+    RootView()
+        .environmentObject(PreviewProfileStore.populated)
+        .environmentObject(PreviewAppleSignInService.signedIn)
+        .environmentObject(HealthKitService.shared)
+        .environmentObject(NotificationScheduler.shared)
+        .environmentObject(TodayViewModel.preview())
+}
+#endif

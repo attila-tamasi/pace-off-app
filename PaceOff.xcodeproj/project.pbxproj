@@ -3,952 +3,959 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		06BE5907FDC7E84DC70D680D /* WatchTodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA890BA5322C7F75FF2DDD4A /* WatchTodayView.swift */; };
-		0E2586C4B9088DCD2B493D55 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B53DF820D28123DA59768D65 /* TodayView.swift */; };
-		145CE6ED3EF794626D8AE087 /* PaceOffWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 043A1B595DCF79105E42EACA /* PaceOffWidgetBundle.swift */; };
-		1E74F03CD2DA53BFC11ACFD4 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0CBE1EC823560360FC3672F /* RootView.swift */; };
-		210B437CD9276CBAD4998032 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F4055F960C4CCD419649518 /* HealthKit.framework */; };
-		23826306BC67A54A72AC75BD /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E7550CAD9C4D79751C95EA /* AppGroup.swift */; };
-		264559AF538464F67901D236 /* HealthKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDA87313DFA425D1345A5393 /* HealthKitService.swift */; };
-		26EB1093C6522919AD0E6E74 /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92ED6E156A6562B097BCDF24 /* VO2MaxSnapshot.swift */; };
-		27A1D4A01DCFFACBC951800E /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A93BE2C372C1F5CBDCF4BD34 /* PushTargetEngine.swift */; };
-		29D92F29032E319F511BAF71 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CD8F5A0E0CD5262B0AC94150 /* SwiftUI.framework */; };
-		2EDEC13DD7154078F5F7F5A6 /* PushTargetEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27F3EE360E48297AAFC97078 /* PushTargetEngineTests.swift */; };
-		329511A4E941AE15245BF043 /* RunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7385B3E565CA63C5F8B9180D /* RunRecord.swift */; };
-		3516D11791F99193B9D5666F /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D334510E36F2E3BD3918B10 /* WidgetKit.framework */; };
-		38869D705CD6A348D6109102 /* WorkoutSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC4E5CE0B74330F1F0A426B5 /* WorkoutSessionManager.swift */; };
-		38A530E48DE95595582211FA /* RunTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB3E0B037B9E932E46109271 /* RunTarget.swift */; };
-		3C7168796BA778D209C98719 /* PaceOffApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF31D94A4E0621E9FD66337D /* PaceOffApp.swift */; };
-		4412C5DDAAA37C34C39B902D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A16055B88F40FC03BF4E72C3 /* SettingsView.swift */; };
-		4DDAEB789C5E2230F3813401 /* RunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7385B3E565CA63C5F8B9180D /* RunRecord.swift */; };
-		4F6025F22D81181885595E0D /* VoiceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26F3445CC4043DFB144A6E8E /* VoiceCopy.swift */; };
-		5393041461115E5569104B1B /* PaceOffWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAEEC655149AEED4C739ACFC /* PaceOffWidget.swift */; };
-		5B5F1DDCEDFBB301086E9275 /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26CBF7022052396834DBB5B8 /* NotificationScheduler.swift */; };
-		6089FEE24EBE3804829E58B5 /* PaceOffWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82B821D599F8B70C132DC15E /* PaceOffWatchApp.swift */; };
-		632E81B0146984E038FF2CAC /* RunTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB3E0B037B9E932E46109271 /* RunTarget.swift */; };
-		6C9BE719A34DBB7AE93AB574 /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F4055F960C4CCD419649518 /* HealthKit.framework */; };
-		6D9DE30A02179420FED9B2C2 /* VoiceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26F3445CC4043DFB144A6E8E /* VoiceCopy.swift */; };
-		728663FD7308C17E74CDEC37 /* VO2MaxDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5ECF91504783637C6E1AAFE /* VO2MaxDetailView.swift */; };
-		76B5D25B64F92FA359EF2921 /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E7550CAD9C4D79751C95EA /* AppGroup.swift */; };
-		771219521B5A771E43CB74C7 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C126EFA0AA92ABA55D2716B6 /* OnboardingView.swift */; };
-		80C937596DD24C465284E559 /* RunDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74AD6A73BE659740953F5C2C /* RunDetailView.swift */; };
-		8862D5D70C68312EA7E1F331 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1FCBE6C52DC0E9940EF65B15 /* Assets.xcassets */; };
-		92F30B0BCBA9380AD8A8CC0F /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92ED6E156A6562B097BCDF24 /* VO2MaxSnapshot.swift */; };
-		9A6780052FB65439003D84FB /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6780042FB65439003D84FB /* UserProfile.swift */; };
-		9A6780062FB65439003D84FB /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6780042FB65439003D84FB /* UserProfile.swift */; };
-		9A6780072FB65439003D84FB /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6780042FB65439003D84FB /* UserProfile.swift */; };
-		9A81B35B2FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */; };
-		9A81B35D2FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */; };
-		9A81B35F2FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */; };
-		9A81B3602FA7BB9400F66DD8 /* BackgroundRefreshService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A81B35A2FA7BB9400F66DD8 /* BackgroundRefreshService.swift */; };
-		A5FDE5453A8109D8B6B2F74F /* RunTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB3E0B037B9E932E46109271 /* RunTarget.swift */; };
-		AE296AB16EC10FF409E0FDDD /* PaceOff Watch App.app in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 036B7996CCDEF92C0612E4D9 /* PaceOff Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		AEDD36E044461085BFDC5766 /* PostRunView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9C8BD20DBCF3DE0BC3E27FB /* PostRunView.swift */; };
-		B64D6F2E59E9BB4F4CE76A5E /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB9CA2CEF907EDC03F2E90E /* Tone.swift */; };
-		B69204D3081BCC6F50A00554 /* RunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7385B3E565CA63C5F8B9180D /* RunRecord.swift */; };
-		BA716F7EC2B7F31275EC13D4 /* Preview Content in Resources */ = {isa = PBXBuildFile; fileRef = 020DA95E7BEAE65EB4A19071 /* Preview Content */; };
-		BE23702015E49DE7EE9A5F63 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2DCD52BC910E9B4F6A825D2F /* Assets.xcassets */; };
-		C0F4D98A1EC1D36BFF9E079F /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB9CA2CEF907EDC03F2E90E /* Tone.swift */; };
-		C3F6C13FAF108C6A4C829143 /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A93BE2C372C1F5CBDCF4BD34 /* PushTargetEngine.swift */; };
-		CD6490B12FB650FD006E69CF /* ProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6490AF2FB650FD006E69CF /* ProfileEditView.swift */; };
-		CD6490B22FB650FD006E69CF /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6490B02FB650FD006E69CF /* ProfileView.swift */; };
-		CD6490B52FB6510E006E69CF /* ProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6490B42FB6510E006E69CF /* ProfileStore.swift */; };
-		CD6490B62FB6510E006E69CF /* AppleSignInService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6490B32FB6510E006E69CF /* AppleSignInService.swift */; };
-		CF488859E369A0601E50B9BF /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E7550CAD9C4D79751C95EA /* AppGroup.swift */; };
-		D22A137180C4A2E96F15E64C /* TrendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD50DC96C723A45DEF2F2E84 /* TrendsView.swift */; };
-		D23368B4BFAE33FD71245E7F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 82BDC057083015101B1E193D /* Assets.xcassets */; };
-		D50B1DF6EEAEFED96DEF2A10 /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AB9CA2CEF907EDC03F2E90E /* Tone.swift */; };
-		E20CFC48BDF19898CAB00164 /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = A93BE2C372C1F5CBDCF4BD34 /* PushTargetEngine.swift */; };
-		E226DC26A5AFD7DA8D0E9D9F /* RunningWorkoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D34453E5DF50D54376CC881C /* RunningWorkoutView.swift */; };
-		E6DDD5AA59560023D889724A /* VoiceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26F3445CC4043DFB144A6E8E /* VoiceCopy.swift */; };
-		E8F5110826A0FCB6C3E62CF3 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84B54EC06446159F25246014 /* HistoryView.swift */; };
-		E958F83681B00C60763BE484 /* TodayViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7913F344AA2E6482DE332D51 /* TodayViewModel.swift */; };
-		F32CE7480525EBFF9992D6F7 /* PaceOffWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 43E300D32D9F9EDED7949068 /* PaceOffWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		F434822A51BAAB2D0B3A3FCD /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92ED6E156A6562B097BCDF24 /* VO2MaxSnapshot.swift */; };
+		025D334D3521CD59D588F3C6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3775666DE353724E74AC3428 /* Assets.xcassets */; };
+		05198CE9E2F4B2EC20E5A128 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 89F34D18B0856E30B0FC3C66 /* Assets.xcassets */; };
+		054C9D4ABE2FF5D749B72468 /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E54D917FE4AF4A958C7514C /* Tone.swift */; };
+		0D2030447FE0FC10DACBED56 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CADA1657036D930B2CE2B499 /* UserProfile.swift */; };
+		0D946C86EAA99034CA0799C9 /* VoiceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */; };
+		10FD6FF06B176AD8F3668CF9 /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */; };
+		1B1B4B7B8C3A3E9ABCA62020 /* ProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FB629335A23776D013B7EDE /* ProfileStore.swift */; };
+		1C4E11A23401FEAB2455E352 /* RunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = F219E095BD73A1C339F5D8D4 /* RunRecord.swift */; };
+		1D22E916159F440DDF80BD52 /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C4C9290B00C1660BE65BDB /* AppGroup.swift */; };
+		1FB4CE2007641163EF10F445 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 419C7CD5F523700586CA14B9 /* TodayView.swift */; };
+		25015CBC6D64D8F4C0968487 /* PaceOffWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D7EEA2FE27D3E90FA1ADCDE /* PaceOffWidgetBundle.swift */; };
+		29E5782772B7C0C5877D4F52 /* BrandPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EC37486993AB6E5BF014496 /* BrandPalette.swift */; };
+		2C62603907421D9986B63000 /* VoiceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */; };
+		32E69C5DAD264F968AA969C2 /* TrendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAE697DCC22952A70B86B261 /* TrendsView.swift */; };
+		3B263CD0BA0F37D56C9C8EBF /* RunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = F219E095BD73A1C339F5D8D4 /* RunRecord.swift */; };
+		3FC0C17165F24F90C6983A91 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8BBEB7705A870FF2FF7285C4 /* Preview Assets.xcassets */; };
+		41CC25C427F34329011D4E74 /* PaceOffWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2E8AEAFE18A69ACE7A052C9 /* PaceOffWidget.swift */; };
+		517EB6668BE17679AA37D693 /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E54D917FE4AF4A958C7514C /* Tone.swift */; };
+		555A1A9BEB4E2E136C3C16D4 /* VO2MaxDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A794349DA4F2399A6CE691 /* VO2MaxDetailView.swift */; };
+		56D563EA16649F0E450A8D0D /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C4C9290B00C1660BE65BDB /* AppGroup.swift */; };
+		581E8B473CBAFE73FF8A38B1 /* AppleIntelligenceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EFBD02A6FEE9098969290F2 /* AppleIntelligenceCopy.swift */; };
+		5D15127CC4FE3B59AC73E83F /* RunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = F219E095BD73A1C339F5D8D4 /* RunRecord.swift */; };
+		5D15621F6A618B2B98422611 /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */; };
+		5F028CA1451E601AEE019801 /* BackgroundRefreshService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733C2FC37577B3FD0C44A279 /* BackgroundRefreshService.swift */; };
+		66F7E99D4BFFD957DFBBAACA /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CADA1657036D930B2CE2B499 /* UserProfile.swift */; };
+		67B30D2219B2CA1AD27A74B1 /* PaceOffApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B89CD78D1D657CCADE5478C /* PaceOffApp.swift */; };
+		69AFA428DC7571D79F144E60 /* PushTargetEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62929CE88A3549DB529E3FEE /* PushTargetEngineTests.swift */; };
+		6A10FA0097553F15A2D4FCAD /* WatchTodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30725DFD06CF73D19656E7B /* WatchTodayView.swift */; };
+		6B96BE52BDE6ADA37714CF72 /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C4C9290B00C1660BE65BDB /* AppGroup.swift */; };
+		825A9BB2C1466DBE6B3C79DD /* ProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D0C777B85BAAE471DAC4EDD /* ProfileEditView.swift */; };
+		831429E77DAF4D658D1B077A /* PaceOffWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFEF73BA3FEC56768FD8B67A /* PaceOffWatchApp.swift */; };
+		8365B24A66E0C6048CCD1BCD /* VoiceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */; };
+		8635BD77DDF7D83B44FBAD3C /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */; };
+		8D820987E8CC3C6ED6950F20 /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */; };
+		8DB1AF3961252E3C9D7ECB09 /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */; };
+		904388AD338E0B085DD048E3 /* PaceOffWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F8862D2A1BFD5B06A75E4B9A /* PaceOffWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		974A1ED5A6E8EBD7712DBB69 /* PaceOff Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = E53E82BE5E747B5989FCDF38 /* PaceOff Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A0A5A5763F2703C2DF4C5196 /* BrandHero.swift in Sources */ = {isa = PBXBuildFile; fileRef = E96A6583E9A382E6662FD125 /* BrandHero.swift */; };
+		A9B8A0E3AABB46843585D58F /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A08A6962C58940E4BEA4FAA /* RootView.swift */; };
+		AB78570747668D2D0FFD95AD /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */; };
+		AFF783DAD8B26413E5686038 /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */; };
+		B2FF357DD79EB6CE91504C87 /* RunningWorkoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DA17254B002079243BAFA67 /* RunningWorkoutView.swift */; };
+		B346B8F61CB56BDD18693999 /* TodayViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97B13269E854F7B2634E474 /* TodayViewModel.swift */; };
+		B5250ABB6A0BD6AF50047D91 /* RunTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41FAD3317ACDC75A0999F6D8 /* RunTarget.swift */; };
+		B556B4AFE3D379360DD042C8 /* RunTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41FAD3317ACDC75A0999F6D8 /* RunTarget.swift */; };
+		B69281E79E750C2E0D226829 /* AuthGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 734B8C58687A0D8E56FF3F7E /* AuthGateView.swift */; };
+		B6970A51274EBC7F39084A3C /* HealthKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8BCA23E5158FE3AEC620739 /* HealthKitService.swift */; };
+		BA3605889173D2970209D36C /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E286506F8987C266805E12B /* ProfileView.swift */; };
+		BA5556FDE1BA4509A9C22F46 /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */; };
+		BD9703C0E37574E7EC553A62 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CADA1657036D930B2CE2B499 /* UserProfile.swift */; };
+		C2C642EC750AF4FB8E72FAF3 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CADA1657036D930B2CE2B499 /* UserProfile.swift */; };
+		C332D74075CE482A6AFA74FB /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F47BFB366DAAE0F746AC95 /* OnboardingView.swift */; };
+		C937A79D0B985D6A9445569F /* RunTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41FAD3317ACDC75A0999F6D8 /* RunTarget.swift */; };
+		CFB94A4D520F0F98855508CB /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA046C6B717C42A9364908A0 /* HistoryView.swift */; };
+		D09508FE79702E88CF82D023 /* RunDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07F1705BBFDFFE669162F99A /* RunDetailView.swift */; };
+		D5BA6108703C8529C9C2065E /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E54D917FE4AF4A958C7514C /* Tone.swift */; };
+		D63BD795058777FC7F7B75F6 /* ProfileSetupSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B842AE2B2B48C0BCA01DBBB3 /* ProfileSetupSheetView.swift */; };
+		D8FA2EFCE6D1183D38BB41FF /* VoiceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */; };
+		DB90626366A8FB5E24001DC4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4EBAFF615D9E50FEF69F19F9 /* Assets.xcassets */; };
+		DBA888F222750EDCB41BF41C /* WorkoutSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD3B1181C9187C3458D13CA /* WorkoutSessionManager.swift */; };
+		DC771AB8EA48DEEFA8CE1D35 /* LegalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7C60D0EC9FE2DA2A5B8AF25 /* LegalView.swift */; };
+		DF3E2F4588DDD37521C786C9 /* AppleSignInService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28B2707B22E9FF547E90D53F /* AppleSignInService.swift */; };
+		E161C700BA77B375E3718CC9 /* LegalLinksFooter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71D681E72E9D55BFB0D8C23A /* LegalLinksFooter.swift */; };
+		E17EE97739548ED134625CF7 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 999E35D73CD309486FA6484E /* SplashView.swift */; };
+		ECCD1C6A1852C9AEBBC18271 /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C4C9290B00C1660BE65BDB /* AppGroup.swift */; };
+		EF487B004A27730CB84F52ED /* PostRunView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814E50257DAA44B51E8A7704 /* PostRunView.swift */; };
+		F42A016DDCE9D0557C0510F8 /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CFA64AEB615429033822E3D /* NotificationScheduler.swift */; };
+		F74CDC7FAE8CD24A90AAEC26 /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E54D917FE4AF4A958C7514C /* Tone.swift */; };
+		F829136F9049E53FF3BCDEBC /* PreviewSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB560BB0D76587E4A9B6B0B /* PreviewSupport.swift */; };
+		FA615BE7BE7EE44E6C750C1B /* RunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = F219E095BD73A1C339F5D8D4 /* RunRecord.swift */; };
+		FC42B40AAD6DBDB87981CE29 /* RunTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41FAD3317ACDC75A0999F6D8 /* RunTarget.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		3E7C9D847016609B9A3D5D6D /* PBXContainerItemProxy */ = {
+		6CEE081550A836969D295F41 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+			containerPortal = 6FC01EC42E60966303F04321 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = C36EDF00769C180FFC5E76E5;
-			remoteInfo = PaceOff;
-		};
-		54A38E525A5E6657EEC807E9 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 98F54143AB4E86B28C3AFEE0 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = C0A22F8F6C2EBA161F532704;
+			remoteGlobalIDString = 7D2119F7C7289F5FA2742D92;
 			remoteInfo = PaceOffWidget;
 		};
-		8878850ED8D19FAB9F97C751 /* PBXContainerItemProxy */ = {
+		9A4C20E5923724135EDCDFA0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+			containerPortal = 6FC01EC42E60966303F04321 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = C6780A6EB1F0ECC58DB44869;
+			remoteGlobalIDString = A2A2BE8A24028AD7932A0E7F;
+			remoteInfo = PaceOff;
+		};
+		9E1FDF24D990C4C27CF2AD0C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6FC01EC42E60966303F04321 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FAB7089E848DDC691970C025;
 			remoteInfo = "PaceOff Watch App";
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		AE1DE2DF05046CA0C9913D9A /* Embed Foundation Extensions */ = {
+		52221ECA1998BA3C39354E1F /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				F32CE7480525EBFF9992D6F7 /* PaceOffWidget.appex in Embed Foundation Extensions */,
-				AE296AB16EC10FF409E0FDDD /* PaceOff Watch App.app in Embed Foundation Extensions */,
+				904388AD338E0B085DD048E3 /* PaceOffWidget.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EFA5E44F29A7C77548C9FEFE /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				974A1ED5A6E8EBD7712DBB69 /* PaceOff Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		020DA95E7BEAE65EB4A19071 /* Preview Content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "Preview Content"; sourceTree = "<group>"; };
-		036B7996CCDEF92C0612E4D9 /* PaceOff Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PaceOff Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		043A1B595DCF79105E42EACA /* PaceOffWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffWidgetBundle.swift; sourceTree = "<group>"; };
-		1D334510E36F2E3BD3918B10 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
-		1FCBE6C52DC0E9940EF65B15 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		26CBF7022052396834DBB5B8 /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
-		26F3445CC4043DFB144A6E8E /* VoiceCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCopy.swift; sourceTree = "<group>"; };
-		27F3EE360E48297AAFC97078 /* PushTargetEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushTargetEngineTests.swift; sourceTree = "<group>"; };
-		29C6C9D2B66CDEDF44E50003 /* PaceOffWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PaceOffWatch.entitlements; sourceTree = "<group>"; };
-		2DCD52BC910E9B4F6A825D2F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		43E300D32D9F9EDED7949068 /* PaceOffWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PaceOffWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		46D91DCDC8EEC8DBD9E6C5B9 /* PaceOff.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PaceOff.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		48E7550CAD9C4D79751C95EA /* AppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroup.swift; sourceTree = "<group>"; };
-		5AB9CA2CEF907EDC03F2E90E /* Tone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tone.swift; sourceTree = "<group>"; };
-		5BB40FCF9B0DBBDF25607A12 /* PaceOff.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PaceOff.entitlements; sourceTree = "<group>"; };
-		5F4055F960C4CCD419649518 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
-		6143C4C2167AC7C220DCC543 /* PaceOffWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PaceOffWidget.entitlements; sourceTree = "<group>"; };
-		7385B3E565CA63C5F8B9180D /* RunRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunRecord.swift; sourceTree = "<group>"; };
-		74AD6A73BE659740953F5C2C /* RunDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunDetailView.swift; sourceTree = "<group>"; };
-		7913F344AA2E6482DE332D51 /* TodayViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayViewModel.swift; sourceTree = "<group>"; };
-		82B821D599F8B70C132DC15E /* PaceOffWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffWatchApp.swift; sourceTree = "<group>"; };
-		82BDC057083015101B1E193D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		84B54EC06446159F25246014 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
-		92ED6E156A6562B097BCDF24 /* VO2MaxSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VO2MaxSnapshot.swift; sourceTree = "<group>"; };
-		9A1483062F9BE34C005C9216 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		9A1483072F9BE34F005C9216 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
-		9A6780042FB65439003D84FB /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
-		9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceCopy.swift; sourceTree = "<group>"; };
-		9A81B35A2FA7BB9400F66DD8 /* BackgroundRefreshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshService.swift; sourceTree = "<group>"; };
-		A16055B88F40FC03BF4E72C3 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		A2423B4D58965EA517FB7665 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A93BE2C372C1F5CBDCF4BD34 /* PushTargetEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushTargetEngine.swift; sourceTree = "<group>"; };
-		A9C8BD20DBCF3DE0BC3E27FB /* PostRunView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostRunView.swift; sourceTree = "<group>"; };
-		B53DF820D28123DA59768D65 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
-		BF31D94A4E0621E9FD66337D /* PaceOffApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffApp.swift; sourceTree = "<group>"; };
-		C126EFA0AA92ABA55D2716B6 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
-		CD6490AF2FB650FD006E69CF /* ProfileEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEditView.swift; sourceTree = "<group>"; };
-		CD6490B02FB650FD006E69CF /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
-		CD6490B32FB6510E006E69CF /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
-		CD6490B42FB6510E006E69CF /* ProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStore.swift; sourceTree = "<group>"; };
-		CD8F5A0E0CD5262B0AC94150 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		D0CBE1EC823560360FC3672F /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
-		D34453E5DF50D54376CC881C /* RunningWorkoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningWorkoutView.swift; sourceTree = "<group>"; };
-		D836CB6C801789727BDF64C1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		DAEEC655149AEED4C739ACFC /* PaceOffWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffWidget.swift; sourceTree = "<group>"; };
-		E128DDE1ED66CC2E99C84C32 /* PaceOffTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PaceOffTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		EA890BA5322C7F75FF2DDD4A /* WatchTodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTodayView.swift; sourceTree = "<group>"; };
-		EB3E0B037B9E932E46109271 /* RunTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunTarget.swift; sourceTree = "<group>"; };
-		EC4E5CE0B74330F1F0A426B5 /* WorkoutSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionManager.swift; sourceTree = "<group>"; };
-		EFDA8AB453760961873D4816 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		F5ECF91504783637C6E1AAFE /* VO2MaxDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VO2MaxDetailView.swift; sourceTree = "<group>"; };
-		FD50DC96C723A45DEF2F2E84 /* TrendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendsView.swift; sourceTree = "<group>"; };
-		FDA87313DFA425D1345A5393 /* HealthKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitService.swift; sourceTree = "<group>"; };
+		07F1705BBFDFFE669162F99A /* RunDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunDetailView.swift; sourceTree = "<group>"; };
+		0D7EEA2FE27D3E90FA1ADCDE /* PaceOffWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffWidgetBundle.swift; sourceTree = "<group>"; };
+		1FB560BB0D76587E4A9B6B0B /* PreviewSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewSupport.swift; sourceTree = "<group>"; };
+		28B2707B22E9FF547E90D53F /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
+		2E286506F8987C266805E12B /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCopy.swift; sourceTree = "<group>"; };
+		3775666DE353724E74AC3428 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3B89CD78D1D657CCADE5478C /* PaceOffApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffApp.swift; sourceTree = "<group>"; };
+		419C7CD5F523700586CA14B9 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		41FAD3317ACDC75A0999F6D8 /* RunTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunTarget.swift; sourceTree = "<group>"; };
+		4EBAFF615D9E50FEF69F19F9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		4FB629335A23776D013B7EDE /* ProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStore.swift; sourceTree = "<group>"; };
+		5EFBD02A6FEE9098969290F2 /* AppleIntelligenceCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceCopy.swift; sourceTree = "<group>"; };
+		6098A8585092DC798A6ADC0A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		62929CE88A3549DB529E3FEE /* PushTargetEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushTargetEngineTests.swift; sourceTree = "<group>"; };
+		6CFA64AEB615429033822E3D /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
+		6D0C777B85BAAE471DAC4EDD /* ProfileEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileEditView.swift; sourceTree = "<group>"; };
+		71D681E72E9D55BFB0D8C23A /* LegalLinksFooter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalLinksFooter.swift; sourceTree = "<group>"; };
+		733C2FC37577B3FD0C44A279 /* BackgroundRefreshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundRefreshService.swift; sourceTree = "<group>"; };
+		734B8C58687A0D8E56FF3F7E /* AuthGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthGateView.swift; sourceTree = "<group>"; };
+		742ADD41F35E157224B55708 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		814E50257DAA44B51E8A7704 /* PostRunView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostRunView.swift; sourceTree = "<group>"; };
+		89F34D18B0856E30B0FC3C66 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8BBEB7705A870FF2FF7285C4 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VO2MaxSnapshot.swift; sourceTree = "<group>"; };
+		8DA17254B002079243BAFA67 /* RunningWorkoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningWorkoutView.swift; sourceTree = "<group>"; };
+		8E54D917FE4AF4A958C7514C /* Tone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tone.swift; sourceTree = "<group>"; };
+		92BAA40520A45D39B9D4C53F /* PaceOff.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = PaceOff.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		999E35D73CD309486FA6484E /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
+		9A08A6962C58940E4BEA4FAA /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		9EC37486993AB6E5BF014496 /* BrandPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandPalette.swift; sourceTree = "<group>"; };
+		A2E8AEAFE18A69ACE7A052C9 /* PaceOffWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffWidget.swift; sourceTree = "<group>"; };
+		A8BCA23E5158FE3AEC620739 /* HealthKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitService.swift; sourceTree = "<group>"; };
+		ABB6D659BA61C433C6FB057B /* PaceOffWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PaceOffWatch.entitlements; sourceTree = "<group>"; };
+		AC5A84D92A1788CC423AA72E /* PaceOffWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PaceOffWidget.entitlements; sourceTree = "<group>"; };
+		B372281CAEAF0D974D37DA59 /* PaceOffTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = PaceOffTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushTargetEngine.swift; sourceTree = "<group>"; };
+		B842AE2B2B48C0BCA01DBBB3 /* ProfileSetupSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSetupSheetView.swift; sourceTree = "<group>"; };
+		C30725DFD06CF73D19656E7B /* WatchTodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTodayView.swift; sourceTree = "<group>"; };
+		C6F47BFB366DAAE0F746AC95 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		CADA1657036D930B2CE2B499 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
+		CCD3B1181C9187C3458D13CA /* WorkoutSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionManager.swift; sourceTree = "<group>"; };
+		D1C4C9290B00C1660BE65BDB /* AppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroup.swift; sourceTree = "<group>"; };
+		DAE697DCC22952A70B86B261 /* TrendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendsView.swift; sourceTree = "<group>"; };
+		E53E82BE5E747B5989FCDF38 /* PaceOff Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PaceOff Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E7C60D0EC9FE2DA2A5B8AF25 /* LegalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalView.swift; sourceTree = "<group>"; };
+		E8FC867EE82662F512A67C8B /* PaceOff.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PaceOff.entitlements; sourceTree = "<group>"; };
+		E96A6583E9A382E6662FD125 /* BrandHero.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandHero.swift; sourceTree = "<group>"; };
+		EFEF73BA3FEC56768FD8B67A /* PaceOffWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffWatchApp.swift; sourceTree = "<group>"; };
+		F0B325D3C19C13ACF0D5D593 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		F219E095BD73A1C339F5D8D4 /* RunRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunRecord.swift; sourceTree = "<group>"; };
+		F8862D2A1BFD5B06A75E4B9A /* PaceOffWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = PaceOffWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F97B13269E854F7B2634E474 /* TodayViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayViewModel.swift; sourceTree = "<group>"; };
+		F9A794349DA4F2399A6CE691 /* VO2MaxDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VO2MaxDetailView.swift; sourceTree = "<group>"; };
+		FA046C6B717C42A9364908A0 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFrameworksBuildPhase section */
-		037B6F5E629EE3920971F6CB /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				6C9BE719A34DBB7AE93AB574 /* HealthKit.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		60F4F1A76325616D43845341 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				210B437CD9276CBAD4998032 /* HealthKit.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		61198F788E2F78EB66C94192 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		D405949D064DB2C541839482 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				3516D11791F99193B9D5666F /* WidgetKit.framework in Frameworks */,
-				29D92F29032E319F511BAF71 /* SwiftUI.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
-
 /* Begin PBXGroup section */
-		36FB5C7350756CBDDA156C23 /* ViewModels */ = {
+		0000C491576A1150FB11C967 /* Preview */ = {
 			isa = PBXGroup;
 			children = (
-				7913F344AA2E6482DE332D51 /* TodayViewModel.swift */,
+				1FB560BB0D76587E4A9B6B0B /* PreviewSupport.swift */,
 			);
-			path = ViewModels;
+			path = Preview;
 			sourceTree = "<group>";
 		};
-		392F9C92BE1EC63E9232DFD1 /* PaceOffTests */ = {
+		0AACCF2E51B871D7096A57CA /* PaceOff */ = {
 			isa = PBXGroup;
 			children = (
-				27F3EE360E48297AAFC97078 /* PushTargetEngineTests.swift */,
-			);
-			path = PaceOffTests;
-			sourceTree = "<group>";
-		};
-		3BD040E73E6B117A0431A6B4 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				5F4055F960C4CCD419649518 /* HealthKit.framework */,
-				1D334510E36F2E3BD3918B10 /* WidgetKit.framework */,
-				CD8F5A0E0CD5262B0AC94150 /* SwiftUI.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		402F47257BAF7B56BBBD0CDC /* PaceOffShared */ = {
-			isa = PBXGroup;
-			children = (
-				9A6780042FB65439003D84FB /* UserProfile.swift */,
-				48E7550CAD9C4D79751C95EA /* AppGroup.swift */,
-				A93BE2C372C1F5CBDCF4BD34 /* PushTargetEngine.swift */,
-				7385B3E565CA63C5F8B9180D /* RunRecord.swift */,
-				EB3E0B037B9E932E46109271 /* RunTarget.swift */,
-				5AB9CA2CEF907EDC03F2E90E /* Tone.swift */,
-				92ED6E156A6562B097BCDF24 /* VO2MaxSnapshot.swift */,
-				26F3445CC4043DFB144A6E8E /* VoiceCopy.swift */,
-			);
-			path = PaceOffShared;
-			sourceTree = "<group>";
-		};
-		42D666989E875456DD59CE01 /* PaceOffWidget */ = {
-			isa = PBXGroup;
-			children = (
-				2DCD52BC910E9B4F6A825D2F /* Assets.xcassets */,
-				EFDA8AB453760961873D4816 /* Info.plist */,
-				6143C4C2167AC7C220DCC543 /* PaceOffWidget.entitlements */,
-				DAEEC655149AEED4C739ACFC /* PaceOffWidget.swift */,
-				043A1B595DCF79105E42EACA /* PaceOffWidgetBundle.swift */,
-			);
-			path = PaceOffWidget;
-			sourceTree = "<group>";
-		};
-		43931CF8D8FF624E4C75AE32 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				46D91DCDC8EEC8DBD9E6C5B9 /* PaceOff.app */,
-				036B7996CCDEF92C0612E4D9 /* PaceOff Watch App.app */,
-				43E300D32D9F9EDED7949068 /* PaceOffWidget.appex */,
-				E128DDE1ED66CC2E99C84C32 /* PaceOffTests.xctest */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		4998A94FFB15E51ADEDB675F /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				A9C8BD20DBCF3DE0BC3E27FB /* PostRunView.swift */,
-				D34453E5DF50D54376CC881C /* RunningWorkoutView.swift */,
-				EA890BA5322C7F75FF2DDD4A /* WatchTodayView.swift */,
-			);
-			path = Views;
-			sourceTree = "<group>";
-		};
-		4EAA3FDECAC6B664005F5FA5 /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				CD6490B32FB6510E006E69CF /* AppleSignInService.swift */,
-				CD6490B42FB6510E006E69CF /* ProfileStore.swift */,
-				9A81B3592FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift */,
-				9A81B35A2FA7BB9400F66DD8 /* BackgroundRefreshService.swift */,
-				FDA87313DFA425D1345A5393 /* HealthKitService.swift */,
-				26CBF7022052396834DBB5B8 /* NotificationScheduler.swift */,
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
-		7A2EC94370130A543343FD95 /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				EC4E5CE0B74330F1F0A426B5 /* WorkoutSessionManager.swift */,
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
-		B64780532466C0821EAE5535 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				CD6490AF2FB650FD006E69CF /* ProfileEditView.swift */,
-				CD6490B02FB650FD006E69CF /* ProfileView.swift */,
-				84B54EC06446159F25246014 /* HistoryView.swift */,
-				C126EFA0AA92ABA55D2716B6 /* OnboardingView.swift */,
-				D0CBE1EC823560360FC3672F /* RootView.swift */,
-				74AD6A73BE659740953F5C2C /* RunDetailView.swift */,
-				A16055B88F40FC03BF4E72C3 /* SettingsView.swift */,
-				B53DF820D28123DA59768D65 /* TodayView.swift */,
-				FD50DC96C723A45DEF2F2E84 /* TrendsView.swift */,
-				F5ECF91504783637C6E1AAFE /* VO2MaxDetailView.swift */,
-			);
-			path = Views;
-			sourceTree = "<group>";
-		};
-		DFE2B2AE5DE533EC44853783 /* PaceOff */ = {
-			isa = PBXGroup;
-			children = (
-				4EAA3FDECAC6B664005F5FA5 /* Services */,
-				36FB5C7350756CBDDA156C23 /* ViewModels */,
-				B64780532466C0821EAE5535 /* Views */,
-				82BDC057083015101B1E193D /* Assets.xcassets */,
-				D836CB6C801789727BDF64C1 /* Info.plist */,
-				5BB40FCF9B0DBBDF25607A12 /* PaceOff.entitlements */,
-				BF31D94A4E0621E9FD66337D /* PaceOffApp.swift */,
-				020DA95E7BEAE65EB4A19071 /* Preview Content */,
+				4D38C34FBD6BAA6AE56446F7 /* Preview Content */,
+				20A1D8614B0C28D9D51ABD4D /* Services */,
+				E4E6B4032215626814ADDC8C /* ViewModels */,
+				7EEACE0D6218931943423686 /* Views */,
+				3775666DE353724E74AC3428 /* Assets.xcassets */,
+				742ADD41F35E157224B55708 /* Info.plist */,
+				E8FC867EE82662F512A67C8B /* PaceOff.entitlements */,
+				3B89CD78D1D657CCADE5478C /* PaceOffApp.swift */,
 			);
 			path = PaceOff;
 			sourceTree = "<group>";
 		};
-		E7872E98990A3BF379C4B6B5 /* PaceOffWatch Watch App */ = {
+		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
-				7A2EC94370130A543343FD95 /* Services */,
-				4998A94FFB15E51ADEDB675F /* Views */,
-				1FCBE6C52DC0E9940EF65B15 /* Assets.xcassets */,
-				A2423B4D58965EA517FB7665 /* Info.plist */,
-				29C6C9D2B66CDEDF44E50003 /* PaceOffWatch.entitlements */,
-				82B821D599F8B70C132DC15E /* PaceOffWatchApp.swift */,
+				D1C4C9290B00C1660BE65BDB /* AppGroup.swift */,
+				B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */,
+				F219E095BD73A1C339F5D8D4 /* RunRecord.swift */,
+				41FAD3317ACDC75A0999F6D8 /* RunTarget.swift */,
+				8E54D917FE4AF4A958C7514C /* Tone.swift */,
+				CADA1657036D930B2CE2B499 /* UserProfile.swift */,
+				8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */,
+				2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */,
+			);
+			path = PaceOffShared;
+			sourceTree = "<group>";
+		};
+		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
+			isa = PBXGroup;
+			children = (
+				62929CE88A3549DB529E3FEE /* PushTargetEngineTests.swift */,
+			);
+			path = PaceOffTests;
+			sourceTree = "<group>";
+		};
+		1F1278B4CF7FB36126749BB5 /* PaceOffWidget */ = {
+			isa = PBXGroup;
+			children = (
+				89F34D18B0856E30B0FC3C66 /* Assets.xcassets */,
+				6098A8585092DC798A6ADC0A /* Info.plist */,
+				AC5A84D92A1788CC423AA72E /* PaceOffWidget.entitlements */,
+				A2E8AEAFE18A69ACE7A052C9 /* PaceOffWidget.swift */,
+				0D7EEA2FE27D3E90FA1ADCDE /* PaceOffWidgetBundle.swift */,
+			);
+			path = PaceOffWidget;
+			sourceTree = "<group>";
+		};
+		20A1D8614B0C28D9D51ABD4D /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				5EFBD02A6FEE9098969290F2 /* AppleIntelligenceCopy.swift */,
+				28B2707B22E9FF547E90D53F /* AppleSignInService.swift */,
+				733C2FC37577B3FD0C44A279 /* BackgroundRefreshService.swift */,
+				A8BCA23E5158FE3AEC620739 /* HealthKitService.swift */,
+				6CFA64AEB615429033822E3D /* NotificationScheduler.swift */,
+				4FB629335A23776D013B7EDE /* ProfileStore.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		22CB6B947F1CF60F198071D6 /* Legal */ = {
+			isa = PBXGroup;
+			children = (
+				71D681E72E9D55BFB0D8C23A /* LegalLinksFooter.swift */,
+				E7C60D0EC9FE2DA2A5B8AF25 /* LegalView.swift */,
+			);
+			path = Legal;
+			sourceTree = "<group>";
+		};
+		30910B409EDD279C4A378D04 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				CCD3B1181C9187C3458D13CA /* WorkoutSessionManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		4D38C34FBD6BAA6AE56446F7 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				8BBEB7705A870FF2FF7285C4 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		6885FCDF11740D65195044A2 = {
+			isa = PBXGroup;
+			children = (
+				0AACCF2E51B871D7096A57CA /* PaceOff */,
+				109C6A0E735388A83524485D /* PaceOffShared */,
+				1B7540353C08CE299EFD814C /* PaceOffTests */,
+				DEF4FB3FE9C39FC0F7C8C73F /* PaceOffWatch Watch App */,
+				1F1278B4CF7FB36126749BB5 /* PaceOffWidget */,
+				745674A9773A8FA748834BAB /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		745674A9773A8FA748834BAB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E53E82BE5E747B5989FCDF38 /* PaceOff Watch App.app */,
+				92BAA40520A45D39B9D4C53F /* PaceOff.app */,
+				B372281CAEAF0D974D37DA59 /* PaceOffTests.xctest */,
+				F8862D2A1BFD5B06A75E4B9A /* PaceOffWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7EEACE0D6218931943423686 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				ABA65778295BD1DDD6652D74 /* Design */,
+				22CB6B947F1CF60F198071D6 /* Legal */,
+				0000C491576A1150FB11C967 /* Preview */,
+				734B8C58687A0D8E56FF3F7E /* AuthGateView.swift */,
+				FA046C6B717C42A9364908A0 /* HistoryView.swift */,
+				C6F47BFB366DAAE0F746AC95 /* OnboardingView.swift */,
+				6D0C777B85BAAE471DAC4EDD /* ProfileEditView.swift */,
+				B842AE2B2B48C0BCA01DBBB3 /* ProfileSetupSheetView.swift */,
+				2E286506F8987C266805E12B /* ProfileView.swift */,
+				9A08A6962C58940E4BEA4FAA /* RootView.swift */,
+				07F1705BBFDFFE669162F99A /* RunDetailView.swift */,
+				999E35D73CD309486FA6484E /* SplashView.swift */,
+				419C7CD5F523700586CA14B9 /* TodayView.swift */,
+				DAE697DCC22952A70B86B261 /* TrendsView.swift */,
+				F9A794349DA4F2399A6CE691 /* VO2MaxDetailView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		ABA65778295BD1DDD6652D74 /* Design */ = {
+			isa = PBXGroup;
+			children = (
+				E96A6583E9A382E6662FD125 /* BrandHero.swift */,
+				9EC37486993AB6E5BF014496 /* BrandPalette.swift */,
+			);
+			path = Design;
+			sourceTree = "<group>";
+		};
+		D90DD211C302F200655BFF21 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				814E50257DAA44B51E8A7704 /* PostRunView.swift */,
+				8DA17254B002079243BAFA67 /* RunningWorkoutView.swift */,
+				C30725DFD06CF73D19656E7B /* WatchTodayView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		DEF4FB3FE9C39FC0F7C8C73F /* PaceOffWatch Watch App */ = {
+			isa = PBXGroup;
+			children = (
+				30910B409EDD279C4A378D04 /* Services */,
+				D90DD211C302F200655BFF21 /* Views */,
+				4EBAFF615D9E50FEF69F19F9 /* Assets.xcassets */,
+				F0B325D3C19C13ACF0D5D593 /* Info.plist */,
+				ABB6D659BA61C433C6FB057B /* PaceOffWatch.entitlements */,
+				EFEF73BA3FEC56768FD8B67A /* PaceOffWatchApp.swift */,
 			);
 			path = "PaceOffWatch Watch App";
 			sourceTree = "<group>";
 		};
-		FBE9CC82CC687DA227D2AA54 = {
+		E4E6B4032215626814ADDC8C /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
-				DFE2B2AE5DE533EC44853783 /* PaceOff */,
-				402F47257BAF7B56BBBD0CDC /* PaceOffShared */,
-				E7872E98990A3BF379C4B6B5 /* PaceOffWatch Watch App */,
-				42D666989E875456DD59CE01 /* PaceOffWidget */,
-				392F9C92BE1EC63E9232DFD1 /* PaceOffTests */,
-				3BD040E73E6B117A0431A6B4 /* Frameworks */,
-				43931CF8D8FF624E4C75AE32 /* Products */,
-				9A1483062F9BE34C005C9216 /* README.md */,
-				9A1483072F9BE34F005C9216 /* .gitignore */,
+				F97B13269E854F7B2634E474 /* TodayViewModel.swift */,
 			);
+			path = ViewModels;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		7A0B3541B292814C95463D53 /* PaceOffTests */ = {
+		7D2119F7C7289F5FA2742D92 /* PaceOffWidget */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 16F3B012C14FB9DB2792C89D /* Build configuration list for PBXNativeTarget "PaceOffTests" */;
+			buildConfigurationList = 7417CF7F3AC671CCE57B4525 /* Build configuration list for PBXNativeTarget "PaceOffWidget" */;
 			buildPhases = (
-				7220EC9372B71BA8620EBCF1 /* Sources */,
-				61198F788E2F78EB66C94192 /* Frameworks */,
-				4A0D592DF231DF3138C0C58E /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				DA1ED45C9D734776EB386671 /* PBXTargetDependency */,
-			);
-			name = PaceOffTests;
-			productName = PaceOffTests;
-			productReference = E128DDE1ED66CC2E99C84C32 /* PaceOffTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		C0A22F8F6C2EBA161F532704 /* PaceOffWidget */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = CB3E9879FB35E5E8BA6C41A5 /* Build configuration list for PBXNativeTarget "PaceOffWidget" */;
-			buildPhases = (
-				6227BDDEADC7F1051A289B80 /* Sources */,
-				D405949D064DB2C541839482 /* Frameworks */,
-				AE16B94378B2164B00C9B5A0 /* Resources */,
+				79544330936A5E4FAA1DFE1B /* Sources */,
+				DD934BE99CCA385AFB51A33A /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			name = PaceOffWidget;
+			packageProductDependencies = (
+			);
 			productName = PaceOffWidget;
-			productReference = 43E300D32D9F9EDED7949068 /* PaceOffWidget.appex */;
+			productReference = F8862D2A1BFD5B06A75E4B9A /* PaceOffWidget.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		C36EDF00769C180FFC5E76E5 /* PaceOff */ = {
+		A2A2BE8A24028AD7932A0E7F /* PaceOff */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = E58136A19DC11288A6ACEA8E /* Build configuration list for PBXNativeTarget "PaceOff" */;
+			buildConfigurationList = 31DAB1D4D3D5F6E8D6992C2E /* Build configuration list for PBXNativeTarget "PaceOff" */;
 			buildPhases = (
-				F69A5FDEF19FE200135C3614 /* Sources */,
-				60F4F1A76325616D43845341 /* Frameworks */,
-				4379614912BC4E52E93B22BA /* Resources */,
-				AE1DE2DF05046CA0C9913D9A /* Embed Foundation Extensions */,
+				D4AC8C5A6A1334F705C486F9 /* Sources */,
+				797FBDBBA33CAE30887471AE /* Resources */,
+				52221ECA1998BA3C39354E1F /* Embed Foundation Extensions */,
+				EFA5E44F29A7C77548C9FEFE /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				1DD4A09FA0353F911428AB7D /* PBXTargetDependency */,
-				CF26A0FB024A679B5A690B4B /* PBXTargetDependency */,
+				A400F62A293B44E6165CC65A /* PBXTargetDependency */,
+				3ECE53D28B1790A5081ACBC5 /* PBXTargetDependency */,
 			);
 			name = PaceOff;
+			packageProductDependencies = (
+			);
 			productName = PaceOff;
-			productReference = 46D91DCDC8EEC8DBD9E6C5B9 /* PaceOff.app */;
+			productReference = 92BAA40520A45D39B9D4C53F /* PaceOff.app */;
 			productType = "com.apple.product-type.application";
 		};
-		C6780A6EB1F0ECC58DB44869 /* PaceOff Watch App */ = {
+		BFBA7F107BC6B6C0E1995419 /* PaceOffTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A0668F910FB80E86E69283C5 /* Build configuration list for PBXNativeTarget "PaceOff Watch App" */;
+			buildConfigurationList = 95FBA83D019CA6DF0582E937 /* Build configuration list for PBXNativeTarget "PaceOffTests" */;
 			buildPhases = (
-				2F73213CC7E359BA2B0ECAB9 /* Sources */,
-				037B6F5E629EE3920971F6CB /* Frameworks */,
-				B4F1F6F619B50364227F4A70 /* Resources */,
+				065DF90DDBC9526286172F6B /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0D8584BAB942DAD007554506 /* PBXTargetDependency */,
+			);
+			name = PaceOffTests;
+			packageProductDependencies = (
+			);
+			productName = PaceOffTests;
+			productReference = B372281CAEAF0D974D37DA59 /* PaceOffTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		FAB7089E848DDC691970C025 /* PaceOff Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DA87B68F804A039CCF96F743 /* Build configuration list for PBXNativeTarget "PaceOff Watch App" */;
+			buildPhases = (
+				A2080CB7A27DB012578D31D8 /* Sources */,
+				F81806FCEA82346D86C97A90 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			name = "PaceOff Watch App";
+			packageProductDependencies = (
+			);
 			productName = "PaceOff Watch App";
-			productReference = 036B7996CCDEF92C0612E4D9 /* PaceOff Watch App.app */;
+			productReference = E53E82BE5E747B5989FCDF38 /* PaceOff Watch App.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		98F54143AB4E86B28C3AFEE0 /* Project object */ = {
+		6FC01EC42E60966303F04321 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastSwiftUpdateCheck = 1700;
-				LastUpgradeCheck = 1700;
+				LastUpgradeCheck = 1430;
 				TargetAttributes = {
-					7A0B3541B292814C95463D53 = {
-						CreatedOnToolsVersion = 16.0;
-						TestTargetID = C36EDF00769C180FFC5E76E5;
+					7D2119F7C7289F5FA2742D92 = {
+						DevelopmentTeam = "";
 					};
-					C0A22F8F6C2EBA161F532704 = {
-						CreatedOnToolsVersion = 16.0;
+					A2A2BE8A24028AD7932A0E7F = {
+						DevelopmentTeam = "";
 					};
-					C36EDF00769C180FFC5E76E5 = {
-						CreatedOnToolsVersion = 16.0;
+					BFBA7F107BC6B6C0E1995419 = {
+						DevelopmentTeam = "";
 					};
-					C6780A6EB1F0ECC58DB44869 = {
-						CreatedOnToolsVersion = 16.0;
+					FAB7089E848DDC691970C025 = {
+						DevelopmentTeam = "";
 					};
 				};
 			};
-			buildConfigurationList = 8B4434FB74E6D83D3FCDD6F8 /* Build configuration list for PBXProject "PaceOff" */;
-			compatibilityVersion = "Xcode 14.0";
+			buildConfigurationList = 03DDA5562779392F3AE8CA4E /* Build configuration list for PBXProject "PaceOff" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
 				Base,
+				en,
 			);
-			mainGroup = FBE9CC82CC687DA227D2AA54;
-			productRefGroup = 43931CF8D8FF624E4C75AE32 /* Products */;
+			mainGroup = 6885FCDF11740D65195044A2;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 745674A9773A8FA748834BAB /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C36EDF00769C180FFC5E76E5 /* PaceOff */,
-				C6780A6EB1F0ECC58DB44869 /* PaceOff Watch App */,
-				C0A22F8F6C2EBA161F532704 /* PaceOffWidget */,
-				7A0B3541B292814C95463D53 /* PaceOffTests */,
+				A2A2BE8A24028AD7932A0E7F /* PaceOff */,
+				FAB7089E848DDC691970C025 /* PaceOff Watch App */,
+				BFBA7F107BC6B6C0E1995419 /* PaceOffTests */,
+				7D2119F7C7289F5FA2742D92 /* PaceOffWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		4379614912BC4E52E93B22BA /* Resources */ = {
+		797FBDBBA33CAE30887471AE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D23368B4BFAE33FD71245E7F /* Assets.xcassets in Resources */,
-				BA716F7EC2B7F31275EC13D4 /* Preview Content in Resources */,
+				025D334D3521CD59D588F3C6 /* Assets.xcassets in Resources */,
+				3FC0C17165F24F90C6983A91 /* Preview Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		4A0D592DF231DF3138C0C58E /* Resources */ = {
+		DD934BE99CCA385AFB51A33A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				05198CE9E2F4B2EC20E5A128 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		AE16B94378B2164B00C9B5A0 /* Resources */ = {
+		F81806FCEA82346D86C97A90 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BE23702015E49DE7EE9A5F63 /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		B4F1F6F619B50364227F4A70 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				8862D5D70C68312EA7E1F331 /* Assets.xcassets in Resources */,
+				DB90626366A8FB5E24001DC4 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		2F73213CC7E359BA2B0ECAB9 /* Sources */ = {
+		065DF90DDBC9526286172F6B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6089FEE24EBE3804829E58B5 /* PaceOffWatchApp.swift in Sources */,
-				38869D705CD6A348D6109102 /* WorkoutSessionManager.swift in Sources */,
-				9A6780072FB65439003D84FB /* UserProfile.swift in Sources */,
-				AEDD36E044461085BFDC5766 /* PostRunView.swift in Sources */,
-				E226DC26A5AFD7DA8D0E9D9F /* RunningWorkoutView.swift in Sources */,
-				06BE5907FDC7E84DC70D680D /* WatchTodayView.swift in Sources */,
-				76B5D25B64F92FA359EF2921 /* AppGroup.swift in Sources */,
-				E20CFC48BDF19898CAB00164 /* PushTargetEngine.swift in Sources */,
-				329511A4E941AE15245BF043 /* RunRecord.swift in Sources */,
-				9A81B35B2FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift in Sources */,
-				38A530E48DE95595582211FA /* RunTarget.swift in Sources */,
-				C0F4D98A1EC1D36BFF9E079F /* Tone.swift in Sources */,
-				26EB1093C6522919AD0E6E74 /* VO2MaxSnapshot.swift in Sources */,
-				4F6025F22D81181885595E0D /* VoiceCopy.swift in Sources */,
+				ECCD1C6A1852C9AEBBC18271 /* AppGroup.swift in Sources */,
+				AB78570747668D2D0FFD95AD /* PushTargetEngine.swift in Sources */,
+				69AFA428DC7571D79F144E60 /* PushTargetEngineTests.swift in Sources */,
+				FA615BE7BE7EE44E6C750C1B /* RunRecord.swift in Sources */,
+				B556B4AFE3D379360DD042C8 /* RunTarget.swift in Sources */,
+				054C9D4ABE2FF5D749B72468 /* Tone.swift in Sources */,
+				C2C642EC750AF4FB8E72FAF3 /* UserProfile.swift in Sources */,
+				5D15621F6A618B2B98422611 /* VO2MaxSnapshot.swift in Sources */,
+				D8FA2EFCE6D1183D38BB41FF /* VoiceCopy.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		6227BDDEADC7F1051A289B80 /* Sources */ = {
+		79544330936A5E4FAA1DFE1B /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5393041461115E5569104B1B /* PaceOffWidget.swift in Sources */,
-				9A81B35D2FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift in Sources */,
-				145CE6ED3EF794626D8AE087 /* PaceOffWidgetBundle.swift in Sources */,
-				CF488859E369A0601E50B9BF /* AppGroup.swift in Sources */,
-				C3F6C13FAF108C6A4C829143 /* PushTargetEngine.swift in Sources */,
-				9A6780062FB65439003D84FB /* UserProfile.swift in Sources */,
-				4DDAEB789C5E2230F3813401 /* RunRecord.swift in Sources */,
-				A5FDE5453A8109D8B6B2F74F /* RunTarget.swift in Sources */,
-				D50B1DF6EEAEFED96DEF2A10 /* Tone.swift in Sources */,
-				92F30B0BCBA9380AD8A8CC0F /* VO2MaxSnapshot.swift in Sources */,
-				E6DDD5AA59560023D889724A /* VoiceCopy.swift in Sources */,
+				6B96BE52BDE6ADA37714CF72 /* AppGroup.swift in Sources */,
+				41CC25C427F34329011D4E74 /* PaceOffWidget.swift in Sources */,
+				25015CBC6D64D8F4C0968487 /* PaceOffWidgetBundle.swift in Sources */,
+				8DB1AF3961252E3C9D7ECB09 /* PushTargetEngine.swift in Sources */,
+				5D15127CC4FE3B59AC73E83F /* RunRecord.swift in Sources */,
+				C937A79D0B985D6A9445569F /* RunTarget.swift in Sources */,
+				D5BA6108703C8529C9C2065E /* Tone.swift in Sources */,
+				BD9703C0E37574E7EC553A62 /* UserProfile.swift in Sources */,
+				8635BD77DDF7D83B44FBAD3C /* VO2MaxSnapshot.swift in Sources */,
+				2C62603907421D9986B63000 /* VoiceCopy.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		7220EC9372B71BA8620EBCF1 /* Sources */ = {
+		A2080CB7A27DB012578D31D8 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2EDEC13DD7154078F5F7F5A6 /* PushTargetEngineTests.swift in Sources */,
+				1D22E916159F440DDF80BD52 /* AppGroup.swift in Sources */,
+				831429E77DAF4D658D1B077A /* PaceOffWatchApp.swift in Sources */,
+				EF487B004A27730CB84F52ED /* PostRunView.swift in Sources */,
+				10FD6FF06B176AD8F3668CF9 /* PushTargetEngine.swift in Sources */,
+				1C4E11A23401FEAB2455E352 /* RunRecord.swift in Sources */,
+				FC42B40AAD6DBDB87981CE29 /* RunTarget.swift in Sources */,
+				B2FF357DD79EB6CE91504C87 /* RunningWorkoutView.swift in Sources */,
+				F74CDC7FAE8CD24A90AAEC26 /* Tone.swift in Sources */,
+				66F7E99D4BFFD957DFBBAACA /* UserProfile.swift in Sources */,
+				8D820987E8CC3C6ED6950F20 /* VO2MaxSnapshot.swift in Sources */,
+				8365B24A66E0C6048CCD1BCD /* VoiceCopy.swift in Sources */,
+				6A10FA0097553F15A2D4FCAD /* WatchTodayView.swift in Sources */,
+				DBA888F222750EDCB41BF41C /* WorkoutSessionManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F69A5FDEF19FE200135C3614 /* Sources */ = {
+		D4AC8C5A6A1334F705C486F9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3C7168796BA778D209C98719 /* PaceOffApp.swift in Sources */,
-				264559AF538464F67901D236 /* HealthKitService.swift in Sources */,
-				5B5F1DDCEDFBB301086E9275 /* NotificationScheduler.swift in Sources */,
-				E958F83681B00C60763BE484 /* TodayViewModel.swift in Sources */,
-				E8F5110826A0FCB6C3E62CF3 /* HistoryView.swift in Sources */,
-				771219521B5A771E43CB74C7 /* OnboardingView.swift in Sources */,
-				1E74F03CD2DA53BFC11ACFD4 /* RootView.swift in Sources */,
-				80C937596DD24C465284E559 /* RunDetailView.swift in Sources */,
-				4412C5DDAAA37C34C39B902D /* SettingsView.swift in Sources */,
-				0E2586C4B9088DCD2B493D55 /* TodayView.swift in Sources */,
-				D22A137180C4A2E96F15E64C /* TrendsView.swift in Sources */,
-				9A81B35F2FA7BB9400F66DD8 /* AppleIntelligenceCopy.swift in Sources */,
-				9A81B3602FA7BB9400F66DD8 /* BackgroundRefreshService.swift in Sources */,
-				728663FD7308C17E74CDEC37 /* VO2MaxDetailView.swift in Sources */,
-				23826306BC67A54A72AC75BD /* AppGroup.swift in Sources */,
-				27A1D4A01DCFFACBC951800E /* PushTargetEngine.swift in Sources */,
-				9A6780052FB65439003D84FB /* UserProfile.swift in Sources */,
-				B69204D3081BCC6F50A00554 /* RunRecord.swift in Sources */,
-				CD6490B52FB6510E006E69CF /* ProfileStore.swift in Sources */,
-				CD6490B62FB6510E006E69CF /* AppleSignInService.swift in Sources */,
-				632E81B0146984E038FF2CAC /* RunTarget.swift in Sources */,
-				B64D6F2E59E9BB4F4CE76A5E /* Tone.swift in Sources */,
-				F434822A51BAAB2D0B3A3FCD /* VO2MaxSnapshot.swift in Sources */,
-				CD6490B12FB650FD006E69CF /* ProfileEditView.swift in Sources */,
-				CD6490B22FB650FD006E69CF /* ProfileView.swift in Sources */,
-				6D9DE30A02179420FED9B2C2 /* VoiceCopy.swift in Sources */,
+				56D563EA16649F0E450A8D0D /* AppGroup.swift in Sources */,
+				581E8B473CBAFE73FF8A38B1 /* AppleIntelligenceCopy.swift in Sources */,
+				DF3E2F4588DDD37521C786C9 /* AppleSignInService.swift in Sources */,
+				B69281E79E750C2E0D226829 /* AuthGateView.swift in Sources */,
+				5F028CA1451E601AEE019801 /* BackgroundRefreshService.swift in Sources */,
+				A0A5A5763F2703C2DF4C5196 /* BrandHero.swift in Sources */,
+				29E5782772B7C0C5877D4F52 /* BrandPalette.swift in Sources */,
+				B6970A51274EBC7F39084A3C /* HealthKitService.swift in Sources */,
+				CFB94A4D520F0F98855508CB /* HistoryView.swift in Sources */,
+				E161C700BA77B375E3718CC9 /* LegalLinksFooter.swift in Sources */,
+				DC771AB8EA48DEEFA8CE1D35 /* LegalView.swift in Sources */,
+				F42A016DDCE9D0557C0510F8 /* NotificationScheduler.swift in Sources */,
+				C332D74075CE482A6AFA74FB /* OnboardingView.swift in Sources */,
+				67B30D2219B2CA1AD27A74B1 /* PaceOffApp.swift in Sources */,
+				F829136F9049E53FF3BCDEBC /* PreviewSupport.swift in Sources */,
+				825A9BB2C1466DBE6B3C79DD /* ProfileEditView.swift in Sources */,
+				D63BD795058777FC7F7B75F6 /* ProfileSetupSheetView.swift in Sources */,
+				1B1B4B7B8C3A3E9ABCA62020 /* ProfileStore.swift in Sources */,
+				BA3605889173D2970209D36C /* ProfileView.swift in Sources */,
+				AFF783DAD8B26413E5686038 /* PushTargetEngine.swift in Sources */,
+				A9B8A0E3AABB46843585D58F /* RootView.swift in Sources */,
+				D09508FE79702E88CF82D023 /* RunDetailView.swift in Sources */,
+				3B263CD0BA0F37D56C9C8EBF /* RunRecord.swift in Sources */,
+				B5250ABB6A0BD6AF50047D91 /* RunTarget.swift in Sources */,
+				E17EE97739548ED134625CF7 /* SplashView.swift in Sources */,
+				1FB4CE2007641163EF10F445 /* TodayView.swift in Sources */,
+				B346B8F61CB56BDD18693999 /* TodayViewModel.swift in Sources */,
+				517EB6668BE17679AA37D693 /* Tone.swift in Sources */,
+				32E69C5DAD264F968AA969C2 /* TrendsView.swift in Sources */,
+				0D2030447FE0FC10DACBED56 /* UserProfile.swift in Sources */,
+				555A1A9BEB4E2E136C3C16D4 /* VO2MaxDetailView.swift in Sources */,
+				BA5556FDE1BA4509A9C22F46 /* VO2MaxSnapshot.swift in Sources */,
+				0D946C86EAA99034CA0799C9 /* VoiceCopy.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		1DD4A09FA0353F911428AB7D /* PBXTargetDependency */ = {
+		0D8584BAB942DAD007554506 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C0A22F8F6C2EBA161F532704 /* PaceOffWidget */;
-			targetProxy = 54A38E525A5E6657EEC807E9 /* PBXContainerItemProxy */;
+			target = A2A2BE8A24028AD7932A0E7F /* PaceOff */;
+			targetProxy = 9A4C20E5923724135EDCDFA0 /* PBXContainerItemProxy */;
 		};
-		CF26A0FB024A679B5A690B4B /* PBXTargetDependency */ = {
+		3ECE53D28B1790A5081ACBC5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C6780A6EB1F0ECC58DB44869 /* PaceOff Watch App */;
-			targetProxy = 8878850ED8D19FAB9F97C751 /* PBXContainerItemProxy */;
+			target = 7D2119F7C7289F5FA2742D92 /* PaceOffWidget */;
+			targetProxy = 6CEE081550A836969D295F41 /* PBXContainerItemProxy */;
 		};
-		DA1ED45C9D734776EB386671 /* PBXTargetDependency */ = {
+		A400F62A293B44E6165CC65A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C36EDF00769C180FFC5E76E5 /* PaceOff */;
-			targetProxy = 3E7C9D847016609B9A3D5D6D /* PBXContainerItemProxy */;
+			target = FAB7089E848DDC691970C025 /* PaceOff Watch App */;
+			targetProxy = 9E1FDF24D990C4C27CF2AD0C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		109AC96B42A664F0B60DB27D /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = PaceOffTests;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.tests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PaceOff.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PaceOff";
-			};
-			name = Release;
-		};
-		31A43B7F78AEFBF672E72F97 /* Debug */ = {
+		10CBA6CC4BA509DE79FCF6AE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
-				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
-				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0.0;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_STRICT_CONCURRENCY = minimal;
-				SWIFT_VERSION = 5.0;
-				WATCHOS_DEPLOYMENT_TARGET = 26.0;
-			};
-			name = Debug;
-		};
-		5B3013142CC075FE6AA5E930 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = "PaceOffWatch Watch App/PaceOffWatch.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 795P7M623R;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "PaceOffWatch Watch App/Info.plist";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/PlugIns",
-				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.watchkitapp;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SUPPORTED_PLATFORMS = "watchos watchsimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 26.0;
-			};
-			name = Release;
-		};
-		9A98016E09D5569C60AB22DC /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = PaceOffWidget/PaceOffWidget.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 795P7M623R;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = PaceOffWidget/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.widget;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		B8873D4D82A803614BDF0620 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = PaceOff/PaceOff.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"PaceOff/Preview Content\"";
-				DEVELOPMENT_TEAM = 795P7M623R;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = PaceOff/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/PlugIns",
-				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		D5EE449C63F516D0BBA8408B /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = PaceOff/PaceOff.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"PaceOff/Preview Content\"";
-				DEVELOPMENT_TEAM = 795P7M623R;
-				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = PaceOff/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/PlugIns",
-				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		D7298EEEE06866E4F0279FE4 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0.0;
-				SDKROOT = iphoneos;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_STRICT_CONCURRENCY = minimal;
-				SWIFT_VERSION = 5.0;
-				VALIDATE_PRODUCT = YES;
+				SWIFT_VERSION = 6.0;
 				WATCHOS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Release;
 		};
-		D84E790A4ABB81F00C8D106A /* Debug */ = {
+		2B82941BD9EA6568EEA4DAD2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "PaceOffWatch Watch App/PaceOffWatch.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 795P7M623R;
-				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "PaceOffWatch Watch App/Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Release;
+		};
+		2C43C6CFF6B7FD56D83E55F6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 6.0;
+				WATCHOS_DEPLOYMENT_TARGET = 26.0;
+			};
+			name = Debug;
+		};
+		30AA38692EE10F5F61E37A8A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
-					"@executable_path/PlugIns",
+					"@loader_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.watchkitapp;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = watchos;
-				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PaceOff.app/PaceOff";
+			};
+			name = Release;
+		};
+		740359B8F770579B6D90A7F0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PaceOff.app/PaceOff";
+			};
+			name = Debug;
+		};
+		93545E271E8BEA31B15FDB5C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PaceOff/PaceOff.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_ASSET_PATHS = "\"PaceOff/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = PaceOff/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app;
+				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AFBDE1A329D6E7013E83FA71 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = PaceOffWidget/PaceOffWidget.entitlements;
+				INFOPLIST_FILE = PaceOffWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.widget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		CCCD346FDA9A55E5F79E0997 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PaceOff/PaceOff.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_ASSET_PATHS = "\"PaceOff/Preview Content\"";
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = PaceOff/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app;
+				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = NO;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		F44F73C2239FCE48DC9B7BA6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = PaceOffWidget/PaceOffWidget.entitlements;
+				INFOPLIST_FILE = PaceOffWidget/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.widget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F4F329C1F451DA8E5DB9FAC7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "PaceOffWatch Watch App/PaceOffWatch.entitlements";
+				INFOPLIST_FILE = "PaceOffWatch Watch App/Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.watchkitapp;
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = 4;
 				WATCHOS_DEPLOYMENT_TARGET = 26.0;
 			};
 			name = Debug;
 		};
-		DF024D5D2B993386F639CA83 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = PaceOffTests;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.tests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PaceOff.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PaceOff";
-			};
-			name = Debug;
-		};
-		F3D583159FA174BB58BE383A /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = PaceOffWidget/PaceOffWidget.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 795P7M623R;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = PaceOffWidget/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.widget;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		16F3B012C14FB9DB2792C89D /* Build configuration list for PBXNativeTarget "PaceOffTests" */ = {
+		03DDA5562779392F3AE8CA4E /* Build configuration list for PBXProject "PaceOff" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				DF024D5D2B993386F639CA83 /* Debug */,
-				109AC96B42A664F0B60DB27D /* Release */,
+				2C43C6CFF6B7FD56D83E55F6 /* Debug */,
+				10CBA6CC4BA509DE79FCF6AE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		8B4434FB74E6D83D3FCDD6F8 /* Build configuration list for PBXProject "PaceOff" */ = {
+		31DAB1D4D3D5F6E8D6992C2E /* Build configuration list for PBXNativeTarget "PaceOff" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				31A43B7F78AEFBF672E72F97 /* Debug */,
-				D7298EEEE06866E4F0279FE4 /* Release */,
+				93545E271E8BEA31B15FDB5C /* Debug */,
+				CCCD346FDA9A55E5F79E0997 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		A0668F910FB80E86E69283C5 /* Build configuration list for PBXNativeTarget "PaceOff Watch App" */ = {
+		7417CF7F3AC671CCE57B4525 /* Build configuration list for PBXNativeTarget "PaceOffWidget" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				D84E790A4ABB81F00C8D106A /* Debug */,
-				5B3013142CC075FE6AA5E930 /* Release */,
+				F44F73C2239FCE48DC9B7BA6 /* Debug */,
+				AFBDE1A329D6E7013E83FA71 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		CB3E9879FB35E5E8BA6C41A5 /* Build configuration list for PBXNativeTarget "PaceOffWidget" */ = {
+		95FBA83D019CA6DF0582E937 /* Build configuration list for PBXNativeTarget "PaceOffTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				9A98016E09D5569C60AB22DC /* Debug */,
-				F3D583159FA174BB58BE383A /* Release */,
+				740359B8F770579B6D90A7F0 /* Debug */,
+				30AA38692EE10F5F61E37A8A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		E58136A19DC11288A6ACEA8E /* Build configuration list for PBXNativeTarget "PaceOff" */ = {
+		DA87B68F804A039CCF96F743 /* Build configuration list for PBXNativeTarget "PaceOff Watch App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				D5EE449C63F516D0BBA8408B /* Debug */,
-				B8873D4D82A803614BDF0620 /* Release */,
+				F4F329C1F451DA8E5DB9FAC7 /* Debug */,
+				2B82941BD9EA6568EEA4DAD2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+	rootObject = 6FC01EC42E60966303F04321 /* Project object */;
 }

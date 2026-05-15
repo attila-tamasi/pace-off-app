@@ -458,3 +458,20 @@ private struct RouteCoordinateSnapshot: Equatable {
         longitude = coordinate.longitude
     }
 }
+
+#if DEBUG
+#Preview("Today (populated)") {
+    NavigationStack { TodayView() }
+        .environmentObject(TodayViewModel.preview())
+}
+
+#Preview("Today (ran today)") {
+    NavigationStack { TodayView() }
+        .environmentObject(TodayViewModel.preview(todayRun: .sample, streak: 5))
+}
+
+#Preview("Today (empty)") {
+    NavigationStack { TodayView() }
+        .environmentObject(TodayViewModel())
+}
+#endif

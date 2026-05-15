@@ -269,3 +269,11 @@ private struct AgeBand {
         }
     }
 }
+
+#if DEBUG
+#Preview("VO₂ Max detail") {
+    NavigationStack {
+        VO2MaxDetailView()
+    }
+}
+#endif
