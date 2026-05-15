@@ -111,6 +111,20 @@ public final class ProfileStore: ObservableObject {
 
     // MARK: - Sign in with Apple
 
+    // MARK: - Sign out
+
+    /// Clear the on-device profile and signal the app shell to return the
+    /// user to the auth gate. Apple Health data is untouched.
+    public func signOut() {
+        Self.deletePhotoFromDisk()
+        photo = nil
+        profile = nil
+        defaults?.removeObject(forKey: AppGroup.Keys.userProfile)
+        defaults?.set(false, forKey: AppGroup.Keys.authComplete)
+        defaults?.set(false, forKey: AppGroup.Keys.onboardingComplete)
+        NotificationCenter.default.post(name: .paceOffSignOut, object: nil)
+    }
+
     /// Fold a successful Sign in with Apple credential into the profile:
     /// store the stable user ID, and pre-fill the display name on first
     /// sign-in (Apple only provides the name once, on the very first grant).
