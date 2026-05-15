@@ -45,3 +45,14 @@ struct RootView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Root tab bar") {
+    RootView()
+        .environmentObject(PreviewProfileStore.populated)
+        .environmentObject(PreviewAppleSignInService.signedIn)
+        .environmentObject(HealthKitService.shared)
+        .environmentObject(NotificationScheduler.shared)
+        .environmentObject(TodayViewModel.preview())
+}
+#endif

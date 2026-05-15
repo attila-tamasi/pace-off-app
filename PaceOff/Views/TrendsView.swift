@@ -103,3 +103,9 @@ struct TrendsView: View {
         self.runs = await r
     }
 }
+
+#if DEBUG
+#Preview("Trends") {
+    NavigationStack { TrendsView() }
+}
+#endif

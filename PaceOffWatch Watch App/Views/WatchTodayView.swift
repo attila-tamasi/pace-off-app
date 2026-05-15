@@ -54,3 +54,12 @@ struct WatchTodayView: View {
 
     private func start() { session.start() }
 }
+
+#if DEBUG
+#Preview("Watch Today") {
+    NavigationStack {
+        WatchTodayView()
+            .environmentObject(WorkoutSessionManager())
+    }
+}
+#endif

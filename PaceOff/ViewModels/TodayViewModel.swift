@@ -133,4 +133,35 @@ public final class TodayViewModel: ObservableObject {
         }
         return streak
     }
+
+    #if DEBUG
+    /// Factory for SwiftUI previews. Populates the view-model with sample
+    /// state so the Today screen renders meaningful content in the canvas
+    /// without hitting HealthKit or the push-target engine.
+    static func preview(
+        target: RunTarget? = .sample,
+        voiceLine: String = "Easy 6K. Keep the pace conversational.",
+        yesterday: RunRecord? = .sample,
+        todayRun: RunRecord? = nil,
+        vo2Max: Double? = 49.2,
+        streak: Int = 3,
+        age: Int? = 33,
+        hrv: Double? = 62,
+        avgHR: Double? = 68,
+        restingHR: Double? = 51
+    ) -> TodayViewModel {
+        let vm = TodayViewModel()
+        vm.target = target
+        vm.voiceLine = voiceLine
+        vm.yesterday = yesterday
+        vm.todayRun = todayRun
+        vm.currentVO2Max = vo2Max
+        vm.currentStreak = streak
+        vm.userAge = age
+        vm.yesterdayHRV = hrv
+        vm.yesterdayAvgHeartRate = avgHR
+        vm.latestRestingHeartRate = restingHR
+        return vm
+    }
+    #endif
 }

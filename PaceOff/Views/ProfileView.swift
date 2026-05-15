@@ -400,3 +400,19 @@ struct ProfileView: View {
         Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
     }
 }
+
+#if DEBUG
+#Preview("Profile (signed in)") {
+    NavigationStack { ProfileView() }
+        .environmentObject(PreviewProfileStore.populated)
+        .environmentObject(PreviewAppleSignInService.signedIn)
+        .environmentObject(HealthKitService.shared)
+}
+
+#Preview("Profile (empty)") {
+    NavigationStack { ProfileView() }
+        .environmentObject(PreviewProfileStore.empty)
+        .environmentObject(PreviewAppleSignInService.notSignedIn)
+        .environmentObject(HealthKitService.shared)
+}
+#endif

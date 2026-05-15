@@ -79,4 +79,11 @@ public final class AppleSignInService: ObservableObject {
             state = .notSignedIn
         }
     }
+
+    #if DEBUG
+    /// Force the service into a specific state for SwiftUI previews.
+    func previewSetState(_ state: State) {
+        self.state = state
+    }
+    #endif
 }

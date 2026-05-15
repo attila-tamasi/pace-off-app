@@ -140,4 +140,14 @@ public final class ProfileStore: ObservableObject {
             }
         }
     }
+
+    #if DEBUG
+    /// Force the store into a specific state for SwiftUI previews. Bypasses
+    /// disk and UserDefaults — only the in-memory `@Published` properties are
+    /// touched, so previews never pollute real user data.
+    func previewLoad(profile: UserProfile?, photo: UIImage?) {
+        self.profile = profile
+        self.photo = photo
+    }
+    #endif
 }

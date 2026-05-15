@@ -81,3 +81,13 @@ private struct RunRow: View {
         .padding(.vertical, 4)
     }
 }
+
+#if DEBUG
+#Preview("History (empty)") {
+    NavigationStack { HistoryView() }
+}
+
+#Preview("Run row") {
+    List { RunRow(run: .sample) }
+}
+#endif
