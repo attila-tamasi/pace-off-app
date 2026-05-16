@@ -38,6 +38,10 @@ struct HistoryView: View {
     private func load() async {
         isLoading = true
         defer { isLoading = false }
+        // Render cached runs first so the list isn't blank while HealthKit churns.
+        if let cached = await HealthDataCache.shared.load(), !cached.runs.isEmpty {
+            self.runs = cached.runs.sorted { $0.startDate > $1.startDate }
+        }
         let fetched = await HealthKitService.shared.fetchRuns(daysBack: 365)
         self.runs = fetched.sorted { $0.startDate > $1.startDate }
     }

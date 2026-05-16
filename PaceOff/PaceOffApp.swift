@@ -52,10 +52,20 @@ struct PaceOffApp: App {
                 }
         }
         .onChange(of: scenePhase) { _, newPhase in
-            // Whenever we head into the background, queue another refresh so
-            // iOS has a fresh request to dispatch ~6 hours from now.
-            if newPhase == .background {
+            switch newPhase {
+            case .active:
+                // Returning to foreground — refresh the health cache so the
+                // UI catches up with any data Apple Watch synced while we
+                // were backgrounded.
+                if stage == .main {
+                    Task { await todayVM.refresh() }
+                }
+            case .background:
+                // Queue another BG refresh so iOS has a fresh request to
+                // dispatch ~6 hours from now.
                 BackgroundRefreshService.shared.scheduleNext()
+            default:
+                break
             }
         }
     }
@@ -86,6 +96,10 @@ struct PaceOffApp: App {
         case .main:
             RootView()
                 .task {
+                    // Show cached data immediately, then refresh in the
+                    // background. First launch falls straight through to
+                    // refresh() since hydrate is a no-op without a file.
+                    await todayVM.hydrateFromCache()
                     await todayVM.refresh()
                     await appleSignIn.refreshCredentialState()
                 }

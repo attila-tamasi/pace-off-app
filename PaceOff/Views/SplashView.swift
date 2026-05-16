@@ -16,8 +16,7 @@ struct SplashView: View {
 
     var body: some View {
         ZStack {
-            BrandPalette.heroGradient
-                .ignoresSafeArea()
+            AnimatedBlobsBackground()
 
             VStack(spacing: 18) {
                 // Replace with `Image("brand-mark")` once a custom mark exists.

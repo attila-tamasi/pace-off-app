@@ -97,6 +97,11 @@ struct TrendsView: View {
     }
 
     private func load() async {
+        // Paint from cache immediately so the charts aren't blank.
+        if let cached = await HealthDataCache.shared.load() {
+            self.vo2Max = cached.vo2Max
+            self.runs = cached.runs
+        }
         async let v = HealthKitService.shared.fetchVO2Max(daysBack: 90)
         async let r = HealthKitService.shared.fetchRuns(daysBack: 90)
         self.vo2Max = await v

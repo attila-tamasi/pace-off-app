@@ -19,6 +19,7 @@ struct ProfileView: View {
     @State private var isEditing = false
     @State private var legalDocument: LegalDocument?
     @State private var confirmingSignOut = false
+    @State private var prediction: GoalPrediction?
 
     var body: some View {
         ScrollView {
@@ -26,6 +27,7 @@ struct ProfileView: View {
                 header
                 goalCard
                 personalBestCard
+                if let prediction { predictionCard(prediction) }
                 accountCard
 
                 editProfileButton
@@ -41,6 +43,7 @@ struct ProfileView: View {
             }
             .padding(20)
         }
+        .task(id: profileStore.profile?.goal) { await refreshPrediction() }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
@@ -168,6 +171,84 @@ struct ProfileView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Goal projection
+
+    private func predictionCard(_ prediction: GoalPrediction) -> some View {
+        card {
+            VStack(alignment: .leading, spacing: 12) {
+                cardLabel("PROJECTED · \(prediction.goal.shortName)",
+                          systemImage: "wand.and.stars")
+
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(prediction.formattedProjectedTime)
+                        .font(.system(size: 36, weight: .bold, design: .rounded))
+                        .contentTransition(.numericText())
+                    Text(prediction.formattedProjectedPace)
+                        .font(.system(.subheadline, design: .rounded, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+
+                if let gap = prediction.formattedGapToPersonalBest {
+                    HStack(spacing: 6) {
+                        Image(systemName: prediction.gapToPersonalBestSeconds ?? 0 < 0
+                              ? "arrow.down.forward"
+                              : "arrow.up.forward")
+                            .font(.system(.caption, weight: .semibold))
+                        Text(gap)
+                            .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                    }
+                    .foregroundStyle(prediction.gapToPersonalBestSeconds ?? 0 < 0 ? .green : .orange)
+                }
+
+                if let ageGraded = prediction.formattedAgeGradedEquivalent {
+                    Text("Age-graded: \(ageGraded) (open equivalent)")
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack(spacing: 6) {
+                    Image(systemName: "info.circle")
+                        .font(.system(.caption2, weight: .semibold))
+                        .foregroundStyle(.tertiary)
+                    Text(predictionBasisDescription(prediction.basis))
+                        .font(.system(.caption2, design: .rounded))
+                        .foregroundStyle(.tertiary)
+                    Spacer(minLength: 0)
+                    Text("Conf: \(prediction.confidence.displayName)")
+                        .font(.system(.caption2, design: .rounded, weight: .semibold))
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.top, 2)
+            }
+        }
+    }
+
+    private func predictionBasisDescription(_ basis: GoalPrediction.Basis) -> String {
+        switch basis {
+        case .recentRun(let distance, _):
+            let km = String(format: "%.1f", distance / 1000)
+            return "Riegel from a recent \(km) km run."
+        case .personalBestExtrapolation:
+            return "Based on your personal best."
+        }
+    }
+
+    private func refreshPrediction() async {
+        guard let profile = profileStore.profile else {
+            prediction = nil
+            return
+        }
+        let snapshot = await HealthDataCache.shared.load()
+        let runs = snapshot?.runs ?? []
+        let age = profile.age() ?? snapshot?.userAge
+        prediction = GoalPredictionService().predict(
+            goal: profile.goal,
+            runs: runs,
+            age: age,
+            personalBest: profile.personalBest
+        )
     }
 
     // MARK: - Account

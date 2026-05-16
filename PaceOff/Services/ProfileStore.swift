@@ -122,6 +122,8 @@ public final class ProfileStore: ObservableObject {
         defaults?.removeObject(forKey: AppGroup.Keys.userProfile)
         defaults?.set(false, forKey: AppGroup.Keys.authComplete)
         defaults?.set(false, forKey: AppGroup.Keys.onboardingComplete)
+        // Drop the on-disk Health snapshot too — it's keyed to this user.
+        Task { await HealthDataCache.shared.clear() }
         NotificationCenter.default.post(name: .paceOffSignOut, object: nil)
     }
 

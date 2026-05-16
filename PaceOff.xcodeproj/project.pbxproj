@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		025D334D3521CD59D588F3C6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3775666DE353724E74AC3428 /* Assets.xcassets */; };
+		028ECB6B514692128DF88BEF /* GoalPredictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A52AE8AB7F745113C8CEAA1B /* GoalPredictionService.swift */; };
 		05198CE9E2F4B2EC20E5A128 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 89F34D18B0856E30B0FC3C66 /* Assets.xcassets */; };
 		054C9D4ABE2FF5D749B72468 /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E54D917FE4AF4A958C7514C /* Tone.swift */; };
 		0D2030447FE0FC10DACBED56 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CADA1657036D930B2CE2B499 /* UserProfile.swift */; };
@@ -28,6 +29,7 @@
 		555A1A9BEB4E2E136C3C16D4 /* VO2MaxDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A794349DA4F2399A6CE691 /* VO2MaxDetailView.swift */; };
 		56D563EA16649F0E450A8D0D /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C4C9290B00C1660BE65BDB /* AppGroup.swift */; };
 		581E8B473CBAFE73FF8A38B1 /* AppleIntelligenceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EFBD02A6FEE9098969290F2 /* AppleIntelligenceCopy.swift */; };
+		5BFEA80B093F570336B9A77B /* GoalPredictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A52AE8AB7F745113C8CEAA1B /* GoalPredictionService.swift */; };
 		5D15127CC4FE3B59AC73E83F /* RunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = F219E095BD73A1C339F5D8D4 /* RunRecord.swift */; };
 		5D15621F6A618B2B98422611 /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */; };
 		5F028CA1451E601AEE019801 /* BackgroundRefreshService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733C2FC37577B3FD0C44A279 /* BackgroundRefreshService.swift */; };
@@ -39,7 +41,9 @@
 		825A9BB2C1466DBE6B3C79DD /* ProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D0C777B85BAAE471DAC4EDD /* ProfileEditView.swift */; };
 		831429E77DAF4D658D1B077A /* PaceOffWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFEF73BA3FEC56768FD8B67A /* PaceOffWatchApp.swift */; };
 		8365B24A66E0C6048CCD1BCD /* VoiceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */; };
+		83B1831AFCAB3E5AF4C4FB0D /* AnimatedBlobsBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F665489F710F5089E4D63F /* AnimatedBlobsBackground.swift */; };
 		8635BD77DDF7D83B44FBAD3C /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */; };
+		8B3ED6DCC25EA0E43E6CB335 /* HealthDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B8DCC13B665D6EEEA4E6DD3 /* HealthDataCache.swift */; };
 		8D820987E8CC3C6ED6950F20 /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */; };
 		8DB1AF3961252E3C9D7ECB09 /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */; };
 		904388AD338E0B085DD048E3 /* PaceOffWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F8862D2A1BFD5B06A75E4B9A /* PaceOffWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -47,6 +51,8 @@
 		A0A5A5763F2703C2DF4C5196 /* BrandHero.swift in Sources */ = {isa = PBXBuildFile; fileRef = E96A6583E9A382E6662FD125 /* BrandHero.swift */; };
 		A9B8A0E3AABB46843585D58F /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A08A6962C58940E4BEA4FAA /* RootView.swift */; };
 		AB78570747668D2D0FFD95AD /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */; };
+		AD0BA6DD2FFE05F206D4FA9C /* HealthDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B8DCC13B665D6EEEA4E6DD3 /* HealthDataCache.swift */; };
+		AF3DA58A6F4EC0DB4A26DABD /* GoalPredictionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528624AB5848F014A52C9377 /* GoalPredictionServiceTests.swift */; };
 		AFF783DAD8B26413E5686038 /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */; };
 		B2FF357DD79EB6CE91504C87 /* RunningWorkoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DA17254B002079243BAFA67 /* RunningWorkoutView.swift */; };
 		B346B8F61CB56BDD18693999 /* TodayViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F97B13269E854F7B2634E474 /* TodayViewModel.swift */; };
@@ -56,14 +62,17 @@
 		B6970A51274EBC7F39084A3C /* HealthKitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8BCA23E5158FE3AEC620739 /* HealthKitService.swift */; };
 		BA3605889173D2970209D36C /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E286506F8987C266805E12B /* ProfileView.swift */; };
 		BA5556FDE1BA4509A9C22F46 /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */; };
+		BBE9559F7C831921CC02837B /* HealthDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B8DCC13B665D6EEEA4E6DD3 /* HealthDataCache.swift */; };
 		BD9703C0E37574E7EC553A62 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CADA1657036D930B2CE2B499 /* UserProfile.swift */; };
 		C2C642EC750AF4FB8E72FAF3 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CADA1657036D930B2CE2B499 /* UserProfile.swift */; };
+		C2D5A59DA15015F47056BAA2 /* GoalPredictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A52AE8AB7F745113C8CEAA1B /* GoalPredictionService.swift */; };
 		C332D74075CE482A6AFA74FB /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F47BFB366DAAE0F746AC95 /* OnboardingView.swift */; };
 		C937A79D0B985D6A9445569F /* RunTarget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41FAD3317ACDC75A0999F6D8 /* RunTarget.swift */; };
 		CFB94A4D520F0F98855508CB /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA046C6B717C42A9364908A0 /* HistoryView.swift */; };
 		D09508FE79702E88CF82D023 /* RunDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07F1705BBFDFFE669162F99A /* RunDetailView.swift */; };
 		D5BA6108703C8529C9C2065E /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E54D917FE4AF4A958C7514C /* Tone.swift */; };
 		D63BD795058777FC7F7B75F6 /* ProfileSetupSheetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B842AE2B2B48C0BCA01DBBB3 /* ProfileSetupSheetView.swift */; };
+		D83F568BACC262FE27380471 /* HealthDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B8DCC13B665D6EEEA4E6DD3 /* HealthDataCache.swift */; };
 		D8FA2EFCE6D1183D38BB41FF /* VoiceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */; };
 		DB90626366A8FB5E24001DC4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4EBAFF615D9E50FEF69F19F9 /* Assets.xcassets */; };
 		DBA888F222750EDCB41BF41C /* WorkoutSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD3B1181C9187C3458D13CA /* WorkoutSessionManager.swift */; };
@@ -71,8 +80,10 @@
 		DF3E2F4588DDD37521C786C9 /* AppleSignInService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28B2707B22E9FF547E90D53F /* AppleSignInService.swift */; };
 		E161C700BA77B375E3718CC9 /* LegalLinksFooter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71D681E72E9D55BFB0D8C23A /* LegalLinksFooter.swift */; };
 		E17EE97739548ED134625CF7 /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 999E35D73CD309486FA6484E /* SplashView.swift */; };
+		E44AAC2C30197D06647E0C1B /* GoalPredictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A52AE8AB7F745113C8CEAA1B /* GoalPredictionService.swift */; };
 		ECCD1C6A1852C9AEBBC18271 /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C4C9290B00C1660BE65BDB /* AppGroup.swift */; };
 		EF487B004A27730CB84F52ED /* PostRunView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814E50257DAA44B51E8A7704 /* PostRunView.swift */; };
+		F1C3F7BFA40B08455CD9842B /* HealthDataCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC2EFED0A8A82FC128DFCAEB /* HealthDataCacheTests.swift */; };
 		F42A016DDCE9D0557C0510F8 /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CFA64AEB615429033822E3D /* NotificationScheduler.swift */; };
 		F74CDC7FAE8CD24A90AAEC26 /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E54D917FE4AF4A958C7514C /* Tone.swift */; };
 		F829136F9049E53FF3BCDEBC /* PreviewSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FB560BB0D76587E4A9B6B0B /* PreviewSupport.swift */; };
@@ -132,6 +143,7 @@
 /* Begin PBXFileReference section */
 		07F1705BBFDFFE669162F99A /* RunDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunDetailView.swift; sourceTree = "<group>"; };
 		0D7EEA2FE27D3E90FA1ADCDE /* PaceOffWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffWidgetBundle.swift; sourceTree = "<group>"; };
+		1B8DCC13B665D6EEEA4E6DD3 /* HealthDataCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthDataCache.swift; sourceTree = "<group>"; };
 		1FB560BB0D76587E4A9B6B0B /* PreviewSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewSupport.swift; sourceTree = "<group>"; };
 		28B2707B22E9FF547E90D53F /* AppleSignInService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInService.swift; sourceTree = "<group>"; };
 		2E286506F8987C266805E12B /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
@@ -142,6 +154,7 @@
 		41FAD3317ACDC75A0999F6D8 /* RunTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunTarget.swift; sourceTree = "<group>"; };
 		4EBAFF615D9E50FEF69F19F9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4FB629335A23776D013B7EDE /* ProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStore.swift; sourceTree = "<group>"; };
+		528624AB5848F014A52C9377 /* GoalPredictionServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalPredictionServiceTests.swift; sourceTree = "<group>"; };
 		5EFBD02A6FEE9098969290F2 /* AppleIntelligenceCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleIntelligenceCopy.swift; sourceTree = "<group>"; };
 		6098A8585092DC798A6ADC0A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		62929CE88A3549DB529E3FEE /* PushTargetEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushTargetEngineTests.swift; sourceTree = "<group>"; };
@@ -157,11 +170,12 @@
 		8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VO2MaxSnapshot.swift; sourceTree = "<group>"; };
 		8DA17254B002079243BAFA67 /* RunningWorkoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningWorkoutView.swift; sourceTree = "<group>"; };
 		8E54D917FE4AF4A958C7514C /* Tone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tone.swift; sourceTree = "<group>"; };
-		92BAA40520A45D39B9D4C53F /* PaceOff.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PaceOff.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		92BAA40520A45D39B9D4C53F /* PaceOff.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = PaceOff.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		999E35D73CD309486FA6484E /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		9A08A6962C58940E4BEA4FAA /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		9EC37486993AB6E5BF014496 /* BrandPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandPalette.swift; sourceTree = "<group>"; };
 		A2E8AEAFE18A69ACE7A052C9 /* PaceOffWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffWidget.swift; sourceTree = "<group>"; };
+		A52AE8AB7F745113C8CEAA1B /* GoalPredictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalPredictionService.swift; sourceTree = "<group>"; };
 		A8BCA23E5158FE3AEC620739 /* HealthKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitService.swift; sourceTree = "<group>"; };
 		ABB6D659BA61C433C6FB057B /* PaceOffWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PaceOffWatch.entitlements; sourceTree = "<group>"; };
 		AC5A84D92A1788CC423AA72E /* PaceOffWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PaceOffWidget.entitlements; sourceTree = "<group>"; };
@@ -170,7 +184,9 @@
 		B842AE2B2B48C0BCA01DBBB3 /* ProfileSetupSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSetupSheetView.swift; sourceTree = "<group>"; };
 		C30725DFD06CF73D19656E7B /* WatchTodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTodayView.swift; sourceTree = "<group>"; };
 		C6F47BFB366DAAE0F746AC95 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		C6F665489F710F5089E4D63F /* AnimatedBlobsBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedBlobsBackground.swift; sourceTree = "<group>"; };
 		CADA1657036D930B2CE2B499 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
+		CC2EFED0A8A82FC128DFCAEB /* HealthDataCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthDataCacheTests.swift; sourceTree = "<group>"; };
 		CCD3B1181C9187C3458D13CA /* WorkoutSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionManager.swift; sourceTree = "<group>"; };
 		D1C4C9290B00C1660BE65BDB /* AppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroup.swift; sourceTree = "<group>"; };
 		DAE697DCC22952A70B86B261 /* TrendsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendsView.swift; sourceTree = "<group>"; };
@@ -181,7 +197,7 @@
 		EFEF73BA3FEC56768FD8B67A /* PaceOffWatchApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffWatchApp.swift; sourceTree = "<group>"; };
 		F0B325D3C19C13ACF0D5D593 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F219E095BD73A1C339F5D8D4 /* RunRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunRecord.swift; sourceTree = "<group>"; };
-		F8862D2A1BFD5B06A75E4B9A /* PaceOffWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PaceOffWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F8862D2A1BFD5B06A75E4B9A /* PaceOffWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = PaceOffWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F97B13269E854F7B2634E474 /* TodayViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayViewModel.swift; sourceTree = "<group>"; };
 		F9A794349DA4F2399A6CE691 /* VO2MaxDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VO2MaxDetailView.swift; sourceTree = "<group>"; };
 		FA046C6B717C42A9364908A0 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
@@ -215,6 +231,8 @@
 			isa = PBXGroup;
 			children = (
 				D1C4C9290B00C1660BE65BDB /* AppGroup.swift */,
+				A52AE8AB7F745113C8CEAA1B /* GoalPredictionService.swift */,
+				1B8DCC13B665D6EEEA4E6DD3 /* HealthDataCache.swift */,
 				B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */,
 				F219E095BD73A1C339F5D8D4 /* RunRecord.swift */,
 				41FAD3317ACDC75A0999F6D8 /* RunTarget.swift */,
@@ -229,6 +247,8 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				528624AB5848F014A52C9377 /* GoalPredictionServiceTests.swift */,
+				CC2EFED0A8A82FC128DFCAEB /* HealthDataCacheTests.swift */,
 				62929CE88A3549DB529E3FEE /* PushTargetEngineTests.swift */,
 			);
 			path = PaceOffTests;
@@ -332,6 +352,7 @@
 		ABA65778295BD1DDD6652D74 /* Design */ = {
 			isa = PBXGroup;
 			children = (
+				C6F665489F710F5089E4D63F /* AnimatedBlobsBackground.swift */,
 				E96A6583E9A382E6662FD125 /* BrandHero.swift */,
 				9EC37486993AB6E5BF014496 /* BrandPalette.swift */,
 			);
@@ -457,8 +478,17 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					7D2119F7C7289F5FA2742D92 = {
+						DevelopmentTeam = 795P7M623R;
+					};
+					A2A2BE8A24028AD7932A0E7F = {
+						DevelopmentTeam = 795P7M623R;
+					};
 					BFBA7F107BC6B6C0E1995419 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 795P7M623R;
+					};
+					FAB7089E848DDC691970C025 = {
+						DevelopmentTeam = 795P7M623R;
 					};
 				};
 			};
@@ -518,6 +548,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				ECCD1C6A1852C9AEBBC18271 /* AppGroup.swift in Sources */,
+				5BFEA80B093F570336B9A77B /* GoalPredictionService.swift in Sources */,
+				AF3DA58A6F4EC0DB4A26DABD /* GoalPredictionServiceTests.swift in Sources */,
+				BBE9559F7C831921CC02837B /* HealthDataCache.swift in Sources */,
+				F1C3F7BFA40B08455CD9842B /* HealthDataCacheTests.swift in Sources */,
 				AB78570747668D2D0FFD95AD /* PushTargetEngine.swift in Sources */,
 				69AFA428DC7571D79F144E60 /* PushTargetEngineTests.swift in Sources */,
 				FA615BE7BE7EE44E6C750C1B /* RunRecord.swift in Sources */,
@@ -534,6 +568,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				6B96BE52BDE6ADA37714CF72 /* AppGroup.swift in Sources */,
+				C2D5A59DA15015F47056BAA2 /* GoalPredictionService.swift in Sources */,
+				8B3ED6DCC25EA0E43E6CB335 /* HealthDataCache.swift in Sources */,
 				41CC25C427F34329011D4E74 /* PaceOffWidget.swift in Sources */,
 				25015CBC6D64D8F4C0968487 /* PaceOffWidgetBundle.swift in Sources */,
 				8DB1AF3961252E3C9D7ECB09 /* PushTargetEngine.swift in Sources */,
@@ -551,6 +587,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				1D22E916159F440DDF80BD52 /* AppGroup.swift in Sources */,
+				E44AAC2C30197D06647E0C1B /* GoalPredictionService.swift in Sources */,
+				AD0BA6DD2FFE05F206D4FA9C /* HealthDataCache.swift in Sources */,
 				831429E77DAF4D658D1B077A /* PaceOffWatchApp.swift in Sources */,
 				EF487B004A27730CB84F52ED /* PostRunView.swift in Sources */,
 				10FD6FF06B176AD8F3668CF9 /* PushTargetEngine.swift in Sources */,
@@ -570,6 +608,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				83B1831AFCAB3E5AF4C4FB0D /* AnimatedBlobsBackground.swift in Sources */,
 				56D563EA16649F0E450A8D0D /* AppGroup.swift in Sources */,
 				581E8B473CBAFE73FF8A38B1 /* AppleIntelligenceCopy.swift in Sources */,
 				DF3E2F4588DDD37521C786C9 /* AppleSignInService.swift in Sources */,
@@ -577,6 +616,8 @@
 				5F028CA1451E601AEE019801 /* BackgroundRefreshService.swift in Sources */,
 				A0A5A5763F2703C2DF4C5196 /* BrandHero.swift in Sources */,
 				29E5782772B7C0C5877D4F52 /* BrandPalette.swift in Sources */,
+				028ECB6B514692128DF88BEF /* GoalPredictionService.swift in Sources */,
+				D83F568BACC262FE27380471 /* HealthDataCache.swift in Sources */,
 				B6970A51274EBC7F39084A3C /* HealthKitService.swift in Sources */,
 				CFB94A4D520F0F98855508CB /* HistoryView.swift in Sources */,
 				E161C700BA77B375E3718CC9 /* LegalLinksFooter.swift in Sources */,
@@ -663,7 +704,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 795P7M623R;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -694,7 +735,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "PaceOffWatch Watch App/PaceOffWatch.entitlements";
-				DEVELOPMENT_TEAM = 795P7M623R;
 				INFOPLIST_FILE = "PaceOffWatch Watch App/Info.plist";
 				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.watchkitapp;
 				SDKROOT = watchos;
@@ -740,7 +780,7 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 795P7M623R;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -814,7 +854,6 @@
 				CODE_SIGN_ENTITLEMENTS = PaceOff/PaceOff.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_ASSET_PATHS = "\"PaceOff/Preview Content\"";
-				DEVELOPMENT_TEAM = 795P7M623R;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = PaceOff/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -833,7 +872,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = PaceOffWidget/PaceOffWidget.entitlements;
-				DEVELOPMENT_TEAM = 795P7M623R;
 				INFOPLIST_FILE = PaceOffWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -855,7 +893,6 @@
 				CODE_SIGN_ENTITLEMENTS = PaceOff/PaceOff.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_ASSET_PATHS = "\"PaceOff/Preview Content\"";
-				DEVELOPMENT_TEAM = 795P7M623R;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = PaceOff/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -874,7 +911,6 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = PaceOffWidget/PaceOffWidget.entitlements;
-				DEVELOPMENT_TEAM = 795P7M623R;
 				INFOPLIST_FILE = PaceOffWidget/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -894,7 +930,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "PaceOffWatch Watch App/PaceOffWatch.entitlements";
-				DEVELOPMENT_TEAM = 795P7M623R;
 				INFOPLIST_FILE = "PaceOffWatch Watch App/Info.plist";
 				PRODUCT_BUNDLE_IDENTIFIER = com.paceoff.app.watchkitapp;
 				SDKROOT = watchos;
