@@ -39,6 +39,7 @@
 		825A9BB2C1466DBE6B3C79DD /* ProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D0C777B85BAAE471DAC4EDD /* ProfileEditView.swift */; };
 		831429E77DAF4D658D1B077A /* PaceOffWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFEF73BA3FEC56768FD8B67A /* PaceOffWatchApp.swift */; };
 		8365B24A66E0C6048CCD1BCD /* VoiceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */; };
+		83B1831AFCAB3E5AF4C4FB0D /* AnimatedBlobsBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6F665489F710F5089E4D63F /* AnimatedBlobsBackground.swift */; };
 		8635BD77DDF7D83B44FBAD3C /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */; };
 		8D820987E8CC3C6ED6950F20 /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */; };
 		8DB1AF3961252E3C9D7ECB09 /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */; };
@@ -170,6 +171,7 @@
 		B842AE2B2B48C0BCA01DBBB3 /* ProfileSetupSheetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSetupSheetView.swift; sourceTree = "<group>"; };
 		C30725DFD06CF73D19656E7B /* WatchTodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchTodayView.swift; sourceTree = "<group>"; };
 		C6F47BFB366DAAE0F746AC95 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		C6F665489F710F5089E4D63F /* AnimatedBlobsBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedBlobsBackground.swift; sourceTree = "<group>"; };
 		CADA1657036D930B2CE2B499 /* UserProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfile.swift; sourceTree = "<group>"; };
 		CCD3B1181C9187C3458D13CA /* WorkoutSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSessionManager.swift; sourceTree = "<group>"; };
 		D1C4C9290B00C1660BE65BDB /* AppGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroup.swift; sourceTree = "<group>"; };
@@ -332,6 +334,7 @@
 		ABA65778295BD1DDD6652D74 /* Design */ = {
 			isa = PBXGroup;
 			children = (
+				C6F665489F710F5089E4D63F /* AnimatedBlobsBackground.swift */,
 				E96A6583E9A382E6662FD125 /* BrandHero.swift */,
 				9EC37486993AB6E5BF014496 /* BrandPalette.swift */,
 			);
@@ -570,6 +573,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				83B1831AFCAB3E5AF4C4FB0D /* AnimatedBlobsBackground.swift in Sources */,
 				56D563EA16649F0E450A8D0D /* AppGroup.swift in Sources */,
 				581E8B473CBAFE73FF8A38B1 /* AppleIntelligenceCopy.swift in Sources */,
 				DF3E2F4588DDD37521C786C9 /* AppleSignInService.swift in Sources */,
