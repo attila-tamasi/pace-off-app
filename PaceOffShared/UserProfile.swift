@@ -91,6 +91,10 @@ public struct UserProfile: Codable, Sendable, Equatable {
     public var goal: RunningGoal
     /// Personal best for the `goal` distance. Nil if the user hasn't run it yet.
     public var personalBest: PersonalBest?
+    /// Optional race-day deadline for the goal. When set, the prediction
+    /// service projects a realistic training-improvement curve up to this
+    /// date; without it, the projection is purely "what could you run today".
+    public var goalDate: Date?
     /// Stable Sign in with Apple user identifier. Nil if the user skipped sign-in.
     public var appleUserID: String?
     /// Whether a profile photo JPEG exists in the App Group container.
@@ -101,6 +105,7 @@ public struct UserProfile: Codable, Sendable, Equatable {
         birthday: Date? = nil,
         goal: RunningGoal = .tenK,
         personalBest: PersonalBest? = nil,
+        goalDate: Date? = nil,
         appleUserID: String? = nil,
         hasPhoto: Bool = false
     ) {
@@ -108,8 +113,17 @@ public struct UserProfile: Codable, Sendable, Equatable {
         self.birthday = birthday
         self.goal = goal
         self.personalBest = personalBest
+        self.goalDate = goalDate
         self.appleUserID = appleUserID
         self.hasPhoto = hasPhoto
+    }
+
+    /// Codable plumbing — keep `goalDate` optional on decode so profiles
+    /// written before this field existed deserialize cleanly (the JSON
+    /// decoder skips missing optional keys, but only if we don't define a
+    /// custom init(from:); we don't, so this comment is the contract).
+    private enum CodingKeys: String, CodingKey {
+        case displayName, birthday, goal, personalBest, goalDate, appleUserID, hasPhoto
     }
 
     /// Age in whole years derived from `birthday`, or nil if no birthday set.

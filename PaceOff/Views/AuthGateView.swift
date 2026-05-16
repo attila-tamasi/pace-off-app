@@ -10,7 +10,7 @@ struct AuthGateView: View {
 
     let onAuthenticated: () -> Void
 
-    @EnvironmentObject private var appleSignIn: AppleSignInService
+    @Environment(AppleSignInService.self) private var appleSignIn
 
     @State private var errorMessage: String?
 
@@ -67,5 +67,5 @@ struct AuthGateView: View {
 
 #Preview {
     AuthGateView(onAuthenticated: {})
-        .environmentObject(AppleSignInService.shared)
+        .environment(AppleSignInService.shared)
 }

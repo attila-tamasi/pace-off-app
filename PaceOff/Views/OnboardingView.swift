@@ -10,8 +10,8 @@ struct OnboardingView: View {
 
     let onComplete: () -> Void
 
-    @EnvironmentObject private var health: HealthKitService
-    @EnvironmentObject private var notifications: NotificationScheduler
+    @Environment(HealthKitService.self) private var health
+    @Environment(NotificationScheduler.self) private var notifications
 
     @State private var page = 0
 
@@ -101,6 +101,6 @@ struct OnboardingView: View {
 
 #Preview("Onboarding") {
     OnboardingView(onComplete: {})
-        .environmentObject(HealthKitService.shared)
-        .environmentObject(NotificationScheduler.shared)
+        .environment(HealthKitService.shared)
+        .environment(NotificationScheduler.shared)
 }

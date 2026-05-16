@@ -215,7 +215,9 @@
 		0AACCF2E51B871D7096A57CA /* PaceOff */ = {
 			isa = PBXGroup;
 			children = (
+				A8D1F511A68D08A6C8CDF019 /* Models */,
 				4D38C34FBD6BAA6AE56446F7 /* Preview Content */,
+				689D65FC4D07BA2EB6A44075 /* Resources */,
 				20A1D8614B0C28D9D51ABD4D /* Services */,
 				E4E6B4032215626814ADDC8C /* ViewModels */,
 				7EEACE0D6218931943423686 /* Views */,
@@ -257,6 +259,7 @@
 		1F1278B4CF7FB36126749BB5 /* PaceOffWidget */ = {
 			isa = PBXGroup;
 			children = (
+				310F400FCDB9C97C8B925691 /* Resources */,
 				89F34D18B0856E30B0FC3C66 /* Assets.xcassets */,
 				6098A8585092DC798A6ADC0A /* Info.plist */,
 				AC5A84D92A1788CC423AA72E /* PaceOffWidget.entitlements */,
@@ -296,6 +299,13 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		310F400FCDB9C97C8B925691 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		4D38C34FBD6BAA6AE56446F7 /* Preview Content */ = {
 			isa = PBXGroup;
 			children = (
@@ -314,6 +324,13 @@
 				1F1278B4CF7FB36126749BB5 /* PaceOffWidget */,
 				745674A9773A8FA748834BAB /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		689D65FC4D07BA2EB6A44075 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		745674A9773A8FA748834BAB /* Products */ = {
@@ -349,6 +366,20 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		8E8CAA9AEFB0EFFB30AC58A7 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		A8D1F511A68D08A6C8CDF019 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
 		ABA65778295BD1DDD6652D74 /* Design */ = {
 			isa = PBXGroup;
 			children = (
@@ -372,6 +403,7 @@
 		DEF4FB3FE9C39FC0F7C8C73F /* PaceOffWatch Watch App */ = {
 			isa = PBXGroup;
 			children = (
+				8E8CAA9AEFB0EFFB30AC58A7 /* Resources */,
 				30910B409EDD279C4A378D04 /* Services */,
 				D90DD211C302F200655BFF21 /* Views */,
 				4EBAFF615D9E50FEF69F19F9 /* Assets.xcassets */,

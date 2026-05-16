@@ -7,11 +7,14 @@ import SwiftUI
 @main
 struct PaceOffApp: App {
 
-    @StateObject private var health = HealthKitService.shared
-    @StateObject private var notifications = NotificationScheduler.shared
-    @StateObject private var todayVM = TodayViewModel()
-    @StateObject private var profileStore = ProfileStore.shared
-    @StateObject private var appleSignIn = AppleSignInService.shared
+    // @Observable types — owned by the App via @State so SwiftUI keeps them
+    // alive for the scene's lifetime. Injected into the environment by type
+    // and read in child views with @Environment(MyType.self).
+    @State private var health = HealthKitService.shared
+    @State private var notifications = NotificationScheduler.shared
+    @State private var todayVM = TodayViewModel()
+    @State private var profileStore = ProfileStore.shared
+    @State private var appleSignIn = AppleSignInService.shared
 
     @AppStorage(AppGroup.Keys.authComplete, store: AppGroup.sharedDefaults)
     private var authComplete: Bool = false
@@ -39,11 +42,11 @@ struct PaceOffApp: App {
     var body: some Scene {
         WindowGroup {
             content
-                .environmentObject(health)
-                .environmentObject(notifications)
-                .environmentObject(todayVM)
-                .environmentObject(profileStore)
-                .environmentObject(appleSignIn)
+                .environment(health)
+                .environment(notifications)
+                .environment(todayVM)
+                .environment(profileStore)
+                .environment(appleSignIn)
                 .preferredColorScheme(.none)
                 .tint(.accentColor)
                 .animation(.easeInOut(duration: 0.35), value: stage)

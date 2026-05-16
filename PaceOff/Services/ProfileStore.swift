@@ -7,17 +7,19 @@
 import Foundation
 import SwiftUI
 import UIKit
+import Observation
 
 @MainActor
-public final class ProfileStore: ObservableObject {
+@Observable
+public final class ProfileStore {
 
     public static let shared = ProfileStore()
 
     /// The current profile. `nil` until the user completes onboarding.
-    @Published public private(set) var profile: UserProfile?
+    public private(set) var profile: UserProfile?
 
     /// Decoded profile photo, loaded lazily from the App Group container.
-    @Published public private(set) var photo: UIImage?
+    public private(set) var photo: UIImage?
 
     private var defaults: UserDefaults? { AppGroup.sharedDefaults }
 
@@ -145,7 +147,7 @@ public final class ProfileStore: ObservableObject {
 
     #if DEBUG
     /// Force the store into a specific state for SwiftUI previews. Bypasses
-    /// disk and UserDefaults — only the in-memory `@Published` properties are
+    /// disk and UserDefaults — only the in-memory observed properties are
     /// touched, so previews never pollute real user data.
     func previewLoad(profile: UserProfile?, photo: UIImage?) {
         self.profile = profile

@@ -4,29 +4,31 @@
 import Foundation
 import SwiftUI
 import CoreLocation
+import Observation
 
 @MainActor
-public final class TodayViewModel: ObservableObject {
+@Observable
+public final class TodayViewModel {
 
-    @Published public private(set) var target: RunTarget?
-    @Published public private(set) var voiceLine: String = "Sync with Apple Health to compute your push."
-    @Published public private(set) var notificationLine: String = ""
-    @Published public private(set) var yesterday: RunRecord?
-    @Published public private(set) var todayRun: RunRecord?
-    @Published public private(set) var currentVO2Max: Double?
-    @Published public private(set) var currentStreak: Int = 0
-    @Published public private(set) var userAge: Int?
-    @Published public private(set) var todayRouteCoordinates: [CLLocationCoordinate2D] = []
-    @Published public private(set) var isRefreshing: Bool = false
+    public private(set) var target: RunTarget?
+    public private(set) var voiceLine: String = "Sync with Apple Health to compute your push."
+    public private(set) var notificationLine: String = ""
+    public private(set) var yesterday: RunRecord?
+    public private(set) var todayRun: RunRecord?
+    public private(set) var currentVO2Max: Double?
+    public private(set) var currentStreak: Int = 0
+    public private(set) var userAge: Int?
+    public private(set) var todayRouteCoordinates: [CLLocationCoordinate2D] = []
+    public private(set) var isRefreshing: Bool = false
 
     // Yesterday's recovery snapshot — surfaced as the morning check-in card
     // at the top of the Today screen.
-    @Published public private(set) var yesterdayHRV: Double?
-    @Published public private(set) var yesterdayAvgHeartRate: Double?
-    @Published public private(set) var latestRestingHeartRate: Double?
+    public private(set) var yesterdayHRV: Double?
+    public private(set) var yesterdayAvgHeartRate: Double?
+    public private(set) var latestRestingHeartRate: Double?
 
-    private let engine = PushTargetEngine()
-    private let voice = VoiceCopy()
+    @ObservationIgnored private let engine = PushTargetEngine()
+    @ObservationIgnored private let voice = VoiceCopy()
 
     public init() {}
 

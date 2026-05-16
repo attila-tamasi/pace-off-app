@@ -5,7 +5,7 @@ import SwiftUI
 
 struct WatchTodayView: View {
 
-    @EnvironmentObject private var session: WorkoutSessionManager
+    @Environment(WorkoutSessionManager.self) private var session
 
     private var cachedTarget: RunTarget? {
         guard let data = AppGroup.sharedDefaults?.data(forKey: AppGroup.Keys.lastTodayTarget) else { return nil }
@@ -59,7 +59,7 @@ struct WatchTodayView: View {
 #Preview("Watch Today") {
     NavigationStack {
         WatchTodayView()
-            .environmentObject(WorkoutSessionManager())
+            .environment(WorkoutSessionManager())
     }
 }
 #endif

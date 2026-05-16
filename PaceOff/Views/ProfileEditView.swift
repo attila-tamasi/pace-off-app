@@ -9,7 +9,7 @@ import PhotosUI
 // MARK: - Edit sheet
 
 struct ProfileEditView: View {
-    @EnvironmentObject private var profileStore: ProfileStore
+    @Environment(ProfileStore.self) private var profileStore
     @Environment(\.dismiss) private var dismiss
 
     // Working copy — committed to the store only on "Save".
@@ -46,6 +46,10 @@ struct ProfileEditView: View {
                 Section("Goal") {
                     GoalGridPicker(selection: $draft.goal)
                         .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+                }
+
+                Section("Race Day") {
+                    GoalDatePicker(goalDate: $draft.goalDate)
                 }
 
                 Section("Personal Best") {
@@ -160,6 +164,47 @@ struct BirthdayPicker: View {
             .datePickerStyle(.compact)
             .onChange(of: date) { _, newDate in
                 birthday = newDate
+            }
+        }
+    }
+}
+
+/// Optional race-day deadline. Mirrors the BirthdayPicker pattern — toggle
+/// gates a graphical date picker so users without a fixed race can skip it.
+/// The minimum selectable date is today (you can't race in the past).
+struct GoalDatePicker: View {
+    @Binding var goalDate: Date?
+
+    @State private var isSet: Bool
+    @State private var date: Date
+
+    init(goalDate: Binding<Date?>) {
+        _goalDate = goalDate
+        _isSet = State(initialValue: goalDate.wrappedValue != nil)
+        _date = State(initialValue: goalDate.wrappedValue ?? Self.defaultDate)
+    }
+
+    private static var defaultDate: Date {
+        // Default to ~12 weeks out — a reasonable plan window for any of the
+        // four standard distances.
+        Calendar.current.date(byAdding: .weekOfYear, value: 12, to: Date()) ?? Date()
+    }
+
+    var body: some View {
+        Toggle("I have a race date", isOn: $isSet)
+            .onChange(of: isSet) { _, on in
+                goalDate = on ? date : nil
+            }
+        if isSet {
+            DatePicker(
+                "Race day",
+                selection: $date,
+                in: Date()...,
+                displayedComponents: .date
+            )
+            .datePickerStyle(.compact)
+            .onChange(of: date) { _, newDate in
+                goalDate = newDate
             }
         }
     }
@@ -289,7 +334,7 @@ struct PersonalBestEditor: View {
 #if DEBUG
 #Preview("Edit Profile sheet") {
     ProfileEditView(profile: .sample, photo: nil)
-        .environmentObject(PreviewProfileStore.populated)
+        .environment(PreviewProfileStore.populated)
 }
 
 #Preview("Photo picker — empty / set") {

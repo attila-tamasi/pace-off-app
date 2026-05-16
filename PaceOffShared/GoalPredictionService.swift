@@ -1,21 +1,36 @@
 // GoalPredictionService.swift
-// Pure-Swift, no I/O: given a user's recent run history, personal best, age,
-// and VO₂ max series, compute a projected finish time for their stated goal
-// distance, plus an age-graded equivalent and the gap to their PB.
+// Pure-Swift, no I/O: project a realistic finish time for the user's stated
+// goal, based on what they're actually capable of *today* — not a stale PB.
 //
-// Algorithms used:
-// 1. **Riegel's formula** for time-at-distance extrapolation:
-//      T₂ = T₁ × (D₂/D₁)^1.06
-//    Pete Riegel, "Athletic Records and Human Endurance" (1981). The exponent
-//    1.06 is the empirically calibrated endurance fade for distance running;
-//    it's been refined since (1.07 / 1.08 for marathon-and-up), but 1.06 is
-//    the canonical value used by RW, McMillan, and most calculators.
+// Why the rewrite (old behaviour was naïve):
+//   The old implementation picked whichever of {recent-run projection, PB}
+//   was *faster* and called it a day. A 10-year-old half-marathon PB beat a
+//   couple of recent slow training runs and was presented as "your projected
+//   time", which is obviously wrong for someone who's out of shape.
 //
-// 2. **WMA-style age-grading factors** (World Masters Athletics) for the
-//    "equivalent to an open performance of …" annotation. Factors below are
-//    a smoothed interpolation of the men's road-race table — accurate enough
-//    for a motivational projection (we are not a USATF certification tool).
-//    Source values cross-checked against runningahead.com's age-grade page.
+// New layered approach:
+//   1. **Base time — current fitness.** Riegel-extrapolate from the best
+//      qualifying run in the last 60 days. This is the strongest signal of
+//      what the user can do today.
+//   2. **Fallback when there are no recent runs:** use the PB but penalize
+//      it for age. We assume ~0.5%/yr fitness loss for the first 5 years,
+//      then ~1%/yr beyond. A 10-year-old PB therefore costs ~7.5%.
+//   3. **VO₂-max fitness adjustment.** If Apple Health says current VO₂ max
+//      has dropped meaningfully from the user's recent peak (>10%), apply a
+//      multiplier scaled by the ratio. Daniels' VDOT principle: race time
+//      scales roughly inversely with VO₂. Only applied when we're projecting
+//      from a PB (recent runs already encode current fitness).
+//   4. **Goal-date training improvement.** If the user has a future race
+//      date, allow a capped improvement: ~0.5%/week for the first 8 weeks,
+//      tapering to a hard 8% cap. This says "if you train consistently
+//      between now and your race, you can knock this much off".
+//   5. **Age grading & PB gap** are still produced as motivational annotations.
+//
+// Algorithms / references:
+//   • **Riegel's formula** for distance extrapolation: T₂ = T₁·(D₂/D₁)^1.06.
+//     Pete Riegel, "Athletic Records and Human Endurance" (1981).
+//   • **WMA-style age-grade factors** for the open-equivalent annotation.
+//   • **Daniels' VDOT** mapping for the VO₂-max adjustment (inverse scaling).
 //
 // Nothing in here touches HealthKit, ProfileStore, or any actor — the service
 // is a `Sendable` value type so the UI can call it inline or off-thread.
@@ -29,13 +44,14 @@ public struct GoalPrediction: Equatable, Sendable {
     public let goal: RunningGoal
 
     /// Predicted finishing time at `goal.distanceMeters`, in seconds.
+    /// Already includes every adjustment (fitness, age of PB, goal-date
+    /// training window). What the user sees in the hero card.
     public let projectedTimeSeconds: Double
 
     /// Implied average pace (seconds per km) for the projected time.
     public let projectedPaceSecPerKm: Double
 
-    /// What input the projection was anchored on. Lets the UI explain
-    /// "based on your 8 km run from last week" vs. "based on your PB".
+    /// What the projection was anchored on — drives the explanation footnote.
     public let basis: Basis
 
     /// How much input the service had to work with.
@@ -50,17 +66,34 @@ public struct GoalPrediction: Equatable, Sendable {
     /// Nil when PB is unknown or for a different distance.
     public let gapToPersonalBestSeconds: Double?
 
+    /// VO₂-max multiplier applied to the base time. `nil` when not enough
+    /// VO₂ history was provided, or when no significant decline was detected.
+    /// > 1.0 means the projection was slowed because current fitness is below
+    /// peak.
+    public let vo2FitnessMultiplier: Double?
+
+    /// Training-improvement multiplier applied because the user has a future
+    /// goal date. `nil` when no goal date is set. < 1.0 means the projection
+    /// was improved on the assumption of consistent training to race day.
+    public let trainingImprovementMultiplier: Double?
+
+    /// Goal date the projection was tuned for. Surfaced so the UI can show
+    /// "if you race on May 14, 2026" rather than just "today's projection".
+    public let goalDate: Date?
+
     public enum Basis: Equatable, Sendable {
         /// Riegel-projected from a recent training run.
         case recentRun(distanceMeters: Double, durationSeconds: Double)
-        /// Riegel-projected from the user's personal best at another distance.
-        case personalBestExtrapolation(fromDistanceMeters: Double, timeSeconds: Double)
+        /// Falling back to the PB because no recent runs are usable. The
+        /// associated value is the PB's age in whole years — drives the
+        /// "from a 10-year-old PB" caption.
+        case agedPersonalBest(yearsOld: Int)
     }
 
     public enum Confidence: Equatable, Sendable {
-        case high          // 5+ runs in 30d incl. one near goal distance
+        case high          // 5+ runs in 30d incl. one near goal distance, VO₂ data present
         case medium        // 3+ runs in 60d
-        case low           // 1–2 runs
+        case low           // 1–2 runs OR PB only and < 3 years old
         case insufficient  // no usable inputs
 
         public var displayName: String {
@@ -90,6 +123,26 @@ public struct GoalPredictionService: Sendable {
     /// Maximum age in trailing-days for runs we'll consider current.
     public static let sourceWindowDays: Int = 60
 
+    /// Per-year fitness decay applied to the PB when it's the only signal,
+    /// for years 1–5. ~0.5%/yr — gentle, reflects that even untrained
+    /// recreational runners hold a lot of base fitness.
+    public static let pbDecayPerYearEarly: Double = 0.005
+
+    /// Per-year decay beyond 5 years. ~1%/yr — steeper, reflecting more
+    /// material loss of base after a long detraining period.
+    public static let pbDecayPerYearLate: Double = 0.010
+
+    /// Threshold below which a VO₂-max drop counts as "out of shape". Smaller
+    /// fluctuations sit inside HealthKit's noise floor.
+    public static let vo2DeclineThreshold: Double = 0.10  // 10%
+
+    /// Weekly training-improvement allowance for the goal-date adjustment.
+    public static let trainingImprovementPerWeek: Double = 0.005  // 0.5%/wk
+
+    /// Hard cap on goal-date improvement, no matter how far away the race is.
+    /// You don't go from couch to a 10% PB in 14 weeks.
+    public static let trainingImprovementMaxFraction: Double = 0.08  // 8%
+
     // MARK: Main entry point
 
     /// Produce a `GoalPrediction` for the user's chosen goal. Returns `nil`
@@ -99,11 +152,14 @@ public struct GoalPredictionService: Sendable {
         runs: [RunRecord],
         age: Int?,
         personalBest: PersonalBest?,
+        vo2MaxHistory: [VO2MaxSnapshot] = [],
+        goalDate: Date? = nil,
         today: Date = Date()
     ) -> GoalPrediction? {
-        let candidates = candidateRuns(from: runs, today: today)
 
-        let bestRunProjection: (basis: GoalPrediction.Basis, seconds: Double)? = candidates
+        // ─── Step 1: pick the base time and basis ──────────────────────────
+        let candidates = candidateRuns(from: runs, today: today)
+        let recentBest: (basis: GoalPrediction.Basis, seconds: Double)? = candidates
             .compactMap { run -> (GoalPrediction.Basis, Double)? in
                 guard let seconds = riegel(fromDistanceMeters: run.distanceMeters,
                                            timeSeconds: run.durationSeconds,
@@ -117,53 +173,58 @@ public struct GoalPredictionService: Sendable {
             }
             .min(by: { $0.1 < $1.1 })
 
-        // PB projection — only if the PB is *for the chosen goal* it's a
-        // direct read; if it's for another distance Riegel-extrapolate.
-        // (UserProfile currently keys PB to the active goal, so the PB is
-        // always at goal.distanceMeters in practice — but we treat it
-        // defensively for forward compatibility.)
-        let pbProjection: (basis: GoalPrediction.Basis, seconds: Double)? = personalBest.map { pb in
-            let basis = GoalPrediction.Basis.personalBestExtrapolation(
-                fromDistanceMeters: goal.distanceMeters,
-                timeSeconds: pb.durationSeconds
-            )
-            return (basis, pb.durationSeconds)
+        let base: (basis: GoalPrediction.Basis, seconds: Double)?
+        let vo2Multiplier: Double?
+
+        if let recentBest {
+            // Recent runs trump everything — they already encode today's
+            // fitness, so no VO₂ correction is needed.
+            base = recentBest
+            vo2Multiplier = nil
+        } else if let pb = personalBest {
+            // No usable recent runs — fall back to the PB, but decay it for
+            // its age and (optionally) for current vs. peak VO₂ max.
+            let pbAge = pbAgeYears(pb: pb, today: today)
+            let decayed = pb.durationSeconds * pbDecayMultiplier(pbYearsOld: pbAge)
+            let vo2 = vo2DeclineMultiplier(history: vo2MaxHistory)
+            let basis = GoalPrediction.Basis.agedPersonalBest(yearsOld: pbAge)
+            base = (basis, decayed * vo2)
+            vo2Multiplier = (vo2 != 1.0) ? vo2 : nil
+        } else {
+            // Nothing to anchor on.
+            return nil
         }
 
-        // Pick whichever projection is faster (lower seconds) — that's the
-        // user's demonstrated ability. PB usually wins because race-day
-        // efforts outrun training paces, but a steady recent build that's
-        // surpassed an old PB should be allowed to.
-        let chosen: (basis: GoalPrediction.Basis, seconds: Double)?
-        switch (bestRunProjection, pbProjection) {
-        case let (.some(r), .some(p)):
-            chosen = r.seconds <= p.seconds ? r : p
-        case let (.some(r), .none):
-            chosen = r
-        case let (.none, .some(p)):
-            chosen = p
-        case (.none, .none):
-            chosen = nil
-        }
+        guard let base else { return nil }
 
-        guard let chosen else { return nil }
+        // ─── Step 2: optional training-improvement curve for goal date ────
+        let training = trainingImprovementMultiplier(goalDate: goalDate, today: today)
+        let trainingFactorForResult: Double? = (training != 1.0) ? training : nil
 
-        let pace = chosen.seconds / (goal.distanceMeters / 1000.0)
-        let confidence = computeConfidence(candidates: candidates, today: today, goal: goal)
-        let ageGraded = age.map { chosen.seconds * ageGradeFactor(age: $0) }
-        let gap: Double? = {
-            guard let pb = personalBest else { return nil }
-            return chosen.seconds - pb.durationSeconds
-        }()
+        let projectedTime = base.seconds * training
+        let pace = projectedTime / (goal.distanceMeters / 1000.0)
+
+        // ─── Step 3: assemble annotations ────────────────────────────────
+        let confidence = computeConfidence(
+            candidates: candidates,
+            personalBest: personalBest,
+            today: today,
+            goal: goal
+        )
+        let ageGraded = age.map { projectedTime * ageGradeFactor(age: $0) }
+        let gap: Double? = personalBest.map { projectedTime - $0.durationSeconds }
 
         return GoalPrediction(
             goal: goal,
-            projectedTimeSeconds: chosen.seconds,
+            projectedTimeSeconds: projectedTime,
             projectedPaceSecPerKm: pace,
-            basis: chosen.basis,
+            basis: base.basis,
             confidence: confidence,
             ageGradedEquivalentSeconds: ageGraded,
-            gapToPersonalBestSeconds: gap
+            gapToPersonalBestSeconds: gap,
+            vo2FitnessMultiplier: vo2Multiplier,
+            trainingImprovementMultiplier: trainingFactorForResult,
+            goalDate: goalDate
         )
     }
 
@@ -183,6 +244,64 @@ public struct GoalPredictionService: Sendable {
         return timeSeconds * pow(ratio, Self.riegelExponent)
     }
 
+    // MARK: - PB age decay
+
+    /// How old is the PB in whole years, clamped at zero.
+    private func pbAgeYears(pb: PersonalBest, today: Date) -> Int {
+        let currentYear = Calendar.current.component(.year, from: today)
+        return max(0, currentYear - pb.year)
+    }
+
+    /// Multiplier ≥ 1.0 representing accumulated fitness loss since the PB.
+    /// 0–5 yrs at 0.5%/yr, then 1%/yr. Public for testing.
+    public func pbDecayMultiplier(pbYearsOld: Int) -> Double {
+        var m = 1.0
+        for year in 0..<pbYearsOld {
+            m *= 1.0 + (year < 5 ? Self.pbDecayPerYearEarly : Self.pbDecayPerYearLate)
+        }
+        return m
+    }
+
+    // MARK: - VO₂ max fitness adjustment
+
+    /// If current VO₂ is meaningfully below the recent peak, return a
+    /// time-multiplier > 1.0 (slower projection). Otherwise 1.0.
+    /// We use the trailing 6-month max as the "peak" so a single spike
+    /// doesn't unfairly penalise the current reading.
+    public func vo2DeclineMultiplier(history: [VO2MaxSnapshot],
+                                     today: Date = Date()) -> Double {
+        guard history.count >= 3 else { return 1.0 }
+        let sorted = history.sorted { $0.date < $1.date }
+        guard let current = sorted.last?.value, current > 0 else { return 1.0 }
+
+        let sixMonthsAgo = Calendar.current.date(byAdding: .month, value: -6, to: today) ?? today
+        let recentWindow = sorted.filter { $0.date >= sixMonthsAgo }
+        guard let peak = recentWindow.map(\.value).max(), peak > current else { return 1.0 }
+
+        let declineFraction = (peak - current) / peak
+        guard declineFraction >= Self.vo2DeclineThreshold else { return 1.0 }
+
+        // Daniels-style inverse scaling: time ∝ peak / current.
+        // Apply only the *excess* beyond the noise threshold so the
+        // adjustment is gentle and proportionate.
+        let effective = max(current, peak * (1 - 0.30))  // cap at 30% decline
+        return peak / effective
+    }
+
+    // MARK: - Goal-date training improvement
+
+    /// Multiplier ≤ 1.0 reflecting consistent-training improvement up to
+    /// `goalDate`. Returns 1.0 (no improvement) when goal date is missing,
+    /// in the past, or zero weeks away.
+    public func trainingImprovementMultiplier(goalDate: Date?, today: Date) -> Double {
+        guard let goalDate, goalDate > today else { return 1.0 }
+        let weeks = goalDate.timeIntervalSince(today) / (7 * 86_400)
+        let usable = max(0, min(weeks, 16))           // cap effective training window
+        let improvement = min(usable * Self.trainingImprovementPerWeek,
+                              Self.trainingImprovementMaxFraction)
+        return 1.0 - improvement
+    }
+
     // MARK: - Candidate selection
 
     private func candidateRuns(from runs: [RunRecord], today: Date) -> [RunRecord] {
@@ -196,11 +315,19 @@ public struct GoalPredictionService: Sendable {
     }
 
     private func computeConfidence(candidates: [RunRecord],
+                                   personalBest: PersonalBest?,
                                    today: Date,
                                    goal: RunningGoal) -> GoalPrediction.Confidence {
-        if candidates.isEmpty { return .insufficient }
-
         let cal = Calendar.current
+
+        if candidates.isEmpty {
+            // No recent runs — confidence hinges on whether the PB is fresh.
+            if let pb = personalBest, pbAgeYears(pb: pb, today: today) <= 2 {
+                return .low
+            }
+            return .insufficient
+        }
+
         let thirtyDayCutoff = cal.date(byAdding: .day, value: -30, to: today) ?? today
         let last30 = candidates.filter { $0.startDate >= thirtyDayCutoff }
 
@@ -282,6 +409,32 @@ public extension GoalPrediction {
         let m = Int(abs) / 60
         let s = Int(abs) % 60
         return "\(sign)\(m):\(String(format: "%02d", s)) vs PB"
+    }
+
+    /// Whole-week countdown to the goal date — "3 weeks", "1 day", or nil if
+    /// no goal date or it's already past.
+    func formattedCountdown(today: Date = Date()) -> String? {
+        guard let goalDate, goalDate > today else { return nil }
+        let cal = Calendar.current
+        let days = cal.dateComponents([.day], from: today, to: goalDate).day ?? 0
+        if days <= 0 { return nil }
+        if days < 14 { return "\(days) day\(days == 1 ? "" : "s")" }
+        let weeks = days / 7
+        return "\(weeks) week\(weeks == 1 ? "" : "s")"
+    }
+
+    /// Human-readable percent — "8% slower for current fitness", or nil.
+    var formattedVO2Adjustment: String? {
+        guard let m = vo2FitnessMultiplier, m > 1.001 else { return nil }
+        let pct = Int(((m - 1.0) * 100).rounded())
+        return "\(pct)% slower for current VO₂ max"
+    }
+
+    /// Human-readable percent — "6% off with consistent training", or nil.
+    var formattedTrainingImprovement: String? {
+        guard let m = trainingImprovementMultiplier, m < 0.999 else { return nil }
+        let pct = Int(((1.0 - m) * 100).rounded())
+        return "−\(pct)% if you train to race day"
     }
 
     private static func formatHMS(_ seconds: Double) -> String {

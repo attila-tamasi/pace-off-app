@@ -5,26 +5,28 @@
 import Foundation
 import HealthKit
 import SwiftUI
+import Observation
 
 @MainActor
-public final class WorkoutSessionManager: NSObject, ObservableObject {
+@Observable
+public final class WorkoutSessionManager: NSObject {
 
-    private let store = HKHealthStore()
-    private var session: HKWorkoutSession?
-    private var builder: HKLiveWorkoutBuilder?
+    @ObservationIgnored private let store = HKHealthStore()
+    @ObservationIgnored private var session: HKWorkoutSession?
+    @ObservationIgnored private var builder: HKLiveWorkoutBuilder?
 
-    @Published public private(set) var isRunning: Bool = false
-    @Published public private(set) var elapsedSeconds: TimeInterval = 0
-    @Published public private(set) var distanceMeters: Double = 0
-    @Published public private(set) var currentHeartRate: Double?
-    @Published public private(set) var currentPace: Double?      // s/km
-    @Published public private(set) var currentPower: Double?     // W
-    @Published public private(set) var currentStride: Double?    // m
-    @Published public private(set) var currentCadence: Double?   // spm
+    public private(set) var isRunning: Bool = false
+    public private(set) var elapsedSeconds: TimeInterval = 0
+    public private(set) var distanceMeters: Double = 0
+    public private(set) var currentHeartRate: Double?
+    public private(set) var currentPace: Double?      // s/km
+    public private(set) var currentPower: Double?     // W
+    public private(set) var currentStride: Double?    // m
+    public private(set) var currentCadence: Double?   // spm
 
-    @Published public var lastRun: RunRecord?
+    public var lastRun: RunRecord?
 
-    private var timer: Timer?
+    @ObservationIgnored private var timer: Timer?
 
     public override init() {
         super.init()
@@ -119,22 +121,7 @@ extension WorkoutSessionManager: HKWorkoutSessionDelegate {
                                            date: Date) {
         if toState == .ended {
             Task { @MainActor in
-                self.builder?.endCollection(withEnd: date) { _, _ in
-                    self.builder?.finishWorkout { workout, _ in
-                        Task { @MainActor in
-                            self.isRunning = false
-                            if let workout {
-                                self.lastRun = RunRecord(
-                                    startDate: workout.startDate,
-                                    endDate: workout.endDate,
-                                    distanceMeters: workout.totalDistance?.doubleValue(for: .meter()) ?? 0,
-                                    durationSeconds: workout.duration,
-                                    activeEnergyKcal: workout.statistics(for: HKQuantityType(.activeEnergyBurned))?.sumQuantity()?.doubleValue(for: .kilocalorie())
-                                )
-                            }
-                        }
-                    }
-                }
+                await self.finalizeCollection(endingAt: date)
             }
         }
     }
@@ -142,6 +129,34 @@ extension WorkoutSessionManager: HKWorkoutSessionDelegate {
     nonisolated public func workoutSession(_ workoutSession: HKWorkoutSession,
                                            didFailWithError error: Error) {
         Task { @MainActor in self.isRunning = false }
+    }
+
+    /// End collection and finish the workout using the async API so the
+    /// `builder` property is always touched on the main actor — avoids the
+    /// Swift 6 "Main actor-isolated property referenced from Sendable closure"
+    /// error that the completion-handler form produced.
+    @MainActor
+    private func finalizeCollection(endingAt date: Date) async {
+        guard let builder else {
+            isRunning = false
+            return
+        }
+        do {
+            try await builder.endCollection(at: date)
+            let workout = try await builder.finishWorkout()
+            isRunning = false
+            if let workout {
+                lastRun = RunRecord(
+                    startDate: workout.startDate,
+                    endDate: workout.endDate,
+                    distanceMeters: workout.totalDistance?.doubleValue(for: .meter()) ?? 0,
+                    durationSeconds: workout.duration,
+                    activeEnergyKcal: workout.statistics(for: HKQuantityType(.activeEnergyBurned))?.sumQuantity()?.doubleValue(for: .kilocalorie())
+                )
+            }
+        } catch {
+            isRunning = false
+        }
     }
 }
 

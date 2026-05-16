@@ -13,7 +13,7 @@ struct ProfileSetupSheetView: View {
 
     let onComplete: () -> Void
 
-    @EnvironmentObject private var profileStore: ProfileStore
+    @Environment(ProfileStore.self) private var profileStore
 
     @State private var draft: UserProfile
     @State private var draftPhoto: UIImage?
@@ -64,6 +64,17 @@ struct ProfileSetupSheetView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     fieldLabel("GOAL")
                     GoalGridPicker(selection: $draft.goal)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    fieldLabel("RACE DAY (OPTIONAL)")
+                    VStack(spacing: 0) {
+                        GoalDatePicker(goalDate: $draft.goalDate)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 6)
+                    }
+                    .background(Color(.secondarySystemBackground),
+                                in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -128,5 +139,5 @@ struct ProfileSetupSheetView: View {
         initialPhoto: nil,
         onComplete: {}
     )
-    .environmentObject(ProfileStore.shared)
+    .environment(ProfileStore.shared)
 }

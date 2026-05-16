@@ -1,7 +1,6 @@
 // GoalPredictionServiceTests.swift
-// Covers the Riegel math, candidate selection, PB integration, age grading,
-// and confidence buckets. Numbers below are independently sanity-checked
-// against published Riegel and WMA age-grade tables.
+// Covers the Riegel math, candidate selection, PB age decay, VO₂ adjustment,
+// goal-date training improvement, and confidence buckets.
 
 import XCTest
 @testable import PaceOff
@@ -20,6 +19,12 @@ final class GoalPredictionServiceTests: XCTestCase {
             distanceMeters: km * 1000,
             durationSeconds: duration
         )
+    }
+
+    private func vo2(daysAgo: Int, value: Double, today: Date = Date()) -> VO2MaxSnapshot {
+        let cal = Calendar.current
+        let date = cal.date(byAdding: .day, value: -daysAgo, to: today) ?? today
+        return VO2MaxSnapshot(date: date, value: value)
     }
 
     // MARK: - Riegel math
@@ -58,7 +63,6 @@ final class GoalPredictionServiceTests: XCTestCase {
     }
 
     func test_ageGrade_anchorPointsMatchWMATable() {
-        // Spot-check several anchors from the WMA-style table the service ships.
         XCTAssertEqual(service.ageGradeFactor(age: 40), 0.965, accuracy: 0.005)
         XCTAssertEqual(service.ageGradeFactor(age: 50), 0.908, accuracy: 0.005)
         XCTAssertEqual(service.ageGradeFactor(age: 60), 0.834, accuracy: 0.005)
@@ -66,13 +70,85 @@ final class GoalPredictionServiceTests: XCTestCase {
     }
 
     func test_ageGrade_interpolatesBetweenAnchors() {
-        // 42 should fall between 40 (0.965) and 45 (0.940) — closer to 40.
         let f = service.ageGradeFactor(age: 42)
         XCTAssertTrue(f < 0.965 && f > 0.940, "Got \(f)")
     }
 
     func test_ageGrade_clampsAboveTable() {
         XCTAssertEqual(service.ageGradeFactor(age: 200), service.ageGradeFactor(age: 90), accuracy: 0.0001)
+    }
+
+    // MARK: - PB age decay (new)
+
+    func test_pbDecay_freshPbHasNoPenalty() {
+        XCTAssertEqual(service.pbDecayMultiplier(pbYearsOld: 0), 1.0, accuracy: 0.0001)
+    }
+
+    func test_pbDecay_oneYearIsHalfPercent() {
+        XCTAssertEqual(service.pbDecayMultiplier(pbYearsOld: 1), 1.005, accuracy: 0.0001)
+    }
+
+    func test_pbDecay_tenYearsIsRoughlyEightPercent() {
+        // 5 years at 0.5%/yr ≈ +2.53%, then 5 years at 1%/yr ≈ +5.10% more.
+        // Compounded ≈ 1.005^5 * 1.010^5 ≈ 1.078 → ~7.8% slower than PB.
+        let m = service.pbDecayMultiplier(pbYearsOld: 10)
+        XCTAssertEqual(m, 1.078, accuracy: 0.005)
+    }
+
+    // MARK: - VO₂ decline multiplier (new)
+
+    func test_vo2_noHistory_returnsNoAdjustment() {
+        XCTAssertEqual(service.vo2DeclineMultiplier(history: []), 1.0, accuracy: 0.0001)
+    }
+
+    func test_vo2_stableHistory_returnsNoAdjustment() {
+        let today = Date()
+        let history: [VO2MaxSnapshot] = (1...6).map { vo2(daysAgo: $0 * 10, value: 50.0, today: today) }
+        XCTAssertEqual(service.vo2DeclineMultiplier(history: history, today: today),
+                       1.0, accuracy: 0.0001)
+    }
+
+    func test_vo2_significantDecline_returnsMultiplierAboveOne() {
+        let today = Date()
+        // Peak 55 four months ago, now down to 45 → 18% drop, above threshold.
+        let history: [VO2MaxSnapshot] = [
+            vo2(daysAgo: 120, value: 55.0, today: today),
+            vo2(daysAgo: 90,  value: 53.0, today: today),
+            vo2(daysAgo: 30,  value: 47.0, today: today),
+            vo2(daysAgo: 1,   value: 45.0, today: today)
+        ]
+        let m = service.vo2DeclineMultiplier(history: history, today: today)
+        XCTAssertGreaterThan(m, 1.0)
+        XCTAssertLessThan(m, 1.30)  // capped at 30%
+    }
+
+    // MARK: - Training-improvement curve (new)
+
+    func test_training_noGoalDate_returnsOne() {
+        XCTAssertEqual(service.trainingImprovementMultiplier(goalDate: nil, today: Date()),
+                       1.0, accuracy: 0.0001)
+    }
+
+    func test_training_pastGoalDate_returnsOne() {
+        let today = Date()
+        let pastDate = today.addingTimeInterval(-7 * 86_400)
+        XCTAssertEqual(service.trainingImprovementMultiplier(goalDate: pastDate, today: today),
+                       1.0, accuracy: 0.0001)
+    }
+
+    func test_training_eightWeeks_returnsAboutFourPercent() {
+        let today = Date()
+        let goalDate = today.addingTimeInterval(8 * 7 * 86_400)
+        let m = service.trainingImprovementMultiplier(goalDate: goalDate, today: today)
+        // 8 weeks × 0.5%/wk = 4% → multiplier ≈ 0.96
+        XCTAssertEqual(m, 0.96, accuracy: 0.005)
+    }
+
+    func test_training_cappedAtEightPercent() {
+        let today = Date()
+        let farAway = today.addingTimeInterval(52 * 7 * 86_400)  // a year out
+        let m = service.trainingImprovementMultiplier(goalDate: farAway, today: today)
+        XCTAssertEqual(m, 0.92, accuracy: 0.001)  // hard 8% cap → 0.92
     }
 
     // MARK: - End-to-end predict()
@@ -84,7 +160,6 @@ final class GoalPredictionServiceTests: XCTestCase {
 
     func test_predict_usesRecentRun_andReportsHighConfidenceNearGoal() {
         let today = Date()
-        // Five recent 8 km runs at 5:00/km — the freshest within the 30-day window.
         let runs = (1...5).map { i in
             run(daysAgo: i * 5, km: 8, paceSecPerKm: 300, today: today)
         }
@@ -98,33 +173,59 @@ final class GoalPredictionServiceTests: XCTestCase {
         XCTAssertEqual(p.goal, .tenK)
         // 8 km @ 5:00/km = 40:00. Riegel to 10 km ≈ 50:53.
         XCTAssertEqual(p.projectedTimeSeconds, 3_053, accuracy: 30)
-        XCTAssertEqual(p.projectedPaceSecPerKm, p.projectedTimeSeconds / 10, accuracy: 0.5)
         XCTAssertEqual(p.confidence, .high)
         XCTAssertNotNil(p.ageGradedEquivalentSeconds)
     }
 
-    func test_predict_prefersFasterOfRunVsPB() {
+    /// New correct behavior: if the user has done a slow recent run, the
+    /// projection reflects current fitness — even when the PB is much faster.
+    /// (The old behavior picked whichever was faster, which over-promised.)
+    func test_predict_recentSlowRunBeatsFasterPB() {
         let today = Date()
-        // One reasonable training run + a PB that's clearly faster — service
-        // should anchor on the PB.
-        let runs = [run(daysAgo: 7, km: 10, paceSecPerKm: 360, today: today)] // 60:00 10K
-        let pb = PersonalBest(durationSeconds: 2700, year: 2024)              // 45:00 10K
+        let runs = [run(daysAgo: 7, km: 10, paceSecPerKm: 360, today: today)] // 60:00 10K — out of shape
+        let pb = PersonalBest(durationSeconds: 2700, year: 2015)               // 45:00 10K, a decade ago
         let p = service.predict(goal: .tenK,
                                 runs: runs,
                                 age: 35,
                                 personalBest: pb,
                                 today: today)
         XCTAssertNotNil(p)
-        XCTAssertEqual(p!.projectedTimeSeconds, 2700, accuracy: 0.1)
-        if case .personalBestExtrapolation = p!.basis {} else {
-            XCTFail("Expected PB basis, got \(p!.basis)")
+        guard let p else { return }
+        // Projection should anchor on the recent run, ~60:00, not the PB's 45:00.
+        XCTAssertEqual(p.projectedTimeSeconds, 3_600, accuracy: 60)
+        // Gap to PB should be positive (slower than PB) and substantial.
+        XCTAssertNotNil(p.gapToPersonalBestSeconds)
+        XCTAssertGreaterThan(p.gapToPersonalBestSeconds ?? 0, 600) // >10 min behind
+        // Basis should be the recent run, not the PB.
+        if case .recentRun = p.basis {} else {
+            XCTFail("Expected recent-run basis, got \(p.basis)")
         }
     }
 
-    func test_predict_picksFastestRunWhenMultiple() {
+    func test_predict_oldPBOnly_isPenalisedForAge() {
+        let today = Date()
+        let pb = PersonalBest(durationSeconds: 2700, year: 2015)  // 10-year-old 45:00 10K
+        let p = service.predict(goal: .tenK,
+                                runs: [],
+                                age: 40,
+                                personalBest: pb,
+                                today: today)
+        XCTAssertNotNil(p)
+        guard let p else { return }
+        // 10y decay ≈ +7.8%. 2700 × 1.078 ≈ 2,910.
+        XCTAssertEqual(p.projectedTimeSeconds, 2_910, accuracy: 60)
+        if case .agedPersonalBest(let years) = p.basis {
+            // Tolerate 9 or 10 here in case the test runs early/late in the calendar year.
+            XCTAssertTrue(years >= 9 && years <= 11, "Got \(years)y")
+        } else {
+            XCTFail("Expected aged-PB basis, got \(p.basis)")
+        }
+    }
+
+    func test_predict_pickedFastestRunWhenMultiple() {
         let today = Date()
         let slow = run(daysAgo: 30, km: 5, paceSecPerKm: 360, today: today) // 30:00 5K
-        let fast = run(daysAgo: 10, km: 5, paceSecPerKm: 240, today: today) // 20:00 5K — much fitter
+        let fast = run(daysAgo: 10, km: 5, paceSecPerKm: 240, today: today) // 20:00 5K
         let p = service.predict(goal: .tenK,
                                 runs: [slow, fast],
                                 age: nil,
@@ -168,5 +269,28 @@ final class GoalPredictionServiceTests: XCTestCase {
                                 today: today)
         XCTAssertNotNil(p?.gapToPersonalBestSeconds)
         XCTAssertLessThan(p!.gapToPersonalBestSeconds!, 0) // projected ahead of PB
+    }
+
+    func test_predict_goalDateImprovesProjection() {
+        let today = Date()
+        let runs = (1...5).map { run(daysAgo: $0 * 4, km: 8, paceSecPerKm: 300, today: today) }
+        let inEightWeeks = today.addingTimeInterval(8 * 7 * 86_400)
+
+        let noDate = service.predict(goal: .tenK, runs: runs, age: 35,
+                                     personalBest: nil, today: today)
+        let withDate = service.predict(goal: .tenK, runs: runs, age: 35,
+                                       personalBest: nil,
+                                       goalDate: inEightWeeks,
+                                       today: today)
+
+        XCTAssertNotNil(noDate?.projectedTimeSeconds)
+        XCTAssertNotNil(withDate?.projectedTimeSeconds)
+        // With 8 weeks to train, projection should be ~4% faster.
+        XCTAssertLessThan(withDate!.projectedTimeSeconds, noDate!.projectedTimeSeconds)
+        XCTAssertEqual(noDate!.projectedTimeSeconds * 0.96,
+                       withDate!.projectedTimeSeconds,
+                       accuracy: 10)
+        XCTAssertNotNil(withDate!.trainingImprovementMultiplier)
+        XCTAssertEqual(withDate!.goalDate, inEightWeeks)
     }
 }

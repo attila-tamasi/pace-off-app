@@ -9,9 +9,11 @@
 
 import Foundation
 import AuthenticationServices
+import Observation
 
 @MainActor
-public final class AppleSignInService: ObservableObject {
+@Observable
+public final class AppleSignInService {
 
     public static let shared = AppleSignInService()
 
@@ -22,7 +24,7 @@ public final class AppleSignInService: ObservableObject {
         case revoked          // user revoked access in Settings
     }
 
-    @Published public private(set) var state: State = .unknown
+    public private(set) var state: State = .unknown
 
     private init() {}
 
