@@ -64,6 +64,51 @@ public final class HealthKitService: ObservableObject {
         }
     }
 
+    // MARK: - High-level sync
+
+    /// Pull every value the UI consumes, in parallel, and write the result
+    /// to `HealthDataCache`. Returns the freshly persisted snapshot so the
+    /// caller can render it without doing a second disk read.
+    ///
+    /// Safe to call concurrently — the cache's actor serializes the final
+    /// write — but in practice the caller (TodayViewModel, the BG refresh
+    /// task) is the only thing invoking it.
+    @discardableResult
+    public func syncAll(
+        runsDaysBack: Int = 90,
+        vo2DaysBack: Int = 90,
+        restingHRDaysBack: Int = 14
+    ) async -> HealthDataSnapshot {
+        let now = Date()
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now
+
+        // Parallelise the independent fetches.
+        async let runs = fetchRuns(daysBack: runsDaysBack)
+        async let vo2  = fetchVO2Max(daysBack: vo2DaysBack)
+        async let rhr  = fetchRestingHeartRate(daysBack: restingHRDaysBack)
+        async let hrv  = fetchHRV(on: yesterday)
+        async let yAvg = fetchAverageHeartRate(on: yesterday)
+        async let lRHR = fetchLatestRestingHeartRate(asOf: now)
+
+        let snapshot = HealthDataSnapshot(
+            schemaVersion: HealthDataSnapshot.currentSchema,
+            lastSyncedAt: now,
+            runsWindowDays: runsDaysBack,
+            vo2WindowDays: vo2DaysBack,
+            restingHRWindowDays: restingHRDaysBack,
+            runs: await runs,
+            vo2Max: await vo2,
+            restingHR: await rhr,
+            yesterdayHRV: await hrv,
+            yesterdayAvgHeartRate: await yAvg,
+            latestRestingHeartRate: await lRHR,
+            userAge: userAge()
+        )
+
+        await HealthDataCache.shared.save(snapshot)
+        return snapshot
+    }
+
     // MARK: - Reads
 
     /// All running workouts in the trailing window.

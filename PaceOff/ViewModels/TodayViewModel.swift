@@ -30,46 +30,34 @@ public final class TodayViewModel: ObservableObject {
 
     public init() {}
 
+    /// Hydrate from the persisted `HealthDataCache` so the UI has something
+    /// to render before the slow HealthKit reads return. No-op when no
+    /// cache file exists yet (first launch).
+    public func hydrateFromCache() async {
+        guard let snapshot = await HealthDataCache.shared.load(),
+              !snapshot.isEmpty
+        else { return }
+        applySnapshot(snapshot)
+    }
+
     public func refresh() async {
         isRefreshing = true
         defer { isRefreshing = false }
 
-        let runs = await HealthKitService.shared.fetchRuns(daysBack: 90)
-        let vo2 = await HealthKitService.shared.fetchVO2Max(daysBack: 90)
-        let rhr = await HealthKitService.shared.fetchRestingHeartRate(daysBack: 14)
+        // Fire one parallel sync that writes the cache. Apply the result.
+        let snapshot = await HealthKitService.shared.syncAll()
+        applySnapshot(snapshot)
 
-        let inputs = PushTargetEngine.Inputs(
-            today: Date(),
-            runs: runs,
-            vo2Max: vo2,
-            restingHeartRate: rhr
-        )
-        let computed = engine.compute(inputs)
-        self.target = computed
-        self.yesterday = mostRecentRunBefore(today: Date(), in: runs)
-        self.todayRun = mostRecentRunOn(day: Date(), in: runs)
-        self.currentVO2Max = vo2.last?.value
-        self.currentStreak = computeStreak(runs)
-        self.userAge = HealthKitService.shared.userAge()
-
-        // Mark "ran today" so the notification scheduler can suppress the evening push.
-        AppGroup.sharedDefaults?.set(self.todayRun != nil, forKey: AppGroup.Keys.runCompletedToday)
-
-        // Pull today's GPS route for the hero map. Empty array when no run today
-        // or when the workout had no location data (treadmill, permission denied).
+        // Today's GPS route — kept out of the cache because it's bulky and
+        // only consumed by this view. Re-pulled on every refresh.
         self.todayRouteCoordinates = (self.todayRun != nil)
             ? await HealthKitService.shared.fetchTodayRunRoute()
             : []
 
-        // Yesterday's recovery — HRV is recorded overnight, average HR is the
-        // all-day average, RHR is whatever Apple Watch most recently published.
-        let cal = Calendar.current
-        let yesterdayDate = cal.date(byAdding: .day, value: -1, to: Date()) ?? Date()
-        self.yesterdayHRV = await HealthKitService.shared.fetchHRV(on: yesterdayDate)
-        self.yesterdayAvgHeartRate = await HealthKitService.shared.fetchAverageHeartRate(on: yesterdayDate)
-        self.latestRestingHeartRate = await HealthKitService.shared.fetchLatestRestingHeartRate(asOf: Date())
-
-        let state = VoiceState(target: computed, yesterday: yesterday, currentStreak: currentStreak)
+        // applySnapshot always produces a non-nil target; this guard keeps the
+        // compiler happy without changing the public type.
+        guard let target else { return }
+        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak)
         let cannedCard = voice.todayCard(for: state)
         let cannedNotif = voice.notification(for: state)
         self.voiceLine = cannedCard
@@ -89,18 +77,46 @@ public final class TodayViewModel: ObservableObject {
         }
 
         // Cache for the widget
-        if let data = try? JSONEncoder().encode(computed) {
+        if let data = try? JSONEncoder().encode(target) {
             AppGroup.sharedDefaults?.set(data, forKey: AppGroup.Keys.lastTodayTarget)
         }
         AppGroup.sharedDefaults?.set(self.voiceLine, forKey: AppGroup.Keys.lastTodayVoiceLine)
 
         // Schedule today's notifications using the (possibly AI-rewritten) body.
         NotificationScheduler.shared.scheduleDailyPushes(
-            target: computed,
+            target: target,
             yesterday: yesterday,
             currentStreak: currentStreak,
             overrideBody: notificationBody
         )
+    }
+
+    /// Recompute every derived property from a cached or freshly-synced
+    /// snapshot. Shared by `hydrateFromCache` and `refresh`.
+    private func applySnapshot(_ snapshot: HealthDataSnapshot) {
+        let runs = snapshot.runs
+        let vo2 = snapshot.vo2Max
+        let rhr = snapshot.restingHR
+        let now = Date()
+
+        let inputs = PushTargetEngine.Inputs(
+            today: now,
+            runs: runs,
+            vo2Max: vo2,
+            restingHeartRate: rhr
+        )
+        let computed = engine.compute(inputs)
+        self.target = computed
+        self.yesterday = mostRecentRunBefore(today: now, in: runs)
+        self.todayRun = mostRecentRunOn(day: now, in: runs)
+        self.currentVO2Max = vo2.last?.value
+        self.currentStreak = computeStreak(runs)
+        self.userAge = snapshot.userAge ?? HealthKitService.shared.userAge()
+        self.yesterdayHRV = snapshot.yesterdayHRV
+        self.yesterdayAvgHeartRate = snapshot.yesterdayAvgHeartRate
+        self.latestRestingHeartRate = snapshot.latestRestingHeartRate
+
+        AppGroup.sharedDefaults?.set(self.todayRun != nil, forKey: AppGroup.Keys.runCompletedToday)
     }
 
     private func mostRecentRunBefore(today: Date, in runs: [RunRecord]) -> RunRecord? {

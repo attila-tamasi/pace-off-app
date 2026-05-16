@@ -106,14 +106,14 @@ public final class BackgroundRefreshService {
     /// Reused by `runOnceNow()` for "manual" foreground refreshes.
     @discardableResult
     public func refreshHealthData() async -> Bool {
-        let runs = await HealthKitService.shared.fetchRuns(daysBack: 90)
+        // syncAll writes the snapshot to HealthDataCache as a side effect,
+        // so the next foreground launch picks it up instantly.
+        let snapshot = await HealthKitService.shared.syncAll()
         if Task.isCancelled { return false }
 
-        let vo2 = await HealthKitService.shared.fetchVO2Max(daysBack: 90)
-        if Task.isCancelled { return false }
-
-        let rhr = await HealthKitService.shared.fetchRestingHeartRate(daysBack: 14)
-        if Task.isCancelled { return false }
+        let runs = snapshot.runs
+        let vo2 = snapshot.vo2Max
+        let rhr = snapshot.restingHR
 
         let inputs = PushTargetEngine.Inputs(
             today: Date(),

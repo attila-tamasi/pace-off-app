@@ -236,6 +236,11 @@ struct VO2MaxDetailView: View {
 
     private func load() async {
         isLoading = true
+        // First paint from cache if available so the chart is never empty.
+        if let cached = await HealthDataCache.shared.load(), !cached.vo2Max.isEmpty {
+            snapshots = cached.vo2Max
+            userAge = cached.userAge ?? HealthKitService.shared.userAge()
+        }
         snapshots = await HealthKitService.shared.fetchVO2Max(daysBack: 365)
         userAge = HealthKitService.shared.userAge()
         isLoading = false
