@@ -50,7 +50,7 @@ func renderIcon() -> Data {
         samplesPerPixel: 3,
         hasAlpha: false,
         isPlanar: false,
-        colorSpaceName: .deviceRGB,
+        colorSpaceName: .srgb,
         bytesPerRow: 0,
         bitsPerPixel: 0
     ) else {
