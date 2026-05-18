@@ -54,5 +54,6 @@ struct RootView: View {
         .environmentObject(HealthKitService.shared)
         .environmentObject(NotificationScheduler.shared)
         .environmentObject(TodayViewModel.preview())
+        .environmentObject(TrainingPlanStore.shared)
 }
 #endif

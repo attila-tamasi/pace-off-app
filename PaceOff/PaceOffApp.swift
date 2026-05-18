@@ -12,6 +12,7 @@ struct PaceOffApp: App {
     @StateObject private var todayVM = TodayViewModel()
     @StateObject private var profileStore = ProfileStore.shared
     @StateObject private var appleSignIn = AppleSignInService.shared
+    @StateObject private var planStore = TrainingPlanStore.shared
 
     @AppStorage(AppGroup.Keys.authComplete, store: AppGroup.sharedDefaults)
     private var authComplete: Bool = false
@@ -44,6 +45,7 @@ struct PaceOffApp: App {
                 .environmentObject(todayVM)
                 .environmentObject(profileStore)
                 .environmentObject(appleSignIn)
+                .environmentObject(planStore)
                 .preferredColorScheme(.none)
                 .tint(.accentColor)
                 .animation(.easeInOut(duration: 0.35), value: stage)

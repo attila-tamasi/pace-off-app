@@ -124,6 +124,8 @@ public final class ProfileStore: ObservableObject {
         defaults?.set(false, forKey: AppGroup.Keys.onboardingComplete)
         // Drop the on-disk Health snapshot too — it's keyed to this user.
         Task { await HealthDataCache.shared.clear() }
+        // And the active training plan.
+        TrainingPlanStore.shared.clear()
         NotificationCenter.default.post(name: .paceOffSignOut, object: nil)
     }
 

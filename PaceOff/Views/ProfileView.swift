@@ -8,6 +8,7 @@ struct ProfileView: View {
     @EnvironmentObject private var profileStore: ProfileStore
     @EnvironmentObject private var appleSignIn: AppleSignInService
     @EnvironmentObject private var health: HealthKitService
+    @EnvironmentObject private var planStore: TrainingPlanStore
 
     @AppStorage(AppGroup.Keys.notificationMorningHour, store: AppGroup.sharedDefaults)
     private var morningHour: Int = 8
@@ -20,6 +21,7 @@ struct ProfileView: View {
     @State private var legalDocument: LegalDocument?
     @State private var confirmingSignOut = false
     @State private var prediction: GoalPrediction?
+    @State private var planSettingsPresented = false
 
     var body: some View {
         ScrollView {
@@ -28,6 +30,7 @@ struct ProfileView: View {
                 goalCard
                 personalBestCard
                 if let prediction { predictionCard(prediction) }
+                trainingPlanCard
                 accountCard
 
                 editProfileButton
@@ -61,6 +64,10 @@ struct ProfileView: View {
         }
         .sheet(item: $legalDocument) { doc in
             LegalView(document: doc)
+        }
+        .sheet(isPresented: $planSettingsPresented) {
+            TrainingPlanSettingsView()
+                .environmentObject(planStore)
         }
         .confirmationDialog("Sign out of Pace Off?",
                             isPresented: $confirmingSignOut,
@@ -249,6 +256,106 @@ struct ProfileView: View {
             age: age,
             personalBest: profile.personalBest
         )
+    }
+
+    // MARK: - Training plan
+
+    @ViewBuilder
+    private var trainingPlanCard: some View {
+        if let plan = planStore.activePlan {
+            activePlanCard(plan)
+        } else {
+            startPlanCard
+        }
+    }
+
+    private func activePlanCard(_ plan: TrainingPlan) -> some View {
+        let today = plan.todayWorkout()
+        let weeksLeft = plan.weeksRemaining()
+        return Button {
+            planSettingsPresented = true
+        } label: {
+            card {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        cardLabel("TRAINING PLAN", systemImage: "list.bullet.rectangle")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(.footnote, weight: .semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    Text(plan.displayName)
+                        .font(.system(.title3, design: .rounded, weight: .semibold))
+                    HStack(spacing: 14) {
+                        miniStat("WEEKS LEFT", value: "\(weeksLeft)")
+                        miniStat("RUNS/WK", value: "\(plan.tier.runsPerWeek)")
+                        miniStat("LONG", value: plan.longRunDay.shortName)
+                    }
+                    if let workout = today, workout.kind != .rest {
+                        Divider().padding(.vertical, 2)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("TODAY · \(workout.kind.displayName.uppercased())")
+                                .font(.system(.caption2, design: .rounded, weight: .semibold))
+                                .kerning(0.8)
+                                .foregroundStyle(.secondary)
+                            Text(workout.summary)
+                                .font(.system(.subheadline, design: .rounded, weight: .medium))
+                        }
+                    } else if today?.kind == .rest {
+                        Divider().padding(.vertical, 2)
+                        Text("TODAY · REST")
+                            .font(.system(.caption2, design: .rounded, weight: .semibold))
+                            .kerning(0.8)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .foregroundStyle(.primary)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func miniStat(_ label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.system(.caption2, design: .rounded, weight: .semibold))
+                .kerning(0.8)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.system(.headline, design: .rounded, weight: .semibold))
+        }
+    }
+
+    private var startPlanCard: some View {
+        NavigationLink {
+            TrainingPlanPickerView()
+                .environmentObject(profileStore)
+                .environmentObject(health)
+                .environmentObject(planStore)
+        } label: {
+            card {
+                HStack(spacing: 14) {
+                    Image(systemName: "list.bullet.rectangle")
+                        .font(.system(.title2, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
+                        .frame(width: 40, height: 40)
+                        .background(Color.accentColor.opacity(0.12), in: Circle())
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Build a training plan")
+                            .font(.system(.body, design: .rounded, weight: .semibold))
+                        Text("Multi-week plan tailored to your goal and current fitness.")
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(.footnote, weight: .semibold))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .foregroundStyle(.primary)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Account
@@ -488,6 +595,7 @@ struct ProfileView: View {
         .environmentObject(PreviewProfileStore.populated)
         .environmentObject(PreviewAppleSignInService.signedIn)
         .environmentObject(HealthKitService.shared)
+        .environmentObject(TrainingPlanStore.shared)
 }
 
 #Preview("Profile (empty)") {
@@ -495,5 +603,6 @@ struct ProfileView: View {
         .environmentObject(PreviewProfileStore.empty)
         .environmentObject(PreviewAppleSignInService.notSignedIn)
         .environmentObject(HealthKitService.shared)
+        .environmentObject(TrainingPlanStore.shared)
 }
 #endif
