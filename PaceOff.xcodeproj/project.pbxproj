@@ -13,7 +13,9 @@
 		054C9D4ABE2FF5D749B72468 /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E54D917FE4AF4A958C7514C /* Tone.swift */; };
 		0D2030447FE0FC10DACBED56 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CADA1657036D930B2CE2B499 /* UserProfile.swift */; };
 		0D946C86EAA99034CA0799C9 /* VoiceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */; };
+		1022BBEEB0D9717188F5169F /* TrainingPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A5993CF8F22DFB58A54E5F /* TrainingPlan.swift */; };
 		10FD6FF06B176AD8F3668CF9 /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */; };
+		13BB208D0E61E055131CFC5C /* TrainingPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A5993CF8F22DFB58A54E5F /* TrainingPlan.swift */; };
 		1B1B4B7B8C3A3E9ABCA62020 /* ProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FB629335A23776D013B7EDE /* ProfileStore.swift */; };
 		1C4E11A23401FEAB2455E352 /* RunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = F219E095BD73A1C339F5D8D4 /* RunRecord.swift */; };
 		1D22E916159F440DDF80BD52 /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C4C9290B00C1660BE65BDB /* AppGroup.swift */; };
@@ -21,14 +23,17 @@
 		25015CBC6D64D8F4C0968487 /* PaceOffWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D7EEA2FE27D3E90FA1ADCDE /* PaceOffWidgetBundle.swift */; };
 		29E5782772B7C0C5877D4F52 /* BrandPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EC37486993AB6E5BF014496 /* BrandPalette.swift */; };
 		2C62603907421D9986B63000 /* VoiceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */; };
+		2C9AD7E9FC1FA638D00D0800 /* TrainingPlanGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E20537271AAE9E2A98CA427 /* TrainingPlanGenerator.swift */; };
 		32E69C5DAD264F968AA969C2 /* TrendsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAE697DCC22952A70B86B261 /* TrendsView.swift */; };
 		3B263CD0BA0F37D56C9C8EBF /* RunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = F219E095BD73A1C339F5D8D4 /* RunRecord.swift */; };
 		3FC0C17165F24F90C6983A91 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8BBEB7705A870FF2FF7285C4 /* Preview Assets.xcassets */; };
 		41CC25C427F34329011D4E74 /* PaceOffWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2E8AEAFE18A69ACE7A052C9 /* PaceOffWidget.swift */; };
 		517EB6668BE17679AA37D693 /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E54D917FE4AF4A958C7514C /* Tone.swift */; };
 		555A1A9BEB4E2E136C3C16D4 /* VO2MaxDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A794349DA4F2399A6CE691 /* VO2MaxDetailView.swift */; };
+		56CD1F518413E2600B15BF37 /* TrainingPlanGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E20537271AAE9E2A98CA427 /* TrainingPlanGenerator.swift */; };
 		56D563EA16649F0E450A8D0D /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C4C9290B00C1660BE65BDB /* AppGroup.swift */; };
 		581E8B473CBAFE73FF8A38B1 /* AppleIntelligenceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EFBD02A6FEE9098969290F2 /* AppleIntelligenceCopy.swift */; };
+		59F425E8897F7B40AF23ED14 /* TrainingPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A5993CF8F22DFB58A54E5F /* TrainingPlan.swift */; };
 		5BFEA80B093F570336B9A77B /* GoalPredictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A52AE8AB7F745113C8CEAA1B /* GoalPredictionService.swift */; };
 		5D15127CC4FE3B59AC73E83F /* RunRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = F219E095BD73A1C339F5D8D4 /* RunRecord.swift */; };
 		5D15621F6A618B2B98422611 /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */; };
@@ -38,6 +43,7 @@
 		69AFA428DC7571D79F144E60 /* PushTargetEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62929CE88A3549DB529E3FEE /* PushTargetEngineTests.swift */; };
 		6A10FA0097553F15A2D4FCAD /* WatchTodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C30725DFD06CF73D19656E7B /* WatchTodayView.swift */; };
 		6B96BE52BDE6ADA37714CF72 /* AppGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1C4C9290B00C1660BE65BDB /* AppGroup.swift */; };
+		6C103161B1CDD9AABF0EECC1 /* TrainingPlanGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E20537271AAE9E2A98CA427 /* TrainingPlanGenerator.swift */; };
 		825A9BB2C1466DBE6B3C79DD /* ProfileEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D0C777B85BAAE471DAC4EDD /* ProfileEditView.swift */; };
 		831429E77DAF4D658D1B077A /* PaceOffWatchApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFEF73BA3FEC56768FD8B67A /* PaceOffWatchApp.swift */; };
 		8365B24A66E0C6048CCD1BCD /* VoiceCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */; };
@@ -49,6 +55,7 @@
 		904388AD338E0B085DD048E3 /* PaceOffWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F8862D2A1BFD5B06A75E4B9A /* PaceOffWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		974A1ED5A6E8EBD7712DBB69 /* PaceOff Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = E53E82BE5E747B5989FCDF38 /* PaceOff Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		A0A5A5763F2703C2DF4C5196 /* BrandHero.swift in Sources */ = {isa = PBXBuildFile; fileRef = E96A6583E9A382E6662FD125 /* BrandHero.swift */; };
+		A539A08015B24FC8A3C4A933 /* TrainingPlanGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E20537271AAE9E2A98CA427 /* TrainingPlanGenerator.swift */; };
 		A9B8A0E3AABB46843585D58F /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A08A6962C58940E4BEA4FAA /* RootView.swift */; };
 		AB78570747668D2D0FFD95AD /* PushTargetEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */; };
 		AD0BA6DD2FFE05F206D4FA9C /* HealthDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B8DCC13B665D6EEEA4E6DD3 /* HealthDataCache.swift */; };
@@ -63,6 +70,7 @@
 		BA3605889173D2970209D36C /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E286506F8987C266805E12B /* ProfileView.swift */; };
 		BA5556FDE1BA4509A9C22F46 /* VO2MaxSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */; };
 		BBE9559F7C831921CC02837B /* HealthDataCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B8DCC13B665D6EEEA4E6DD3 /* HealthDataCache.swift */; };
+		BCC50FAC327686B48885FBE9 /* TrainingPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A5993CF8F22DFB58A54E5F /* TrainingPlan.swift */; };
 		BD9703C0E37574E7EC553A62 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CADA1657036D930B2CE2B499 /* UserProfile.swift */; };
 		C2C642EC750AF4FB8E72FAF3 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CADA1657036D930B2CE2B499 /* UserProfile.swift */; };
 		C2D5A59DA15015F47056BAA2 /* GoalPredictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A52AE8AB7F745113C8CEAA1B /* GoalPredictionService.swift */; };
@@ -149,6 +157,7 @@
 		2E286506F8987C266805E12B /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCopy.swift; sourceTree = "<group>"; };
 		3775666DE353724E74AC3428 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		37A5993CF8F22DFB58A54E5F /* TrainingPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingPlan.swift; sourceTree = "<group>"; };
 		3B89CD78D1D657CCADE5478C /* PaceOffApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffApp.swift; sourceTree = "<group>"; };
 		419C7CD5F523700586CA14B9 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
 		41FAD3317ACDC75A0999F6D8 /* RunTarget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunTarget.swift; sourceTree = "<group>"; };
@@ -169,6 +178,7 @@
 		8BBEB7705A870FF2FF7285C4 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VO2MaxSnapshot.swift; sourceTree = "<group>"; };
 		8DA17254B002079243BAFA67 /* RunningWorkoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningWorkoutView.swift; sourceTree = "<group>"; };
+		8E20537271AAE9E2A98CA427 /* TrainingPlanGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingPlanGenerator.swift; sourceTree = "<group>"; };
 		8E54D917FE4AF4A958C7514C /* Tone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tone.swift; sourceTree = "<group>"; };
 		92BAA40520A45D39B9D4C53F /* PaceOff.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = PaceOff.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		999E35D73CD309486FA6484E /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
@@ -237,6 +247,8 @@
 				F219E095BD73A1C339F5D8D4 /* RunRecord.swift */,
 				41FAD3317ACDC75A0999F6D8 /* RunTarget.swift */,
 				8E54D917FE4AF4A958C7514C /* Tone.swift */,
+				37A5993CF8F22DFB58A54E5F /* TrainingPlan.swift */,
+				8E20537271AAE9E2A98CA427 /* TrainingPlanGenerator.swift */,
 				CADA1657036D930B2CE2B499 /* UserProfile.swift */,
 				8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */,
 				2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */,
@@ -557,6 +569,8 @@
 				FA615BE7BE7EE44E6C750C1B /* RunRecord.swift in Sources */,
 				B556B4AFE3D379360DD042C8 /* RunTarget.swift in Sources */,
 				054C9D4ABE2FF5D749B72468 /* Tone.swift in Sources */,
+				1022BBEEB0D9717188F5169F /* TrainingPlan.swift in Sources */,
+				56CD1F518413E2600B15BF37 /* TrainingPlanGenerator.swift in Sources */,
 				C2C642EC750AF4FB8E72FAF3 /* UserProfile.swift in Sources */,
 				5D15621F6A618B2B98422611 /* VO2MaxSnapshot.swift in Sources */,
 				D8FA2EFCE6D1183D38BB41FF /* VoiceCopy.swift in Sources */,
@@ -576,6 +590,8 @@
 				5D15127CC4FE3B59AC73E83F /* RunRecord.swift in Sources */,
 				C937A79D0B985D6A9445569F /* RunTarget.swift in Sources */,
 				D5BA6108703C8529C9C2065E /* Tone.swift in Sources */,
+				BCC50FAC327686B48885FBE9 /* TrainingPlan.swift in Sources */,
+				6C103161B1CDD9AABF0EECC1 /* TrainingPlanGenerator.swift in Sources */,
 				BD9703C0E37574E7EC553A62 /* UserProfile.swift in Sources */,
 				8635BD77DDF7D83B44FBAD3C /* VO2MaxSnapshot.swift in Sources */,
 				2C62603907421D9986B63000 /* VoiceCopy.swift in Sources */,
@@ -596,6 +612,8 @@
 				FC42B40AAD6DBDB87981CE29 /* RunTarget.swift in Sources */,
 				B2FF357DD79EB6CE91504C87 /* RunningWorkoutView.swift in Sources */,
 				F74CDC7FAE8CD24A90AAEC26 /* Tone.swift in Sources */,
+				59F425E8897F7B40AF23ED14 /* TrainingPlan.swift in Sources */,
+				2C9AD7E9FC1FA638D00D0800 /* TrainingPlanGenerator.swift in Sources */,
 				66F7E99D4BFFD957DFBBAACA /* UserProfile.swift in Sources */,
 				8D820987E8CC3C6ED6950F20 /* VO2MaxSnapshot.swift in Sources */,
 				8365B24A66E0C6048CCD1BCD /* VoiceCopy.swift in Sources */,
@@ -639,6 +657,8 @@
 				1FB4CE2007641163EF10F445 /* TodayView.swift in Sources */,
 				B346B8F61CB56BDD18693999 /* TodayViewModel.swift in Sources */,
 				517EB6668BE17679AA37D693 /* Tone.swift in Sources */,
+				13BB208D0E61E055131CFC5C /* TrainingPlan.swift in Sources */,
+				A539A08015B24FC8A3C4A933 /* TrainingPlanGenerator.swift in Sources */,
 				32E69C5DAD264F968AA969C2 /* TrendsView.swift in Sources */,
 				0D2030447FE0FC10DACBED56 /* UserProfile.swift in Sources */,
 				555A1A9BEB4E2E136C3C16D4 /* VO2MaxDetailView.swift in Sources */,
