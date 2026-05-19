@@ -5,7 +5,7 @@
 import SwiftUI
 
 struct RootView: View {
-    @EnvironmentObject private var profileStore: ProfileStore
+    @Environment(ProfileStore.self) private var profileStore
 
     @State private var selection: AppTab = .today
     @State private var presentingProfileSetup = false
@@ -40,20 +40,9 @@ struct RootView: View {
                 initialPhoto: profileStore.photo,
                 onComplete: { presentingProfileSetup = false }
             )
-            .environmentObject(profileStore)
+            .environment(profileStore)
             .interactiveDismissDisabled()
         }
     }
 }
 
-#if DEBUG
-#Preview("Root tab bar") {
-    RootView()
-        .environmentObject(PreviewProfileStore.populated)
-        .environmentObject(PreviewAppleSignInService.signedIn)
-        .environmentObject(HealthKitService.shared)
-        .environmentObject(NotificationScheduler.shared)
-        .environmentObject(TodayViewModel.preview())
-        .environmentObject(TrainingPlanStore.shared)
-}
-#endif

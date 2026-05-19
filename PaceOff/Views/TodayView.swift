@@ -10,7 +10,8 @@ import CoreLocation
 
 struct TodayView: View {
 
-    @EnvironmentObject private var todayVM: TodayViewModel
+    @Environment(TodayViewModel.self) private var todayVM
+    @Environment(ProfileStore.self) private var profileStore
     @State private var cameraPosition: MapCameraPosition = .region(TodayView.berlinRegion)
 
     /// Map height as a fraction of the available screen height.
@@ -161,12 +162,7 @@ struct TodayView: View {
 
     private var contentSection: some View {
         VStack(alignment: .leading, spacing: 22) {
-
-            Text(Date().formatted(.dateTime.weekday(.wide).month().day()).uppercased())
-                .font(.system(.caption, design: .rounded, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .kerning(1.2)
-                .frame(maxWidth: .infinity, alignment: .center)
+            dateRibbon
 
             recoveryCard
 
@@ -178,6 +174,41 @@ struct TodayView: View {
 
             supportingGrid
         }
+    }
+
+    /// Date line. When the user has a goal date set, also shows a countdown
+    /// chip ("RACE IN 12 WEEKS") so the home screen always reminds them why
+    /// they're being pushed.
+    private var dateRibbon: some View {
+        let date = Date().formatted(.dateTime.weekday(.wide).month().day()).uppercased()
+        return HStack(spacing: 10) {
+            Text(date)
+                .font(.system(.caption, design: .rounded, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .kerning(1.2)
+            if let countdown = goalCountdownLabel {
+                Text("·")
+                    .foregroundStyle(.tertiary)
+                    .font(.system(.caption, weight: .semibold))
+                Text(countdown)
+                    .font(.system(.caption, design: .rounded, weight: .bold))
+                    .kerning(0.8)
+                    .foregroundStyle(Color.accentColor)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    /// "RACE IN 12 WEEKS" / "RACE IN 4 DAYS", or nil if no goal date is set.
+    private var goalCountdownLabel: String? {
+        guard let goalDate = profileStore.profile?.goalDate, goalDate > Date() else { return nil }
+        let days = Calendar.current.dateComponents([.day], from: Date(), to: goalDate).day ?? 0
+        if days <= 0 { return nil }
+        if days < 14 {
+            return "RACE IN \(days) DAY\(days == 1 ? "" : "S")"
+        }
+        let weeks = days / 7
+        return "RACE IN \(weeks) WEEK\(weeks == 1 ? "" : "S")"
     }
 
     // MARK: - Yesterday's recovery (morning check-in)
@@ -255,11 +286,32 @@ struct TodayView: View {
     // MARK: - Hero card (today's target)
 
     private var heroCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("TODAY'S TARGET")
-                .font(.system(.caption, design: .rounded, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .kerning(1.2)
+        VStack(alignment: .leading, spacing: 14) {
+            // Header row: label on the left, tone pill on the right — no
+            // overlap, balanced visual weight, easier to scan.
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("TODAY'S TARGET")
+                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .kerning(1.2)
+                    if let goalLine {
+                        Text(goalLine)
+                            .font(.system(.caption2, design: .rounded, weight: .medium))
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                Spacer(minLength: 8)
+                if let tone = todayVM.target?.tone {
+                    Text(tone.displayName.uppercased())
+                        .font(.system(.caption2, design: .rounded, weight: .bold))
+                        .kerning(0.8)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(toneColor(tone).opacity(0.15), in: Capsule())
+                        .foregroundStyle(toneColor(tone))
+                }
+            }
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(todayVM.target?.formattedDistance.replacingOccurrences(of: " km", with: "") ?? "—")
@@ -284,22 +336,13 @@ struct TodayView: View {
                 .fill(.background)
                 .shadow(color: .black.opacity(0.08), radius: 14, x: 0, y: 6)
         }
-        .overlay(alignment: .topTrailing) { toneBadge }
     }
 
-    private var toneBadge: some View {
-        Group {
-            if let t = todayVM.target {
-                Text(t.tone.displayName.uppercased())
-                    .font(.system(.caption2, design: .rounded, weight: .bold))
-                    .kerning(0.8)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(toneColor(t.tone).opacity(0.15), in: Capsule())
-                    .foregroundStyle(toneColor(t.tone))
-                    .padding(18)
-            }
-        }
+    /// "Toward Half Marathon" — only when a profile goal is set. The home
+    /// screen now reflects the user's stated goal, not just a daily number.
+    private var goalLine: String? {
+        guard let goal = profileStore.profile?.goal else { return nil }
+        return "Toward \(goal.displayName)"
     }
 
     private func toneColor(_ tone: Tone) -> Color {
@@ -462,16 +505,19 @@ private struct RouteCoordinateSnapshot: Equatable {
 #if DEBUG
 #Preview("Today (populated)") {
     NavigationStack { TodayView() }
-        .environmentObject(TodayViewModel.preview())
+        .environment(TodayViewModel.preview())
+        .environment(PreviewProfileStore.populated)
 }
 
 #Preview("Today (ran today)") {
     NavigationStack { TodayView() }
-        .environmentObject(TodayViewModel.preview(todayRun: .sample, streak: 5))
+        .environment(TodayViewModel.preview(todayRun: .sample, streak: 5))
+        .environment(PreviewProfileStore.populated)
 }
 
 #Preview("Today (empty)") {
     NavigationStack { TodayView() }
-        .environmentObject(TodayViewModel())
+        .environment(TodayViewModel())
+        .environment(PreviewProfileStore.empty)
 }
 #endif

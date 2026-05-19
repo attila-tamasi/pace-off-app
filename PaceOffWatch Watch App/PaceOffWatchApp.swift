@@ -6,17 +6,17 @@ import SwiftUI
 @main
 struct PaceOffWatchApp: App {
 
-    @StateObject private var session = WorkoutSessionManager()
+    @State private var session = WorkoutSessionManager()
 
     var body: some Scene {
         WindowGroup {
             NavigationStack {
                 if session.isRunning {
                     RunningWorkoutView()
-                        .environmentObject(session)
+                        .environment(session)
                 } else {
                     WatchTodayView()
-                        .environmentObject(session)
+                        .environment(session)
                 }
             }
         }

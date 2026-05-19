@@ -5,16 +5,18 @@
 import Foundation
 import HealthKit
 import CoreLocation
+import Observation
 
 @MainActor
-public final class HealthKitService: ObservableObject {
+@Observable
+public final class HealthKitService {
 
     public static let shared = HealthKitService()
 
-    private let store = HKHealthStore()
+    @ObservationIgnored private let store = HKHealthStore()
 
-    @Published public private(set) var isAuthorized: Bool = false
-    @Published public private(set) var lastError: String?
+    public private(set) var isAuthorized: Bool = false
+    public private(set) var lastError: String?
 
     private init() {}
 
@@ -429,10 +431,17 @@ public final class HealthKitService: ObservableObject {
         var all: [CLLocation] = []
         for route in routes {
             let locations: [CLLocation] = await withCheckedContinuation { continuation in
-                var collected: [CLLocation] = []
+                // HealthKit serializes route-query callbacks on its own queue,
+                // so a single mutable accumulator is safe — but Swift 6 won't
+                // let us capture `var` in the @Sendable closure. Wrap it in a
+                // class (@unchecked Sendable) to make the intent explicit.
+                final class LocationCollector: @unchecked Sendable {
+                    var items: [CLLocation] = []
+                }
+                let collector = LocationCollector()
                 let q = HKWorkoutRouteQuery(route: route) { _, batch, done, _ in
-                    if let batch { collected.append(contentsOf: batch) }
-                    if done { continuation.resume(returning: collected) }
+                    if let batch { collector.items.append(contentsOf: batch) }
+                    if done { continuation.resume(returning: collector.items) }
                 }
                 store.execute(q)
             }

@@ -5,7 +5,7 @@ import SwiftUI
 
 struct RunningWorkoutView: View {
 
-    @EnvironmentObject private var session: WorkoutSessionManager
+    @Environment(WorkoutSessionManager.self) private var session
     @State private var secondaryMetric: SecondaryMetric = .heartRate
     @State private var showStopConfirm = false
 
@@ -122,7 +122,7 @@ struct RunningWorkoutView: View {
 #Preview("Running workout") {
     NavigationStack {
         RunningWorkoutView()
-            .environmentObject(WorkoutSessionManager())
+            .environment(WorkoutSessionManager())
     }
 }
 #endif

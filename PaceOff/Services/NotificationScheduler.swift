@@ -3,16 +3,18 @@
 
 import Foundation
 import UserNotifications
+import Observation
 
 @MainActor
-public final class NotificationScheduler: ObservableObject {
+@Observable
+public final class NotificationScheduler {
 
     public static let shared = NotificationScheduler()
 
-    private let center = UNUserNotificationCenter.current()
-    private let voice = VoiceCopy()
+    @ObservationIgnored private let center = UNUserNotificationCenter.current()
+    @ObservationIgnored private let voice = VoiceCopy()
 
-    @Published public private(set) var permissionGranted: Bool = false
+    public private(set) var permissionGranted: Bool = false
 
     private init() {}
 
