@@ -8,7 +8,7 @@ struct ProfileView: View {
     @Environment(ProfileStore.self) private var profileStore
     @Environment(AppleSignInService.self) private var appleSignIn
     @Environment(HealthKitService.self) private var health
-    @Environment(TrainingPlanStore.self) private var planStore: TrainingPlanStore
+    @Environment(TrainingPlanStore.self) private var planStore
 
     @AppStorage(AppGroup.Keys.notificationMorningHour, store: AppGroup.sharedDefaults)
 
@@ -31,27 +31,12 @@ struct ProfileView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                header
-                goalCard
-                personalBestCard
-                if let prediction { predictionCard(prediction) }
-                trainingPlanCard
-                accountCard
-
-                editProfileButton
-
-                notificationsCard
-                voiceCard
-                healthCard
-                legalCard
-                aboutCard
-
-                signOutButton
-                    .padding(.top, 4)
                 identityHero
                 goalAndPredictionCard
+                trainingPlanCard
                 preferencesList
-                signOutButton.padding(.top, 4)
+                signOutButton
+                    .padding(.top, 4)
             }
             .padding(20)
         }
@@ -79,7 +64,7 @@ struct ProfileView: View {
         }
         .sheet(isPresented: $planSettingsPresented) {
             TrainingPlanSettingsView()
-                .environmentObject(planStore)
+                .environment(planStore)
         }
         .confirmationDialog("Sign out of Pace Off?",
                             isPresented: $confirmingSignOut,
@@ -463,9 +448,6 @@ struct ProfileView: View {
     private var startPlanCard: some View {
         NavigationLink {
             TrainingPlanPickerView()
-                .environmentObject(profileStore)
-                .environmentObject(health)
-                .environmentObject(planStore)
         } label: {
             card {
                 HStack(spacing: 14) {
@@ -713,3 +695,21 @@ struct ProfileView: View {
         Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
     }
 }
+
+#if DEBUG
+#Preview("Profile (signed in)") {
+    NavigationStack { ProfileView() }
+        .environment(PreviewProfileStore.populated)
+        .environment(PreviewAppleSignInService.signedIn)
+        .environment(HealthKitService.shared)
+        .environment(TrainingPlanStore.shared)
+}
+
+#Preview("Profile (empty)") {
+    NavigationStack { ProfileView() }
+        .environment(PreviewProfileStore.empty)
+        .environment(PreviewAppleSignInService.notSignedIn)
+        .environment(HealthKitService.shared)
+        .environment(TrainingPlanStore.shared)
+}
+#endif

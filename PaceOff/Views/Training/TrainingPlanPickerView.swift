@@ -7,8 +7,8 @@ import SwiftUI
 
 struct TrainingPlanPickerView: View {
 
-    @EnvironmentObject private var profileStore: ProfileStore
-    @EnvironmentObject private var health: HealthKitService
+    @Environment(ProfileStore.self) private var profileStore
+    @Environment(HealthKitService.self) private var health
 
     @State private var longRunDay: Weekday = .sunday
     @State private var planForDetail: TrainingPlan?
@@ -35,7 +35,6 @@ struct TrainingPlanPickerView: View {
         .navigationDestination(isPresented: $detailPresented) {
             if let plan = planForDetail {
                 TrainingPlanDetailView(plan: plan)
-                    .environmentObject(profileStore)
             }
         }
     }
@@ -155,7 +154,8 @@ struct TrainingPlanPickerView: View {
     NavigationStack {
         TrainingPlanPickerView()
     }
-    .environmentObject(PreviewProfileStore.populated)
-    .environmentObject(HealthKitService.shared)
+    .environment(PreviewProfileStore.populated)
+    .environment(HealthKitService.shared)
+    .environment(TrainingPlanStore.shared)
 }
 #endif

@@ -8,7 +8,7 @@ import SwiftUI
 
 struct TrainingPlanSettingsView: View {
 
-    @EnvironmentObject private var planStore: TrainingPlanStore
+    @Environment(TrainingPlanStore.self) private var planStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var confirmingEnd = false
@@ -76,6 +76,6 @@ struct TrainingPlanSettingsView: View {
         )
     )
     return TrainingPlanSettingsView()
-        .environmentObject(store)
+        .environment(store)
 }
 #endif

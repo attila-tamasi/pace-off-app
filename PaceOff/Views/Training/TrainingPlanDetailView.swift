@@ -9,7 +9,7 @@ struct TrainingPlanDetailView: View {
 
     let plan: TrainingPlan
 
-    @EnvironmentObject private var planStore: TrainingPlanStore
+    @Environment(TrainingPlanStore.self) private var planStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var confirming = false
@@ -172,6 +172,6 @@ private extension TrainingPlan {
     NavigationStack {
         TrainingPlanDetailView(plan: .preview)
     }
-    .environmentObject(TrainingPlanStore.shared)
+    .environment(TrainingPlanStore.shared)
 }
 #endif

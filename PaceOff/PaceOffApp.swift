@@ -48,6 +48,7 @@ struct PaceOffApp: App {
                 .environment(todayVM)
                 .environment(profileStore)
                 .environment(appleSignIn)
+                .environment(planStore)
                 .preferredColorScheme(.none)
                 .tint(.accentColor)
                 .animation(.easeInOut(duration: 0.35), value: stage)

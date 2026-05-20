@@ -1,22 +1,24 @@
 // TrainingPlanStore.swift
 // Stores the user's *active* training plan as a JSON blob in the App Group
 // container — same persistence pattern HealthDataCache uses. Single shared
-// instance, MainActor-isolated so the UI can observe @Published changes.
+// instance, MainActor-isolated so the UI can observe changes via the modern
+// Swift Observation framework.
 
 import Foundation
-import Combine
+import Observation
 
 @MainActor
-public final class TrainingPlanStore: ObservableObject {
+@Observable
+public final class TrainingPlanStore {
 
     public static let shared = TrainingPlanStore()
 
     /// Filename inside the App Group container.
     public static let filename = "training-plan.json"
 
-    @Published public private(set) var activePlan: TrainingPlan?
+    public private(set) var activePlan: TrainingPlan?
 
-    private let fileManager = FileManager.default
+    @ObservationIgnored private let fileManager = FileManager.default
 
     public init() {
         load()
