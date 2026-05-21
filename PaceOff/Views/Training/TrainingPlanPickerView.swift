@@ -1,7 +1,9 @@
 // TrainingPlanPickerView.swift
-// First screen of the Training Plan flow. Three tier cards (Easy / Medium /
-// Aggressive). Tapping one pushes a detail view that shows the full plan
-// and offers a "Select this plan" CTA.
+// First screen of the Training Plan flow. Surfaces the goal race up top so
+// the runner can lock in distance + race day before picking an intensity
+// tier — the three cards (Easy / Medium / Aggressive) drive plan generation
+// from that goal. Tapping a card pushes a detail view that shows the full
+// plan and offers a "Select this plan" CTA.
 
 import SwiftUI
 
@@ -21,6 +23,7 @@ struct TrainingPlanPickerView: View {
         ScrollView {
             VStack(spacing: 20) {
                 header
+                goalCard
                 longRunDayPicker
                 ForEach(PlanTier.allCases) { tier in
                     tierCard(tier)
@@ -45,12 +48,71 @@ struct TrainingPlanPickerView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Pick a plan")
                 .font(.system(.largeTitle, design: .rounded, weight: .bold))
-            Text("Three intensities for your \(goal.displayName). Paces are tailored to your current fitness using Daniels' VDOT method.")
+            Text("Lock in your goal race, then choose an intensity. Paces are tailored to your current fitness using Daniels' VDOT method.")
                 .font(.system(.subheadline, design: .rounded))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Goal card (distance + race day)
+
+    /// Editing the goal here writes straight back to `ProfileStore` — the
+    /// profile is the single source of truth for race goal and date (the
+    /// prediction card on Profile, plan generation, and the Today screen all
+    /// read from it). Plan-local override would create silent divergence.
+    private var goalCard: some View {
+        // We need a Binding<RunningGoal> and Binding<Date?> backed by the
+        // store. SwiftUI's @Environment(ProfileStore.self) wrapper supplies
+        // an `@Bindable` `profileStore` accessor; we synthesise property-
+        // shaped bindings around the store's mutator.
+        let goalBinding = Binding<RunningGoal>(
+            get: { profileStore.profile?.goal ?? .tenK },
+            set: { newGoal in
+                profileStore.update { $0.goal = newGoal }
+            }
+        )
+        let dateBinding = Binding<Date?>(
+            get: { profileStore.profile?.goalDate },
+            set: { newDate in
+                profileStore.update { $0.goalDate = newDate }
+            }
+        )
+
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 6) {
+                Image(systemName: "target")
+                    .font(.system(.caption, weight: .semibold))
+                Text("YOUR RACE")
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .kerning(1.1)
+            }
+            .foregroundStyle(.secondary)
+
+            GoalGridPicker(selection: goalBinding)
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "flag.checkered")
+                        .font(.system(.caption, weight: .semibold))
+                    Text("RACE DAY")
+                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                        .kerning(1.1)
+                }
+                .foregroundStyle(.secondary)
+                GoalDatePicker(goalDate: dateBinding)
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(.background)
+                .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
+        }
     }
 
     // MARK: - Long-run day picker
@@ -127,6 +189,7 @@ struct TrainingPlanPickerView: View {
     // MARK: - Helpers
 
     private var goal: RunningGoal { profileStore.profile?.goal ?? .tenK }
+    private var goalDate: Date? { profileStore.profile?.goalDate }
     private var personalBest: PersonalBest? { profileStore.profile?.personalBest }
 
     private func inputs(for tier: PlanTier) -> TrainingPlanInputs {
@@ -135,12 +198,13 @@ struct TrainingPlanPickerView: View {
             tier: tier,
             longRunDay: longRunDay,
             vo2Max: vo2Max,
-            personalBest: personalBest
+            personalBest: personalBest,
+            goalDate: goalDate
         )
     }
 
     private func weeksFor(_ goal: RunningGoal) -> Int {
-        generator.planWeeks(for: goal)
+        generator.planWeeks(for: goal, goalDate: goalDate)
     }
 
     private func loadVO2Max() async {
@@ -155,6 +219,15 @@ struct TrainingPlanPickerView: View {
         TrainingPlanPickerView()
     }
     .environment(PreviewProfileStore.populated)
+    .environment(HealthKitService.shared)
+    .environment(TrainingPlanStore.shared)
+}
+
+#Preview("Plan picker — marathon w/ race day") {
+    NavigationStack {
+        TrainingPlanPickerView()
+    }
+    .environment(PreviewProfileStore.marathonWithRaceDay)
     .environment(HealthKitService.shared)
     .environment(TrainingPlanStore.shared)
 }
