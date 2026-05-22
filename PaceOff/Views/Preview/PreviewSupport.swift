@@ -137,6 +137,18 @@ enum PreviewProfileStore {
         store.previewLoad(profile: nil, photo: nil)
         return store
     }
+
+    /// Marathon goal with a race day 14 weeks out. Used by the training-plan
+    /// picker preview to exercise the race-date code path.
+    static var marathonWithRaceDay: ProfileStore {
+        var profile = UserProfile.sample
+        profile.goal = .marathon
+        profile.goalDate = Calendar.current.date(byAdding: .weekOfYear, value: 14, to: Date())
+        profile.personalBest = PersonalBest(durationSeconds: 14_400, year: 2024) // 4:00:00
+        let store = ProfileStore()
+        store.previewLoad(profile: profile, photo: nil)
+        return store
+    }
 }
 
 // MARK: - Preview AppleSignInService

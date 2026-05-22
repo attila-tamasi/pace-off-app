@@ -57,6 +57,36 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         XCTAssertEqual(generator.planWeeks(for: .marathon), 16)
     }
 
+    func test_planLength_raceDateInsideDefaultShrinksPlan() {
+        let today = Date()
+        // Use absolute seconds to dodge DST drift around calendar arithmetic.
+        let sixWeeksOut = today.addingTimeInterval(6 * 7 * 24 * 3600)
+        let weeks = generator.planWeeks(for: .marathon, goalDate: sixWeeksOut, today: today)
+        XCTAssertEqual(weeks, 6, "Plan should condense to the available window")
+    }
+
+    func test_planLength_raceDateBeyondDefaultUsesDefault() {
+        let today = Date()
+        // Race 26 weeks out — well past the 16-week marathon default.
+        let farOut = today.addingTimeInterval(26 * 7 * 24 * 3600)
+        let weeks = generator.planWeeks(for: .marathon, goalDate: farOut, today: today)
+        XCTAssertEqual(weeks, 16, "Plan length is capped at the goal's default")
+    }
+
+    func test_planLength_raceDateInPastFallsBackToDefault() {
+        let today = Date()
+        let lastMonth = today.addingTimeInterval(-4 * 7 * 24 * 3600)
+        let weeks = generator.planWeeks(for: .tenK, goalDate: lastMonth, today: today)
+        XCTAssertEqual(weeks, 10)
+    }
+
+    func test_planLength_neverGoesBelowFourWeeks() {
+        let today = Date()
+        let inFiveDays = today.addingTimeInterval(5 * 24 * 3600)
+        let weeks = generator.planWeeks(for: .marathon, goalDate: inFiveDays, today: today)
+        XCTAssertGreaterThanOrEqual(weeks, 4)
+    }
+
     // MARK: - Structural assertions
 
     private func plan(_ goal: RunningGoal,
@@ -133,10 +163,60 @@ final class TrainingPlanGeneratorTests: XCTestCase {
 
     func test_generate_taperReducesVolume() {
         let p = plan(.marathon, .medium)
-        let peak = p.weeks[p.weekCount - 3]   // build to peak here
+        // peakWeek = total - 3 (0-indexed: weekCount - 4). With weekCount=16
+        // that's weeks[12] (week 13 of 16).
+        let peak = p.weeks[p.weekCount - 4]
         let raceWeek = p.weeks.last!
         XCTAssertLessThan(raceWeek.totalDistanceKm, peak.totalDistanceKm,
                           "Race week should taper below peak")
+    }
+
+    func test_generate_marathonLongestLongRunIs37km() {
+        for tier in PlanTier.allCases {
+            let p = plan(.marathon, tier)
+            let longestKm = p.weeks
+                .flatMap(\.days)
+                .filter { $0.workout.kind == .long }
+                .map(\.workout.distanceKm)
+                .max() ?? 0
+            // We accept ±0.05 km (50 m) of float drift around the 37 km peak.
+            XCTAssertEqual(longestKm, 37.0, accuracy: 0.05,
+                           "Marathon \(tier.displayName) plan should peak at 37 km long run")
+        }
+    }
+
+    func test_generate_marathonLongRunBuildIsMonotonicUpToPeak() {
+        let p = plan(.marathon, .medium)
+        let longRunsKm = p.weeks.map { week -> Double in
+            week.days.first { $0.workout.kind == .long }!.workout.distanceKm
+        }
+        // Peak is at weekCount - 3 (1-indexed) → index weekCount - 4. Build is
+        // weeks[0...peakIdx] and should be non-decreasing.
+        let peakIdx = p.weekCount - 4
+        for i in 1...peakIdx {
+            XCTAssertGreaterThanOrEqual(longRunsKm[i], longRunsKm[i - 1] - 0.001,
+                                        "Long run should not regress during build at week \(i + 1)")
+        }
+        // And taper should reduce from peak.
+        XCTAssertLessThan(longRunsKm.last!, longRunsKm[peakIdx],
+                          "Race-day long run should be well below peak")
+    }
+
+    func test_generate_nonMarathonLongRunsUnchangedCeilings() {
+        // Other distances keep their original ceilings (5K/10K/Half).
+        let half = plan(.halfMarathon, .aggressive)
+        let halfLong = half.weeks.flatMap(\.days)
+            .filter { $0.workout.kind == .long }
+            .map(\.workout.distanceKm).max() ?? 0
+        XCTAssertEqual(halfLong, 24.0, accuracy: 0.5,
+                       "Aggressive half-marathon long run should still peak around 24 km")
+
+        let tenK = plan(.tenK, .aggressive)
+        let tenKLong = tenK.weeks.flatMap(\.days)
+            .filter { $0.workout.kind == .long }
+            .map(\.workout.distanceKm).max() ?? 0
+        XCTAssertEqual(tenKLong, 16.0, accuracy: 0.5,
+                       "Aggressive 10K long run should still peak around 16 km")
     }
 
     // MARK: - Pace plausibility

@@ -149,6 +149,11 @@ public struct TrainingPlanInputs: Sendable {
     /// User's PB for *the goal distance*, if recorded. Refines VDOT when
     /// VO₂ max is missing or stale.
     public let personalBest: PersonalBest?
+    /// Race-day deadline for the goal. When set in the future, the plan is
+    /// shortened to fit (capped at the goal's default plan length, with a
+    /// 4-week minimum so we still get a build + taper). When nil the default
+    /// plan length is used.
+    public let goalDate: Date?
     /// Plan generation date (used only for `createdAt`; not for the schedule).
     public let today: Date
 
@@ -157,12 +162,14 @@ public struct TrainingPlanInputs: Sendable {
                 longRunDay: Weekday = .sunday,
                 vo2Max: Double? = nil,
                 personalBest: PersonalBest? = nil,
+                goalDate: Date? = nil,
                 today: Date = Date()) {
         self.goal = goal
         self.tier = tier
         self.longRunDay = longRunDay
         self.vo2Max = vo2Max
         self.personalBest = personalBest
+        self.goalDate = goalDate
         self.today = today
     }
 }
@@ -184,7 +191,9 @@ public struct TrainingPlanGenerator: Sendable {
 
     public func generate(_ inputs: TrainingPlanInputs) -> TrainingPlan {
         let (vdot, fromFallback) = resolveVDOT(inputs)
-        let weekCount = planWeeks(for: inputs.goal)
+        let weekCount = planWeeks(for: inputs.goal,
+                                  goalDate: inputs.goalDate,
+                                  today: inputs.today)
         let weeks = (1...weekCount).map { i in
             buildWeek(
                 index: i,
@@ -228,7 +237,21 @@ public struct TrainingPlanGenerator: Sendable {
 
     // MARK: Plan length
 
-    public func planWeeks(for goal: RunningGoal) -> Int {
+    /// How many weeks the plan should run. When `goalDate` is in the future,
+    /// the plan is condensed to fit (never extended beyond the default — a
+    /// race 6 months out doesn't need a 26-week 5K plan). 4-week minimum so
+    /// the structure (build + taper) survives.
+    public func planWeeks(for goal: RunningGoal,
+                          goalDate: Date? = nil,
+                          today: Date = Date()) -> Int {
+        let defaultWeeks = defaultPlanWeeks(for: goal)
+        guard let goalDate, goalDate > today else { return defaultWeeks }
+        let secondsUntil = goalDate.timeIntervalSince(today)
+        let weeksUntil = Int(ceil(secondsUntil / (7 * 24 * 3600)))
+        return max(4, min(defaultWeeks, weeksUntil))
+    }
+
+    private func defaultPlanWeeks(for goal: RunningGoal) -> Int {
         switch goal {
         case .fiveK:        return 8
         case .tenK:         return 10
@@ -501,22 +524,26 @@ public struct TrainingPlanGenerator: Sendable {
     }
 
     /// Peak long-run distance. Capped at race + 25% for 5K/10K, around
-    /// race-distance for half (cap 24 km), and 32 km for marathon (Daniels'
-    /// recommended ceiling — don't go further on training).
+    /// race-distance for half (cap 24 km), and 37 km for marathon across all
+    /// tiers (Pfitzinger's 23-mile / ~37 km benchmark — pushes glycogen
+    /// economy and race-day confidence without crossing into recovery debt
+    /// territory).
     private func peakLongRunKm(goal: RunningGoal, tier: PlanTier) -> Double {
         switch goal {
         case .fiveK:        return tier == .aggressive ? 10 : 8
         case .tenK:         return tier == .aggressive ? 16 : 14
         case .halfMarathon: return tier == .aggressive ? 24 : 20
-        case .marathon:     return tier == .aggressive ? 32 : 28
+        case .marathon:     return 37
         }
     }
 
-    /// Sigmoid-ish buildup from 70% of peak in week 1 to 100% three weeks
-    /// before the race, then a 70/55/40% taper over the final two weeks.
+    /// Linear build from 70% of peak in week 1 to 100% at `total - 3`, then
+    /// a three-week taper (70 / 50 / 30%) into race day. The peak week is
+    /// included in the build branch on purpose — a plan that says "37 km
+    /// long run at peak" should actually prescribe a 37 km run somewhere.
     private func volumeFraction(week: Int, of total: Int) -> Double {
-        let peakWeek = total - 2          // build to 1.0 here
-        if week >= peakWeek {
+        let peakWeek = max(1, total - 3)  // build to 1.0 here
+        if week > peakWeek {
             // Taper.
             let weeksOut = total - week   // 2 = mid-taper, 1 = race-week
             switch weeksOut {
