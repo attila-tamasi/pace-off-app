@@ -27,3 +27,19 @@ public struct RestingHeartRateSnapshot: Codable, Sendable, Identifiable, Equatab
         self.bpm = bpm
     }
 }
+
+/// A daily HRV (SDNN) reading. Apple Watch records HRV during sleep, so a
+/// day typically has zero or one sample; we treat the day's average as *the*
+/// value for that day.
+public struct HRVSnapshot: Codable, Sendable, Identifiable, Equatable {
+    public let id: UUID
+    public let date: Date
+    /// HRV in milliseconds (SDNN).
+    public let ms: Double
+
+    public init(id: UUID = UUID(), date: Date, ms: Double) {
+        self.id = id
+        self.date = date
+        self.ms = ms
+    }
+}

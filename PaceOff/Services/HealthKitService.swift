@@ -79,7 +79,8 @@ public final class HealthKitService {
     public func syncAll(
         runsDaysBack: Int = 90,
         vo2DaysBack: Int = 90,
-        restingHRDaysBack: Int = 14
+        restingHRDaysBack: Int = 14,
+        hrvDaysBack: Int = 30
     ) async -> HealthDataSnapshot {
         let now = Date()
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now
@@ -89,6 +90,7 @@ public final class HealthKitService {
         async let vo2  = fetchVO2Max(daysBack: vo2DaysBack)
         async let rhr  = fetchRestingHeartRate(daysBack: restingHRDaysBack)
         async let hrv  = fetchHRV(on: yesterday)
+        async let hrvHist = fetchHRVHistory(daysBack: hrvDaysBack)
         async let yAvg = fetchAverageHeartRate(on: yesterday)
         async let lRHR = fetchLatestRestingHeartRate(asOf: now)
 
@@ -98,9 +100,11 @@ public final class HealthKitService {
             runsWindowDays: runsDaysBack,
             vo2WindowDays: vo2DaysBack,
             restingHRWindowDays: restingHRDaysBack,
+            hrvWindowDays: hrvDaysBack,
             runs: await runs,
             vo2Max: await vo2,
             restingHR: await rhr,
+            hrvHistory: await hrvHist,
             yesterdayHRV: await hrv,
             yesterdayAvgHeartRate: await yAvg,
             latestRestingHeartRate: await lRHR,
@@ -231,6 +235,41 @@ public final class HealthKitService {
                 options: .discreteAverage
             ) { _, stats, _ in
                 continuation.resume(returning: stats?.averageQuantity()?.doubleValue(for: unit))
+            }
+            store.execute(query)
+        }
+    }
+
+    /// Trailing daily HRV (SDNN, ms) samples for the last `daysBack` days.
+    /// One entry per calendar day that has data — HealthKit typically has
+    /// one overnight SDNN reading per night from Apple Watch. Used to build
+    /// the ReadinessEngine's rolling personal baseline.
+    public func fetchHRVHistory(daysBack: Int = 30) async -> [HRVSnapshot] {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN),
+              let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date())
+        else { return [] }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
+        let unit = HKUnit.secondUnit(with: .milli)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: type,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+            ) { _, samples, _ in
+                // Collapse to one value per calendar day (average when there
+                // are multiple readings — rare but happens after naps).
+                let cal = Calendar.current
+                var byDay: [Date: [Double]] = [:]
+                for sample in (samples as? [HKQuantitySample] ?? []) {
+                    let day = cal.startOfDay(for: sample.endDate)
+                    byDay[day, default: []].append(sample.quantity.doubleValue(for: unit))
+                }
+                let snapshots = byDay
+                    .map { HRVSnapshot(date: $0.key, ms: $0.value.reduce(0, +) / Double($0.value.count)) }
+                    .sorted { $0.date < $1.date }
+                continuation.resume(returning: snapshots)
             }
             store.execute(query)
         }
