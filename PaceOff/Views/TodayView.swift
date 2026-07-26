@@ -1,8 +1,10 @@
 // TodayView.swift
 // Home screen — single ScrollView:
-//   • Map at the top (today's route, or empty placeholder centered on Berlin)
-//   • Content below it (date, hero target, today's run card, supporting grid)
-//   • Scroll up and the map naturally disappears above the content.
+//   • Compact route strip at the top (only when there's a run today)
+//   • Content below (date, readiness+recovery, target hero, today's run card,
+//     supporting grid)
+//   • With no run today, the map is replaced by a lightweight graphic hero
+//     so we don't burn half the screen on a stock map region.
 
 import SwiftUI
 import MapKit
@@ -12,16 +14,11 @@ struct TodayView: View {
 
     @Environment(TodayViewModel.self) private var todayVM
     @Environment(ProfileStore.self) private var profileStore
-    @State private var cameraPosition: MapCameraPosition = .region(TodayView.berlinRegion)
+    @State private var cameraPosition: MapCameraPosition = .automatic
 
-    /// Map height as a fraction of the available screen height.
-    private let mapHeightFraction: CGFloat = 0.46
-
-    /// Default region used when there's no run today — centered on Berlin.
-    private static let berlinRegion = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 52.5200, longitude: 13.4050),
-        span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
-    )
+    /// Map height as a fraction of available screen height. Compact on
+    /// purpose — the map is a preview, not the point of the screen.
+    private let mapHeightFraction: CGFloat = 0.28
 
     var body: some View {
         GeometryReader { geo in
@@ -77,7 +74,7 @@ struct TodayView: View {
     @ViewBuilder
     private var mapLayer: some View {
         if todayVM.todayRouteCoordinates.isEmpty {
-            emptyMapPlaceholder
+            noRunHero
         } else {
             Map(position: $cameraPosition, interactionModes: [.pan, .zoom]) {
                 MapPolyline(coordinates: todayVM.todayRouteCoordinates)
@@ -107,40 +104,68 @@ struct TodayView: View {
         }
     }
 
-    /// Stylized placeholder shown when there's no recorded run today — the map
-    /// itself is rendered, but parked over Berlin so the user always sees a
-    /// real-looking map instead of an empty grey rectangle.
-    private var emptyMapPlaceholder: some View {
+    /// Lightweight non-map hero shown when there's no run today. Replaces the
+    /// previous "stock map parked over Berlin" — that ate a lot of pixels for
+    /// something the user didn't relate to. Instead, a gradient card with a
+    /// glyph and a tiny nudge sentence tied to today's readiness.
+    private var noRunHero: some View {
         ZStack {
-            Map(position: $cameraPosition, interactionModes: [.pan, .zoom])
-                .mapStyle(.standard(elevation: .realistic, pointsOfInterest: .excludingAll))
-
+            LinearGradient(
+                colors: [Color.accentColor.opacity(0.28), Color.accentColor.opacity(0.06)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
             VStack(spacing: 10) {
-                Image(systemName: "figure.run.circle")
-                    .font(.system(size: 40, weight: .light))
-                    .foregroundStyle(.primary)
-                Text("No run today")
+                Image(systemName: readinessGlyph)
+                    .font(.system(size: 42, weight: .semibold))
+                    .foregroundStyle(readinessColor(for: todayVM.readiness.level))
+                    .padding(.bottom, 2)
+                Text(noRunHeadline)
                     .font(.system(.title3, design: .rounded, weight: .semibold))
                     .foregroundStyle(.primary)
-                Text("Your route will appear here once you run.")
+                Text(noRunSubtitle)
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .padding(.horizontal, 24)
         }
     }
 
-    /// Fit the camera to the full route plus a little padding. When the route is
-    /// empty (no run today), fall back to the Berlin region so the map still
-    /// shows something recognizable.
-    private func updateCamera(for coords: [CLLocationCoordinate2D]) {
-        guard !coords.isEmpty else {
-            cameraPosition = .region(TodayView.berlinRegion)
-            return
+    private var readinessGlyph: String {
+        switch todayVM.readiness.level {
+        case .green:   return "checkmark.circle.fill"
+        case .yellow:  return "exclamationmark.circle.fill"
+        case .red:     return "moon.zzz.fill"
+        case .unknown: return "figure.run.circle"
         }
+    }
+
+    private var noRunHeadline: String {
+        switch todayVM.readiness.level {
+        case .green:   return "Ready when you are"
+        case .yellow:  return "Ease into today"
+        case .red:     return "Rest is the workout"
+        case .unknown: return "No run today"
+        }
+    }
+
+    private var noRunSubtitle: String {
+        switch todayVM.readiness.level {
+        case .green, .yellow, .red:
+            return todayVM.readiness.reason
+        case .unknown:
+            return "Your route will appear here once you run."
+        }
+    }
+
+    /// Fit the camera to the full route plus a little padding. Called only
+    /// when there IS a route — no-op otherwise, since the map isn't in the
+    /// view tree without one.
+    private func updateCamera(for coords: [CLLocationCoordinate2D]) {
+        guard !coords.isEmpty else { return }
         var minLat = coords[0].latitude, maxLat = coords[0].latitude
         var minLng = coords[0].longitude, maxLng = coords[0].longitude
         for c in coords {
@@ -211,50 +236,94 @@ struct TodayView: View {
         return "RACE IN \(weeks) WEEK\(weeks == 1 ? "" : "S")"
     }
 
-    // MARK: - Yesterday's recovery (morning check-in)
+    // MARK: - Recovery + Readiness (morning check-in)
 
     /// Shown at the top of the home screen so it's the first thing the user
-    /// reads when they open the app. Three numbers from yesterday/overnight:
-    /// HRV (SDNN), average heart rate, and most-recent resting heart rate.
+    /// reads. Now leads with the Green/Yellow/Red readiness call — the raw
+    /// HRV/HR/resting numbers stay below as the "why". The card's left edge
+    /// takes the readiness colour so the traffic-light state is legible at
+    /// a glance without a giant dot.
     private var recoveryCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("YESTERDAY'S RECOVERY")
-                    .font(.system(.caption, design: .rounded, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .kerning(1.2)
-                Spacer()
-                Image(systemName: "heart.text.square.fill")
-                    .font(.system(.caption, weight: .semibold))
-                    .foregroundStyle(.pink)
-            }
+        let readiness = todayVM.readiness
+        let accent = readinessColor(for: readiness.level)
+        return HStack(alignment: .top, spacing: 0) {
+            // Coloured leading rail that carries the traffic-light state.
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(accent)
+                .frame(width: 5)
+                .padding(.vertical, 18)
+                .padding(.leading, 4)
 
-            HStack(alignment: .top, spacing: 0) {
-                recoveryStat(
-                    label: "HRV",
-                    value: todayVM.yesterdayHRV.map { "\(Int($0.rounded()))" } ?? "—",
-                    unit: "ms"
-                )
-                divider
-                recoveryStat(
-                    label: "AVG HR",
-                    value: todayVM.yesterdayAvgHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
-                    unit: "bpm"
-                )
-                divider
-                recoveryStat(
-                    label: "RESTING",
-                    value: todayVM.latestRestingHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
-                    unit: "bpm"
-                )
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("READINESS")
+                            .font(.system(.caption, design: .rounded, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                            .kerning(1.2)
+                        Text(readiness.headline)
+                            .font(.system(.title3, design: .rounded, weight: .semibold))
+                            .foregroundStyle(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 8)
+                    Text(readiness.level.displayName.uppercased())
+                        .font(.system(.caption2, design: .rounded, weight: .bold))
+                        .kerning(0.8)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(accent.opacity(0.15), in: Capsule())
+                        .foregroundStyle(accent)
+                }
+
+                if readiness.level != .unknown {
+                    Text(readiness.reason)
+                        .font(.system(.footnote, design: .rounded))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Divider().padding(.vertical, 2)
+
+                HStack(alignment: .top, spacing: 0) {
+                    recoveryStat(
+                        label: "HRV",
+                        value: todayVM.yesterdayHRV.map { "\(Int($0.rounded()))" } ?? "—",
+                        unit: "ms"
+                    )
+                    divider
+                    recoveryStat(
+                        label: "AVG HR",
+                        value: todayVM.yesterdayAvgHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
+                        unit: "bpm"
+                    )
+                    divider
+                    recoveryStat(
+                        label: "RESTING",
+                        value: todayVM.latestRestingHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
+                        unit: "bpm"
+                    )
+                }
             }
+            .padding(.vertical, 20)
+            .padding(.horizontal, 16)
         }
-        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(.background)
                 .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 3)
+        }
+    }
+
+    /// The traffic-light colour palette. `.unknown` uses secondary so a fresh
+    /// install renders neutrally, not alarmingly.
+    private func readinessColor(for level: ReadinessLevel) -> Color {
+        switch level {
+        case .green:   return .green
+        case .yellow:  return .yellow
+        case .red:     return .red
+        case .unknown: return .secondary
         }
     }
 
@@ -512,6 +581,38 @@ private struct RouteCoordinateSnapshot: Equatable {
 #Preview("Today (ran today)") {
     NavigationStack { TodayView() }
         .environment(TodayViewModel.preview(todayRun: .sample, streak: 5))
+        .environment(PreviewProfileStore.populated)
+}
+
+#Preview("Today (readiness — yellow)") {
+    NavigationStack { TodayView() }
+        .environment(TodayViewModel.preview(
+            readiness: ReadinessScore(
+                level: .yellow,
+                headline: "HRV below your baseline",
+                reason: "Consider trimming volume or dropping the quality session.",
+                hrvToday: 38,
+                hrvBaseline: 52,
+                restingHRToday: 56,
+                restingHRBaseline: 55
+            )
+        ))
+        .environment(PreviewProfileStore.populated)
+}
+
+#Preview("Today (readiness — red)") {
+    NavigationStack { TodayView() }
+        .environment(TodayViewModel.preview(
+            readiness: ReadinessScore(
+                level: .red,
+                headline: "HRV well below your baseline",
+                reason: "Take an easy or rest day. Pushing hard here rarely pays off.",
+                hrvToday: 28,
+                hrvBaseline: 52,
+                restingHRToday: 62,
+                restingHRBaseline: 55
+            )
+        ))
         .environment(PreviewProfileStore.populated)
 }
 

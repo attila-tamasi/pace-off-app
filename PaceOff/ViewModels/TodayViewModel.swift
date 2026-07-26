@@ -27,8 +27,14 @@ public final class TodayViewModel {
     public private(set) var yesterdayAvgHeartRate: Double?
     public private(set) var latestRestingHeartRate: Double?
 
+    /// Green / Yellow / Red readiness derived from HRV and resting HR
+    /// versus the runner's rolling personal baseline. `.unknown` when the
+    /// baseline can't be built yet (fresh installs, missing HealthKit data).
+    public private(set) var readiness: ReadinessScore = .unknown
+
     @ObservationIgnored private let engine = PushTargetEngine()
     @ObservationIgnored private let voice = VoiceCopy()
+    @ObservationIgnored private let readinessEngine = ReadinessEngine()
 
     public init() {}
 
@@ -117,6 +123,11 @@ public final class TodayViewModel {
         self.yesterdayHRV = snapshot.yesterdayHRV
         self.yesterdayAvgHeartRate = snapshot.yesterdayAvgHeartRate
         self.latestRestingHeartRate = snapshot.latestRestingHeartRate
+        self.readiness = readinessEngine.score(
+            hrvHistory: snapshot.hrvHistory,
+            restingHRHistory: snapshot.restingHR,
+            today: now
+        )
 
         AppGroup.sharedDefaults?.set(self.todayRun != nil, forKey: AppGroup.Keys.runCompletedToday)
     }
@@ -166,7 +177,16 @@ public final class TodayViewModel {
         age: Int? = 33,
         hrv: Double? = 62,
         avgHR: Double? = 68,
-        restingHR: Double? = 51
+        restingHR: Double? = 51,
+        readiness: ReadinessScore = ReadinessScore(
+            level: .green,
+            headline: "Ready to run",
+            reason: "Recovery markers look normal for you — go run what you planned.",
+            hrvToday: 62,
+            hrvBaseline: 60,
+            restingHRToday: 51,
+            restingHRBaseline: 52
+        )
     ) -> TodayViewModel {
         let vm = TodayViewModel()
         vm.target = target
@@ -179,6 +199,7 @@ public final class TodayViewModel {
         vm.yesterdayHRV = hrv
         vm.yesterdayAvgHeartRate = avgHR
         vm.latestRestingHeartRate = restingHR
+        vm.readiness = readiness
         return vm
     }
     #endif
