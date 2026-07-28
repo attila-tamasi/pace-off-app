@@ -1,9 +1,11 @@
 // RunDetailView.swift
-// Full breakdown of a single run including the GPS route map and running dynamics.
+// Full breakdown of a single run including the GPS route map, per-km
+// pace-decay chart, and running dynamics.
 
 import SwiftUI
 import MapKit
 import CoreLocation
+import Charts
 
 struct RunDetailView: View {
     let run: RunRecord
@@ -11,6 +13,11 @@ struct RunDetailView: View {
     @State private var routeCoordinates: [CLLocationCoordinate2D] = []
     @State private var isLoadingRoute: Bool = true
     @State private var cameraPosition: MapCameraPosition = .automatic
+
+    /// Per-kilometre splits derived from the route locations + HR samples.
+    /// Populated after the route loads; empty for indoor / short runs.
+    @State private var splits: [KilometerSplit] = []
+    @State private var isLoadingSplits: Bool = true
 
     /// Map height as a fraction of the available screen height. Matches the
     /// proportion used on the Today screen so the experience feels consistent.
@@ -27,6 +34,7 @@ struct RunDetailView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         header
                         metricsGrid
+                        splitsSection
                         if hasDynamics { dynamicsSection }
                     }
                     .padding(20)
@@ -39,7 +47,7 @@ struct RunDetailView: View {
         .navigationTitle(run.startDate.formatted(.dateTime.month().day()))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
-        .task(id: run.id) { await loadRoute() }
+        .task(id: run.id) { await loadRouteAndSplits() }
     }
 
     // MARK: - Map
@@ -97,12 +105,37 @@ struct RunDetailView: View {
         }
     }
 
-    private func loadRoute() async {
+    private func loadRouteAndSplits() async {
         isLoadingRoute = true
-        let coords = await HealthKitService.shared.fetchRunRoute(for: run)
-        routeCoordinates = coords
+        isLoadingSplits = true
+
+        // Fetch the full CLLocation stream (with timestamps) so we can
+        // both draw the map polyline AND compute pace-decay splits from
+        // it — one HealthKit round-trip instead of two.
+        let locations = await HealthKitService.shared.fetchRunLocations(for: run)
+        routeCoordinates = locations.map(\.coordinate)
         isLoadingRoute = false
-        updateCamera(for: coords)
+        updateCamera(for: routeCoordinates)
+
+        // Splits: convert (date, lat, lon) → cumulative-metres samples
+        // and pull HR samples across the workout window.
+        let stream = locations.map {
+            (date: $0.timestamp,
+             lat: $0.coordinate.latitude,
+             lon: $0.coordinate.longitude)
+        }
+        let locationSamples = PaceDecayAnalyser.locationSamples(from: stream)
+        let hrRaw = await HealthKitService.shared.fetchHeartRateSamples(
+            from: run.startDate, to: run.endDate
+        )
+        let hrSamples = hrRaw.map {
+            PaceDecayAnalyser.HeartRateSample(date: $0.date, bpm: $0.bpm)
+        }
+        splits = PaceDecayAnalyser().splits(
+            locations: locationSamples,
+            heartRates: hrSamples
+        )
+        isLoadingSplits = false
     }
 
     private func updateCamera(for coords: [CLLocationCoordinate2D]) {
@@ -145,6 +178,187 @@ struct RunDetailView: View {
             metric("HEART RATE", value: run.averageHeartRate.map { "\(Int($0)) bpm" } ?? "—", icon: "heart.fill")
             metric("ENERGY", value: run.activeEnergyKcal.map { "\(Int($0)) kcal" } ?? "—", icon: "flame.fill")
         }
+    }
+
+    // MARK: - Pace-decay chart
+
+    /// Nothing to render when the run had no route (indoor, permission
+    /// denied) or was shorter than 1 km. Otherwise: bar chart of per-km
+    /// pace + a HR line overlay when we have HR data, and a headline
+    /// naming any big shift ("Pace slowed 22 s/km after km 4").
+    @ViewBuilder
+    private var splitsSection: some View {
+        if isLoadingSplits {
+            splitsLoading
+        } else if splits.count >= 2 {
+            splitsCard
+        } else {
+            EmptyView()
+        }
+    }
+
+    private var splitsLoading: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionLabel("PACE PER KM")
+            HStack {
+                ProgressView()
+                Text("Computing splits…")
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+            .padding(.vertical, 24)
+        }
+        .padding(16)
+        .background(.background, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var splitsCard: some View {
+        // Pace domain: pad by 15 s each side so the tallest bar isn't jammed
+        // against the axis. Bigger sec/km (slower) sits UP on the axis by
+        // default — the intuitive read is "taller = slower".
+        let minPace = (splits.map(\.secondsPerKm).min() ?? 0) - 15
+        let maxPace = (splits.map(\.secondsPerKm).max() ?? 0) + 15
+        let hasHR = splits.contains { $0.averageHeartRate != nil }
+
+        return VStack(alignment: .leading, spacing: 12) {
+            sectionLabel("PACE PER KM")
+            if let headline = decayHeadline {
+                Text(headline)
+                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Chart {
+                ForEach(splits) { split in
+                    BarMark(
+                        x: .value("Km", split.index),
+                        y: .value("sec/km", split.secondsPerKm)
+                    )
+                    .foregroundStyle(Color.accentColor.gradient)
+                    .cornerRadius(4)
+                    .annotation(position: .top, alignment: .center) {
+                        Text(split.formattedPace)
+                            .font(.system(.caption2, design: .rounded, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .chartYScale(domain: minPace...maxPace)
+            .chartYAxis {
+                AxisMarks(position: .leading, values: .automatic(desiredCount: 4)) { value in
+                    AxisGridLine()
+                    AxisValueLabel {
+                        if let sec = value.as(Double.self) {
+                            Text(formatPace(sec))
+                                .font(.system(.caption2, design: .rounded))
+                        }
+                    }
+                }
+            }
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: min(splits.count, 8))) { value in
+                    AxisGridLine()
+                    AxisValueLabel {
+                        if let km = value.as(Int.self) {
+                            Text("\(km)")
+                                .font(.system(.caption2, design: .rounded))
+                        }
+                    }
+                }
+            }
+            .frame(height: 200)
+
+            if hasHR {
+                // A compact HR row — one small stat per km, wrapping — so
+                // the user can still see "km 4 spiked to 168" without
+                // buying into the dual-axis complexity of an overlaid line.
+                heartRateRow
+            }
+        }
+        .padding(16)
+        .background(.background, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private var heartRateRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("AVG HR PER KM")
+                .font(.system(.caption2, design: .rounded, weight: .semibold))
+                .kerning(0.8)
+                .foregroundStyle(.tertiary)
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 44, maximum: 60), spacing: 6)],
+                alignment: .leading,
+                spacing: 6
+            ) {
+                ForEach(splits) { split in
+                    VStack(spacing: 1) {
+                        Text("\(split.index)")
+                            .font(.system(.caption2, design: .rounded, weight: .semibold))
+                            .foregroundStyle(.tertiary)
+                        Text(split.averageHeartRate.map { "\(Int($0.rounded()))" } ?? "—")
+                            .font(.system(.footnote, design: .rounded, weight: .semibold))
+                            .foregroundStyle(hrColor(for: split.averageHeartRate))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 4)
+                    .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: 6))
+                }
+            }
+        }
+    }
+
+    /// Redden HR values that sit above the run's own median — a cheap way
+    /// to flag effort spikes without needing a personal max HR baseline.
+    private func hrColor(for bpm: Double?) -> Color {
+        guard let bpm else { return .secondary }
+        let hrValues = splits.compactMap(\.averageHeartRate).sorted()
+        guard !hrValues.isEmpty else { return .primary }
+        let median = hrValues[hrValues.count / 2]
+        return bpm > median + 5 ? .red : .primary
+    }
+
+    /// Headline sentence: names where the run's pace drifted meaningfully.
+    /// Uses the tercile split (first vs last third) so a single slow km
+    /// doesn't trigger noise on longer runs.
+    private var decayHeadline: String? {
+        guard splits.count >= 4 else { return nil }
+        let thirdSize = max(1, splits.count / 3)
+        let firstAvg = averagePace(splits.prefix(thirdSize))
+        let lastAvg = averagePace(splits.suffix(thirdSize))
+        let delta = lastAvg - firstAvg  // positive = slower at the end
+        if delta > 12 {
+            return String(
+                format: "Slowed %d s/km in the final third — likely fatigue or effort dip.",
+                Int(delta.rounded())
+            )
+        } else if delta < -8 {
+            return String(
+                format: "Sped up %d s/km toward the end — strong finish.",
+                Int(-delta.rounded())
+            )
+        } else {
+            return "Pace held steady across the run — well-judged effort."
+        }
+    }
+
+    private func averagePace(_ slice: ArraySlice<KilometerSplit>) -> Double {
+        let vals = slice.map(\.secondsPerKm)
+        guard !vals.isEmpty else { return 0 }
+        return vals.reduce(0, +) / Double(vals.count)
+    }
+
+    private func formatPace(_ secPerKm: Double) -> String {
+        let m = Int(secPerKm) / 60
+        let s = Int(secPerKm) % 60
+        return String(format: "%d:%02d", m, s)
+    }
+
+    private func sectionLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.system(.caption, design: .rounded, weight: .semibold))
+            .kerning(1.2)
+            .foregroundStyle(.secondary)
     }
 
     private var hasDynamics: Bool {
@@ -202,9 +416,49 @@ struct RunDetailView: View {
 }
 
 #if DEBUG
+private let sampleSplits: [KilometerSplit] = [
+    KilometerSplit(index: 1, secondsPerKm: 335, averageHeartRate: 150, cumulativeSeconds: 335),
+    KilometerSplit(index: 2, secondsPerKm: 328, averageHeartRate: 154, cumulativeSeconds: 663),
+    KilometerSplit(index: 3, secondsPerKm: 330, averageHeartRate: 157, cumulativeSeconds: 993),
+    KilometerSplit(index: 4, secondsPerKm: 344, averageHeartRate: 163, cumulativeSeconds: 1_337),
+    KilometerSplit(index: 5, secondsPerKm: 352, averageHeartRate: 168, cumulativeSeconds: 1_689),
+    KilometerSplit(index: 6, secondsPerKm: 358, averageHeartRate: 171, cumulativeSeconds: 2_047),
+    KilometerSplit(index: 7, secondsPerKm: 363, averageHeartRate: 172, cumulativeSeconds: 2_410),
+    KilometerSplit(index: 8, secondsPerKm: 349, averageHeartRate: 168, cumulativeSeconds: 2_759),
+]
+
+/// Wrapper used only in previews so we can seed the split state without
+/// touching HealthKit. Keeps the production `RunDetailView` init clean.
+private struct PaceDecayPreviewHost: View {
+    let run: RunRecord
+    let splits: [KilometerSplit]
+    var body: some View {
+        NavigationStack {
+            RunDetailView.previewWithSplits(run: run, splits: splits)
+        }
+    }
+}
+
+extension RunDetailView {
+    /// Build a preview-only variant that pre-populates the splits state.
+    /// Kept behind an extension so the production initializer stays a
+    /// simple `RunDetailView(run:)`.
+    fileprivate static func previewWithSplits(run: RunRecord, splits: [KilometerSplit]) -> some View {
+        var view = RunDetailView(run: run)
+        view._splits = State(initialValue: splits)
+        view._isLoadingSplits = State(initialValue: false)
+        view._isLoadingRoute = State(initialValue: false)
+        return view
+    }
+}
+
 #Preview("Run detail") {
     NavigationStack {
         RunDetailView(run: .sample)
     }
+}
+
+#Preview("Run detail — with pace decay") {
+    PaceDecayPreviewHost(run: .sample, splits: sampleSplits)
 }
 #endif
