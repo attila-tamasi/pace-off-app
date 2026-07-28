@@ -1,14 +1,13 @@
 // RootView.swift
 // Tab bar — Today / History / Trends / Profile. Settings has been folded
-// into the Profile tab.
+// into the Profile tab. By the time we reach this view the onboarding
+// flow has committed a valid UserProfile — no defensive setup sheet.
 
 import SwiftUI
 
 struct RootView: View {
-    @Environment(ProfileStore.self) private var profileStore
 
     @State private var selection: AppTab = .today
-    @State private var presentingProfileSetup = false
 
     enum AppTab: Hashable { case today, history, trends, profile }
 
@@ -27,22 +26,5 @@ struct RootView: View {
                 NavigationStack { ProfileView() }
             }
         }
-        .onAppear {
-            // Defensive: if we reached the main tab bar without a complete
-            // profile (e.g. mid-flow flag drift), force the setup sheet.
-            if !profileStore.isSetUp {
-                presentingProfileSetup = true
-            }
-        }
-        .sheet(isPresented: $presentingProfileSetup) {
-            ProfileSetupSheetView(
-                initialProfile: profileStore.profile,
-                initialPhoto: profileStore.photo,
-                onComplete: { presentingProfileSetup = false }
-            )
-            .environment(profileStore)
-            .interactiveDismissDisabled()
-        }
     }
 }
-
