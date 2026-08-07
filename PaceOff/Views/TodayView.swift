@@ -1,8 +1,8 @@
 // TodayView.swift
 // Home screen — single ScrollView:
-//   • Compact route strip at the top (only when there's a run today)
-//   • Content below (date, readiness+recovery, target hero, today's run card,
-//     supporting grid)
+//   • Compact route strip at the top (today's route when there is one)
+//   • Content below (date, recovery, readiness, target hero, today's run
+//     card, supporting grid)
 //   • With no run today, the map is replaced by a lightweight graphic hero
 //     so we don't burn half the screen on a stock map region.
 
@@ -106,8 +106,9 @@ struct TodayView: View {
 
     /// Lightweight non-map hero shown when there's no run today. Replaces the
     /// previous "stock map parked over Berlin" — that ate a lot of pixels for
-    /// something the user didn't relate to. Instead, a gradient card with a
-    /// glyph and a tiny nudge sentence tied to today's readiness.
+    /// something the user didn't relate to. The glyph and headline follow
+    /// today's readiness; the detailed sentence stays on the readiness card
+    /// below so the two surfaces don't repeat each other.
     private var noRunHero: some View {
         ZStack {
             LinearGradient(
@@ -116,14 +117,14 @@ struct TodayView: View {
                 endPoint: .bottomTrailing
             )
             VStack(spacing: 10) {
-                Image(systemName: readinessGlyph)
+                Image(systemName: noRunGlyph)
                     .font(.system(size: 42, weight: .semibold))
-                    .foregroundStyle(readinessColor(for: todayVM.readiness.level))
+                    .foregroundStyle(todayVM.readiness.map { readinessColor($0.level) } ?? .secondary)
                     .padding(.bottom, 2)
                 Text(noRunHeadline)
                     .font(.system(.title3, design: .rounded, weight: .semibold))
                     .foregroundStyle(.primary)
-                Text(noRunSubtitle)
+                Text("Your route will appear here once you run.")
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -134,30 +135,21 @@ struct TodayView: View {
         }
     }
 
-    private var readinessGlyph: String {
-        switch todayVM.readiness.level {
+    private var noRunGlyph: String {
+        switch todayVM.readiness?.level {
         case .green:   return "checkmark.circle.fill"
         case .yellow:  return "exclamationmark.circle.fill"
         case .red:     return "moon.zzz.fill"
-        case .unknown: return "figure.run.circle"
+        case nil:      return "figure.run.circle"
         }
     }
 
     private var noRunHeadline: String {
-        switch todayVM.readiness.level {
+        switch todayVM.readiness?.level {
         case .green:   return "Ready when you are"
         case .yellow:  return "Ease into today"
         case .red:     return "Rest is the workout"
-        case .unknown: return "No run today"
-        }
-    }
-
-    private var noRunSubtitle: String {
-        switch todayVM.readiness.level {
-        case .green, .yellow, .red:
-            return todayVM.readiness.reason
-        case .unknown:
-            return "Your route will appear here once you run."
+        case nil:      return "No run today"
         }
     }
 
@@ -190,6 +182,10 @@ struct TodayView: View {
             dateRibbon
 
             recoveryCard
+
+            if let readiness = todayVM.readiness {
+                readinessCard(readiness)
+            }
 
             heroCard
 
@@ -236,94 +232,50 @@ struct TodayView: View {
         return "RACE IN \(weeks) WEEK\(weeks == 1 ? "" : "S")"
     }
 
-    // MARK: - Recovery + Readiness (morning check-in)
+    // MARK: - Yesterday's recovery (morning check-in)
 
     /// Shown at the top of the home screen so it's the first thing the user
-    /// reads. Now leads with the Green/Yellow/Red readiness call — the raw
-    /// HRV/HR/resting numbers stay below as the "why". The card's left edge
-    /// takes the readiness colour so the traffic-light state is legible at
-    /// a glance without a giant dot.
+    /// reads when they open the app. Three numbers from yesterday/overnight:
+    /// HRV (SDNN), average heart rate, and most-recent resting heart rate.
     private var recoveryCard: some View {
-        let readiness = todayVM.readiness
-        let accent = readinessColor(for: readiness.level)
-        return HStack(alignment: .top, spacing: 0) {
-            // Coloured leading rail that carries the traffic-light state.
-            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                .fill(accent)
-                .frame(width: 5)
-                .padding(.vertical, 18)
-                .padding(.leading, 4)
-
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .center) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("READINESS")
-                            .font(.system(.caption, design: .rounded, weight: .semibold))
-                            .foregroundStyle(.secondary)
-                            .kerning(1.2)
-                        Text(readiness.headline)
-                            .font(.system(.title3, design: .rounded, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer(minLength: 8)
-                    Text(readiness.level.displayName.uppercased())
-                        .font(.system(.caption2, design: .rounded, weight: .bold))
-                        .kerning(0.8)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(accent.opacity(0.15), in: Capsule())
-                        .foregroundStyle(accent)
-                }
-
-                if readiness.level != .unknown {
-                    Text(readiness.reason)
-                        .font(.system(.footnote, design: .rounded))
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                Divider().padding(.vertical, 2)
-
-                HStack(alignment: .top, spacing: 0) {
-                    recoveryStat(
-                        label: "HRV",
-                        value: todayVM.yesterdayHRV.map { "\(Int($0.rounded()))" } ?? "—",
-                        unit: "ms"
-                    )
-                    divider
-                    recoveryStat(
-                        label: "AVG HR",
-                        value: todayVM.yesterdayAvgHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
-                        unit: "bpm"
-                    )
-                    divider
-                    recoveryStat(
-                        label: "RESTING",
-                        value: todayVM.latestRestingHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
-                        unit: "bpm"
-                    )
-                }
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("YESTERDAY'S RECOVERY")
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .kerning(1.2)
+                Spacer()
+                Image(systemName: "heart.text.square.fill")
+                    .font(.system(.caption, weight: .semibold))
+                    .foregroundStyle(.pink)
             }
-            .padding(.vertical, 20)
-            .padding(.horizontal, 16)
+
+            HStack(alignment: .top, spacing: 0) {
+                recoveryStat(
+                    label: "HRV",
+                    value: todayVM.yesterdayHRV.map { "\(Int($0.rounded()))" } ?? "—",
+                    unit: "ms"
+                )
+                divider
+                recoveryStat(
+                    label: "AVG HR",
+                    value: todayVM.yesterdayAvgHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
+                    unit: "bpm"
+                )
+                divider
+                recoveryStat(
+                    label: "RESTING",
+                    value: todayVM.latestRestingHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
+                    unit: "bpm"
+                )
+            }
         }
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(.background)
                 .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 3)
-        }
-    }
-
-    /// The traffic-light colour palette. `.unknown` uses secondary so a fresh
-    /// install renders neutrally, not alarmingly.
-    private func readinessColor(for level: ReadinessLevel) -> Color {
-        switch level {
-        case .green:   return .green
-        case .yellow:  return .yellow
-        case .red:     return .red
-        case .unknown: return .secondary
         }
     }
 
@@ -350,6 +302,66 @@ struct TodayView: View {
             .fill(Color.secondary.opacity(0.15))
             .frame(width: 1, height: 36)
             .padding(.horizontal, 4)
+    }
+
+    // MARK: - Readiness traffic light
+
+    /// Green / yellow / red verdict on today's recovery, sitting between the
+    /// raw numbers above and the prescription below. Hidden entirely while
+    /// there isn't enough HRV/RHR history for a trustworthy baseline.
+    private func readinessCard(_ readiness: DailyReadiness) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("TODAY'S READINESS")
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .kerning(1.2)
+                Spacer()
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(readinessColor(readiness.level))
+                        .frame(width: 8, height: 8)
+                    Text(readinessLabel(readiness.level))
+                        .font(.system(.caption2, design: .rounded, weight: .bold))
+                        .kerning(0.8)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(readinessColor(readiness.level).opacity(0.15), in: Capsule())
+                .foregroundStyle(readinessColor(readiness.level))
+            }
+
+            Text(readiness.sentence)
+                .font(.system(.body, design: .rounded, weight: .medium))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(.background)
+                .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 3)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Today's readiness: \(readinessLabel(readiness.level)). \(readiness.sentence)")
+    }
+
+    private func readinessLabel(_ level: ReadinessLevel) -> String {
+        switch level {
+        case .green: return "READY"
+        case .yellow: return "EASE OFF"
+        case .red: return "REST"
+        }
+    }
+
+    private func readinessColor(_ level: ReadinessLevel) -> Color {
+        switch level {
+        case .green: return .green
+        case .yellow: return .yellow
+        case .red: return .red
+        }
     }
 
     // MARK: - Hero card (today's target)
@@ -584,35 +596,9 @@ private struct RouteCoordinateSnapshot: Equatable {
         .environment(PreviewProfileStore.populated)
 }
 
-#Preview("Today (readiness — yellow)") {
+#Preview("Today (rest day)") {
     NavigationStack { TodayView() }
-        .environment(TodayViewModel.preview(
-            readiness: ReadinessScore(
-                level: .yellow,
-                headline: "HRV below your baseline",
-                reason: "Consider trimming volume or dropping the quality session.",
-                hrvToday: 38,
-                hrvBaseline: 52,
-                restingHRToday: 56,
-                restingHRBaseline: 55
-            )
-        ))
-        .environment(PreviewProfileStore.populated)
-}
-
-#Preview("Today (readiness — red)") {
-    NavigationStack { TodayView() }
-        .environment(TodayViewModel.preview(
-            readiness: ReadinessScore(
-                level: .red,
-                headline: "HRV well below your baseline",
-                reason: "Take an easy or rest day. Pushing hard here rarely pays off.",
-                hrvToday: 28,
-                hrvBaseline: 52,
-                restingHRToday: 62,
-                restingHRBaseline: 55
-            )
-        ))
+        .environment(TodayViewModel.preview(readiness: .sampleRed))
         .environment(PreviewProfileStore.populated)
 }
 

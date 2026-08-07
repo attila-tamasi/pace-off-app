@@ -27,14 +27,13 @@ public final class TodayViewModel {
     public private(set) var yesterdayAvgHeartRate: Double?
     public private(set) var latestRestingHeartRate: Double?
 
-    /// Green / Yellow / Red readiness derived from HRV and resting HR
-    /// versus the runner's rolling personal baseline. `.unknown` when the
-    /// baseline can't be built yet (fresh installs, missing HealthKit data).
-    public private(set) var readiness: ReadinessScore = .unknown
+    // Daily traffic light. Nil until there's enough HRV/RHR history to
+    // trust a baseline — the card stays hidden rather than guessing.
+    public private(set) var readiness: DailyReadiness?
 
     @ObservationIgnored private let engine = PushTargetEngine()
-    @ObservationIgnored private let voice = VoiceCopy()
     @ObservationIgnored private let readinessEngine = ReadinessEngine()
+    @ObservationIgnored private let voice = VoiceCopy()
 
     public init() {}
 
@@ -115,6 +114,9 @@ public final class TodayViewModel {
         )
         let computed = engine.compute(inputs)
         self.target = computed
+        self.readiness = readinessEngine.compute(
+            ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr)
+        )
         self.yesterday = mostRecentRunBefore(today: now, in: runs)
         self.todayRun = mostRecentRunOn(day: now, in: runs)
         self.currentVO2Max = vo2.last?.value
@@ -123,11 +125,6 @@ public final class TodayViewModel {
         self.yesterdayHRV = snapshot.yesterdayHRV
         self.yesterdayAvgHeartRate = snapshot.yesterdayAvgHeartRate
         self.latestRestingHeartRate = snapshot.latestRestingHeartRate
-        self.readiness = readinessEngine.score(
-            hrvHistory: snapshot.hrvHistory,
-            restingHRHistory: snapshot.restingHR,
-            today: now
-        )
 
         AppGroup.sharedDefaults?.set(self.todayRun != nil, forKey: AppGroup.Keys.runCompletedToday)
     }
@@ -178,15 +175,7 @@ public final class TodayViewModel {
         hrv: Double? = 62,
         avgHR: Double? = 68,
         restingHR: Double? = 51,
-        readiness: ReadinessScore = ReadinessScore(
-            level: .green,
-            headline: "Ready to run",
-            reason: "Recovery markers look normal for you — go run what you planned.",
-            hrvToday: 62,
-            hrvBaseline: 60,
-            restingHRToday: 51,
-            restingHRBaseline: 52
-        )
+        readiness: DailyReadiness? = .sample
     ) -> TodayViewModel {
         let vm = TodayViewModel()
         vm.target = target

@@ -80,7 +80,7 @@ public final class HealthKitService {
         runsDaysBack: Int = 90,
         vo2DaysBack: Int = 90,
         restingHRDaysBack: Int = 14,
-        hrvDaysBack: Int = 30
+        hrvDaysBack: Int = 35
     ) async -> HealthDataSnapshot {
         let now = Date()
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now
@@ -89,8 +89,8 @@ public final class HealthKitService {
         async let runs = fetchRuns(daysBack: runsDaysBack)
         async let vo2  = fetchVO2Max(daysBack: vo2DaysBack)
         async let rhr  = fetchRestingHeartRate(daysBack: restingHRDaysBack)
+        async let hrvS = fetchHRVSeries(daysBack: hrvDaysBack)
         async let hrv  = fetchHRV(on: yesterday)
-        async let hrvHist = fetchHRVHistory(daysBack: hrvDaysBack)
         async let yAvg = fetchAverageHeartRate(on: yesterday)
         async let lRHR = fetchLatestRestingHeartRate(asOf: now)
 
@@ -104,7 +104,7 @@ public final class HealthKitService {
             runs: await runs,
             vo2Max: await vo2,
             restingHR: await rhr,
-            hrvHistory: await hrvHist,
+            hrv: await hrvS,
             yesterdayHRV: await hrv,
             yesterdayAvgHeartRate: await yAvg,
             latestRestingHeartRate: await lRHR,
@@ -191,6 +191,32 @@ public final class HealthKitService {
         }
     }
 
+    /// All HRV (SDNN) samples in the trailing window, in milliseconds.
+    /// The ReadinessEngine collapses these to per-day means and builds its
+    /// rolling baseline, so we hand over raw samples rather than aggregates.
+    public func fetchHRVSeries(daysBack: Int = 35) async -> [HRVSnapshot] {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN),
+              let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date())
+        else { return [] }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
+        let unit = HKUnit.secondUnit(with: .milli)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: type,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+            ) { _, samples, _ in
+                let snapshots: [HRVSnapshot] = (samples as? [HKQuantitySample] ?? []).map {
+                    HRVSnapshot(date: $0.endDate, sdnnMs: $0.quantity.doubleValue(for: unit))
+                }
+                continuation.resume(returning: snapshots)
+            }
+            store.execute(query)
+        }
+    }
+
     // MARK: - Daily recovery snapshot
 
     /// Average over all heart-rate samples for the calendar day containing
@@ -235,41 +261,6 @@ public final class HealthKitService {
                 options: .discreteAverage
             ) { _, stats, _ in
                 continuation.resume(returning: stats?.averageQuantity()?.doubleValue(for: unit))
-            }
-            store.execute(query)
-        }
-    }
-
-    /// Trailing daily HRV (SDNN, ms) samples for the last `daysBack` days.
-    /// One entry per calendar day that has data — HealthKit typically has
-    /// one overnight SDNN reading per night from Apple Watch. Used to build
-    /// the ReadinessEngine's rolling personal baseline.
-    public func fetchHRVHistory(daysBack: Int = 30) async -> [HRVSnapshot] {
-        guard let type = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN),
-              let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date())
-        else { return [] }
-        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
-        let unit = HKUnit.secondUnit(with: .milli)
-
-        return await withCheckedContinuation { continuation in
-            let query = HKSampleQuery(
-                sampleType: type,
-                predicate: predicate,
-                limit: HKObjectQueryNoLimit,
-                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
-            ) { _, samples, _ in
-                // Collapse to one value per calendar day (average when there
-                // are multiple readings — rare but happens after naps).
-                let cal = Calendar.current
-                var byDay: [Date: [Double]] = [:]
-                for sample in (samples as? [HKQuantitySample] ?? []) {
-                    let day = cal.startOfDay(for: sample.endDate)
-                    byDay[day, default: []].append(sample.quantity.doubleValue(for: unit))
-                }
-                let snapshots = byDay
-                    .map { HRVSnapshot(date: $0.key, ms: $0.value.reduce(0, +) / Double($0.value.count)) }
-                    .sorted { $0.date < $1.date }
-                continuation.resume(returning: snapshots)
             }
             store.execute(query)
         }
@@ -490,6 +481,100 @@ public final class HealthKitService {
         return all
             .sorted { $0.timestamp < $1.timestamp }
             .map(\.coordinate)
+    }
+
+    /// Fetch the timestamped route points for a given RunRecord — same
+    /// matching logic as `fetchRunRoute` but returns the raw `CLLocation`
+    /// values so callers can compute per-km splits from timestamps + coords.
+    public func fetchRunLocations(for record: RunRecord) async -> [CLLocation] {
+        let windowStart = record.startDate.addingTimeInterval(-60)
+        let windowEnd = record.endDate.addingTimeInterval(60)
+
+        let runPred = HKQuery.predicateForWorkouts(with: .running)
+        let datePred = HKQuery.predicateForSamples(withStart: windowStart, end: windowEnd, options: [])
+        let combined = NSCompoundPredicate(andPredicateWithSubpredicates: [runPred, datePred])
+
+        let workout: HKWorkout? = await withCheckedContinuation { continuation in
+            let q = HKSampleQuery(
+                sampleType: .workoutType(),
+                predicate: combined,
+                limit: 20,
+                sortDescriptors: nil
+            ) { _, samples, _ in
+                let workouts = (samples as? [HKWorkout]) ?? []
+                let match = workouts.min { lhs, rhs in
+                    abs(lhs.startDate.timeIntervalSince(record.startDate)) <
+                    abs(rhs.startDate.timeIntervalSince(record.startDate))
+                }
+                continuation.resume(returning: match)
+            }
+            store.execute(q)
+        }
+        guard let workout else { return [] }
+        return await routeLocations(for: workout)
+    }
+
+    /// Timestamped `CLLocation` samples from a workout's attached route
+    /// series, sorted chronologically. Shares plumbing with
+    /// `routeCoordinates(for:)` but preserves the full `CLLocation`.
+    private func routeLocations(for workout: HKWorkout) async -> [CLLocation] {
+        let routeType = HKSeriesType.workoutRoute()
+        let routePred = HKQuery.predicateForObjects(from: workout)
+        let routes: [HKWorkoutRoute] = await withCheckedContinuation { continuation in
+            let q = HKAnchoredObjectQuery(
+                type: routeType,
+                predicate: routePred,
+                anchor: nil,
+                limit: HKObjectQueryNoLimit
+            ) { _, samples, _, _, _ in
+                continuation.resume(returning: (samples as? [HKWorkoutRoute]) ?? [])
+            }
+            store.execute(q)
+        }
+        guard !routes.isEmpty else { return [] }
+
+        var all: [CLLocation] = []
+        for route in routes {
+            let locations: [CLLocation] = await withCheckedContinuation { continuation in
+                final class LocationCollector: @unchecked Sendable {
+                    var items: [CLLocation] = []
+                }
+                let collector = LocationCollector()
+                let q = HKWorkoutRouteQuery(route: route) { _, batch, done, _ in
+                    if let batch { collector.items.append(contentsOf: batch) }
+                    if done { continuation.resume(returning: collector.items) }
+                }
+                store.execute(q)
+            }
+            all.append(contentsOf: locations)
+        }
+
+        return all.sorted { $0.timestamp < $1.timestamp }
+    }
+
+    /// Timestamped heart-rate samples across a date range — the raw feed
+    /// the pace-decay analyser averages into per-km HR values.
+    public func fetchHeartRateSamples(from startDate: Date, to endDate: Date)
+        async -> [(date: Date, bpm: Double)]
+    {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .heartRate) else { return [] }
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
+        let unit = HKUnit.count().unitDivided(by: .minute())
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: type,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+            ) { _, samples, _ in
+                let list = (samples as? [HKQuantitySample] ?? []).map {
+                    (date: $0.startDate, bpm: $0.quantity.doubleValue(for: unit))
+                }
+                continuation.resume(returning: list)
+            }
+            store.execute(query)
+        }
     }
 
     // MARK: - User profile (read-only characteristics)

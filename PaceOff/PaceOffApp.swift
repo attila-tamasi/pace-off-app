@@ -30,7 +30,6 @@ struct PaceOffApp: App {
         case splash
         case auth
         case onboarding
-        case profileSetup
         case main
     }
 
@@ -87,16 +86,8 @@ struct PaceOffApp: App {
                 .transition(.opacity)
 
         case .onboarding:
-            OnboardingView(onComplete: completeOnboarding)
+            OnboardingFlow(onComplete: completeOnboarding)
                 .transition(.opacity)
-
-        case .profileSetup:
-            ProfileSetupSheetView(
-                initialProfile: profileStore.profile,
-                initialPhoto: profileStore.photo,
-                onComplete: completeProfileSetup
-            )
-            .transition(.opacity)
 
         case .main:
             RootView()
@@ -117,10 +108,12 @@ struct PaceOffApp: App {
     private func advanceFromSplash() {
         if !authComplete {
             stage = .auth
-        } else if !onboardingComplete {
+        } else if !onboardingComplete || !profileStore.isSetUp {
+            // Defensive: a legacy install may have flipped
+            // `onboardingComplete` before we had a profile-setup step. In
+            // that case send them back through onboarding so we land with
+            // a valid profile.
             stage = .onboarding
-        } else if !profileStore.isSetUp {
-            stage = .profileSetup
         } else {
             stage = .main
         }
@@ -133,14 +126,6 @@ struct PaceOffApp: App {
 
     private func completeOnboarding() {
         onboardingComplete = true
-        if profileStore.isSetUp {
-            stage = .main
-        } else {
-            stage = .profileSetup
-        }
-    }
-
-    private func completeProfileSetup() {
         stage = .main
     }
 

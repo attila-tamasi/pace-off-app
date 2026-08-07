@@ -23,8 +23,8 @@ import Foundation
 /// Persisted as JSON. Versioned via `schemaVersion` so a future change in
 /// shape can choose to nuke the cache rather than crash decoding.
 public struct HealthDataSnapshot: Codable, Sendable, Equatable {
-    /// Bumped whenever the encoded shape changes incompatibly. v2 added
-    /// `hrvHistory`; older cache files are dropped rather than migrated.
+    /// Bumped whenever the encoded shape changes incompatibly.
+    /// v2: added the HRV series for the readiness traffic light.
     public static let currentSchema: Int = 2
 
     public var schemaVersion: Int
@@ -40,9 +40,7 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
     public var runs: [RunRecord]
     public var vo2Max: [VO2MaxSnapshot]
     public var restingHR: [RestingHeartRateSnapshot]
-    /// Daily HRV (SDNN) readings — used by `ReadinessEngine` to build a
-    /// personal baseline for the Green/Yellow/Red morning readiness signal.
-    public var hrvHistory: [HRVSnapshot]
+    public var hrv: [HRVSnapshot]
 
     // Recovery snapshot — small scalars, all optional because HealthKit may
     // have nothing recorded for the day.
@@ -61,11 +59,11 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
         runsWindowDays: Int = 90,
         vo2WindowDays: Int = 90,
         restingHRWindowDays: Int = 14,
-        hrvWindowDays: Int = 30,
+        hrvWindowDays: Int = 35,
         runs: [RunRecord] = [],
         vo2Max: [VO2MaxSnapshot] = [],
         restingHR: [RestingHeartRateSnapshot] = [],
-        hrvHistory: [HRVSnapshot] = [],
+        hrv: [HRVSnapshot] = [],
         yesterdayHRV: Double? = nil,
         yesterdayAvgHeartRate: Double? = nil,
         latestRestingHeartRate: Double? = nil,
@@ -80,7 +78,7 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
         self.runs = runs
         self.vo2Max = vo2Max
         self.restingHR = restingHR
-        self.hrvHistory = hrvHistory
+        self.hrv = hrv
         self.yesterdayHRV = yesterdayHRV
         self.yesterdayAvgHeartRate = yesterdayAvgHeartRate
         self.latestRestingHeartRate = latestRestingHeartRate
@@ -91,7 +89,7 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
     /// from defaults). Lets callers tell "have I ever synced?" apart from
     /// "I synced two seconds ago and have no runs".
     public var isEmpty: Bool {
-        runs.isEmpty && vo2Max.isEmpty && restingHR.isEmpty && hrvHistory.isEmpty
+        runs.isEmpty && vo2Max.isEmpty && restingHR.isEmpty && hrv.isEmpty
             && yesterdayHRV == nil && yesterdayAvgHeartRate == nil
             && latestRestingHeartRate == nil && userAge == nil
     }
