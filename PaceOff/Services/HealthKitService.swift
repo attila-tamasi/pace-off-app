@@ -79,7 +79,8 @@ public final class HealthKitService {
     public func syncAll(
         runsDaysBack: Int = 90,
         vo2DaysBack: Int = 90,
-        restingHRDaysBack: Int = 14
+        restingHRDaysBack: Int = 14,
+        hrvDaysBack: Int = 35
     ) async -> HealthDataSnapshot {
         let now = Date()
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now
@@ -88,6 +89,7 @@ public final class HealthKitService {
         async let runs = fetchRuns(daysBack: runsDaysBack)
         async let vo2  = fetchVO2Max(daysBack: vo2DaysBack)
         async let rhr  = fetchRestingHeartRate(daysBack: restingHRDaysBack)
+        async let hrvS = fetchHRVSeries(daysBack: hrvDaysBack)
         async let hrv  = fetchHRV(on: yesterday)
         async let yAvg = fetchAverageHeartRate(on: yesterday)
         async let lRHR = fetchLatestRestingHeartRate(asOf: now)
@@ -98,9 +100,11 @@ public final class HealthKitService {
             runsWindowDays: runsDaysBack,
             vo2WindowDays: vo2DaysBack,
             restingHRWindowDays: restingHRDaysBack,
+            hrvWindowDays: hrvDaysBack,
             runs: await runs,
             vo2Max: await vo2,
             restingHR: await rhr,
+            hrv: await hrvS,
             yesterdayHRV: await hrv,
             yesterdayAvgHeartRate: await yAvg,
             latestRestingHeartRate: await lRHR,
@@ -180,6 +184,32 @@ public final class HealthKitService {
             ) { _, samples, _ in
                 let snapshots: [RestingHeartRateSnapshot] = (samples as? [HKQuantitySample] ?? []).map {
                     RestingHeartRateSnapshot(date: $0.endDate, bpm: $0.quantity.doubleValue(for: unit))
+                }
+                continuation.resume(returning: snapshots)
+            }
+            store.execute(query)
+        }
+    }
+
+    /// All HRV (SDNN) samples in the trailing window, in milliseconds.
+    /// The ReadinessEngine collapses these to per-day means and builds its
+    /// rolling baseline, so we hand over raw samples rather than aggregates.
+    public func fetchHRVSeries(daysBack: Int = 35) async -> [HRVSnapshot] {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN),
+              let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date())
+        else { return [] }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
+        let unit = HKUnit.secondUnit(with: .milli)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: type,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+            ) { _, samples, _ in
+                let snapshots: [HRVSnapshot] = (samples as? [HKQuantitySample] ?? []).map {
+                    HRVSnapshot(date: $0.endDate, sdnnMs: $0.quantity.doubleValue(for: unit))
                 }
                 continuation.resume(returning: snapshots)
             }

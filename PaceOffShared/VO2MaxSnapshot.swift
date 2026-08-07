@@ -27,3 +27,16 @@ public struct RestingHeartRateSnapshot: Codable, Sendable, Identifiable, Equatab
         self.bpm = bpm
     }
 }
+
+public struct HRVSnapshot: Codable, Sendable, Identifiable, Equatable {
+    public let id: UUID
+    public let date: Date
+    /// SDNN in milliseconds — Apple Health's native HRV unit.
+    public let sdnnMs: Double
+
+    public init(id: UUID = UUID(), date: Date, sdnnMs: Double) {
+        self.id = id
+        self.date = date
+        self.sdnnMs = sdnnMs
+    }
+}

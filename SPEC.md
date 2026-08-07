@@ -57,17 +57,20 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 - `NotificationScheduler` uses `UNUserNotificationCenter` + calendar triggers; up to three pushes / day per PRD §9.1
 - Evening "last call" only fires when the user has skipped at least one day this week
 
+### 11. Daily readiness traffic light
+- Green / Yellow / Red readiness card on Today — HRV (SDNN) + resting HR versus rolling personal baselines (30-day HRV, 14-day RHR), with one supporting sentence ("HRV below your baseline — easy day.")
+- `ReadinessEngine` — pure Swift in `PaceOffShared`, unit-tested; two independently degraded signals escalate to red; hides entirely (returns nil) until ≥7 days of HRV or ≥5 days of RHR history
+- **Display-only in V1**: augments the existing `Tone` display, does not feed into `PushTargetEngine`'s prescribed distance (follow-up decision)
+- HRV series cached in `HealthDataSnapshot` (schema v2); no new HealthKit read scope — SDNN was already requested for the morning check-in card
+
 ---
 
 ## Proposals — V2+ / needs decision
 
 Everything below came out of a brainstorm and would extend Pace Off's positioning toward accountability. **None of these are approved.** Each is tagged with the dependency cost so a decision can be made deliberately.
 
-### A. Daily traffic-light (HRV + resting HR)
-- Green / Yellow / Red daily readiness — HRV (SDNN) + resting HR versus a rolling personal baseline
-- One supporting sentence ("HRV below your baseline — easy day")
-- **Overlaps with existing** `PushTargetEngine`, which already surfaces `Tone` (encouraging / firm / rest). Decide whether this replaces the tone display, augments it, or is a separate readiness surface.
-- **Cost:** new HealthKit read scope (HRV / SDNN); no new dependencies. Fits current architecture cleanly.
+### A. Daily traffic-light (HRV + resting HR) — ✅ shipped
+Shipped as **§11** above (decision: augments the tone display, display-only in V1). Remaining open question for a follow-up: should a red day cap or reduce `PushTargetEngine`'s prescribed distance?
 
 ### B. Buddy pairing + shared weekly goal progress
 - Invite a running buddy via share link (iMessage flow); no random matching

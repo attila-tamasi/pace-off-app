@@ -166,6 +166,10 @@ struct TodayView: View {
 
             recoveryCard
 
+            if let readiness = todayVM.readiness {
+                readinessCard(readiness)
+            }
+
             heroCard
 
             if let run = todayVM.todayRun {
@@ -281,6 +285,66 @@ struct TodayView: View {
             .fill(Color.secondary.opacity(0.15))
             .frame(width: 1, height: 36)
             .padding(.horizontal, 4)
+    }
+
+    // MARK: - Readiness traffic light
+
+    /// Green / yellow / red verdict on today's recovery, sitting between the
+    /// raw numbers above and the prescription below. Hidden entirely while
+    /// there isn't enough HRV/RHR history for a trustworthy baseline.
+    private func readinessCard(_ readiness: DailyReadiness) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("TODAY'S READINESS")
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .kerning(1.2)
+                Spacer()
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(readinessColor(readiness.level))
+                        .frame(width: 8, height: 8)
+                    Text(readinessLabel(readiness.level))
+                        .font(.system(.caption2, design: .rounded, weight: .bold))
+                        .kerning(0.8)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(readinessColor(readiness.level).opacity(0.15), in: Capsule())
+                .foregroundStyle(readinessColor(readiness.level))
+            }
+
+            Text(readiness.sentence)
+                .font(.system(.body, design: .rounded, weight: .medium))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(.background)
+                .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 3)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Today's readiness: \(readinessLabel(readiness.level)). \(readiness.sentence)")
+    }
+
+    private func readinessLabel(_ level: ReadinessLevel) -> String {
+        switch level {
+        case .green: return "READY"
+        case .yellow: return "EASE OFF"
+        case .red: return "REST"
+        }
+    }
+
+    private func readinessColor(_ level: ReadinessLevel) -> Color {
+        switch level {
+        case .green: return .green
+        case .yellow: return .yellow
+        case .red: return .red
+        }
     }
 
     // MARK: - Hero card (today's target)
@@ -512,6 +576,12 @@ private struct RouteCoordinateSnapshot: Equatable {
 #Preview("Today (ran today)") {
     NavigationStack { TodayView() }
         .environment(TodayViewModel.preview(todayRun: .sample, streak: 5))
+        .environment(PreviewProfileStore.populated)
+}
+
+#Preview("Today (rest day)") {
+    NavigationStack { TodayView() }
+        .environment(TodayViewModel.preview(readiness: .sampleRed))
         .environment(PreviewProfileStore.populated)
 }
 
