@@ -1,8 +1,10 @@
 // TodayView.swift
 // Home screen — single ScrollView:
-//   • Map at the top (today's route, or empty placeholder centered on Berlin)
-//   • Content below it (date, hero target, today's run card, supporting grid)
-//   • Scroll up and the map naturally disappears above the content.
+//   • Compact route strip at the top (today's route when there is one)
+//   • Content below (date, recovery, readiness, target hero, today's run
+//     card, supporting grid)
+//   • With no run today, the map is replaced by a lightweight graphic hero
+//     so we don't burn half the screen on a stock map region.
 
 import SwiftUI
 import MapKit
@@ -12,16 +14,11 @@ struct TodayView: View {
 
     @Environment(TodayViewModel.self) private var todayVM
     @Environment(ProfileStore.self) private var profileStore
-    @State private var cameraPosition: MapCameraPosition = .region(TodayView.berlinRegion)
+    @State private var cameraPosition: MapCameraPosition = .automatic
 
-    /// Map height as a fraction of the available screen height.
-    private let mapHeightFraction: CGFloat = 0.46
-
-    /// Default region used when there's no run today — centered on Berlin.
-    private static let berlinRegion = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 52.5200, longitude: 13.4050),
-        span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
-    )
+    /// Map height as a fraction of available screen height. Compact on
+    /// purpose — the map is a preview, not the point of the screen.
+    private let mapHeightFraction: CGFloat = 0.28
 
     var body: some View {
         GeometryReader { geo in
@@ -77,7 +74,7 @@ struct TodayView: View {
     @ViewBuilder
     private var mapLayer: some View {
         if todayVM.todayRouteCoordinates.isEmpty {
-            emptyMapPlaceholder
+            noRunHero
         } else {
             Map(position: $cameraPosition, interactionModes: [.pan, .zoom]) {
                 MapPolyline(coordinates: todayVM.todayRouteCoordinates)
@@ -107,40 +104,60 @@ struct TodayView: View {
         }
     }
 
-    /// Stylized placeholder shown when there's no recorded run today — the map
-    /// itself is rendered, but parked over Berlin so the user always sees a
-    /// real-looking map instead of an empty grey rectangle.
-    private var emptyMapPlaceholder: some View {
+    /// Lightweight non-map hero shown when there's no run today. Replaces the
+    /// previous "stock map parked over Berlin" — that ate a lot of pixels for
+    /// something the user didn't relate to. The glyph and headline follow
+    /// today's readiness; the detailed sentence stays on the readiness card
+    /// below so the two surfaces don't repeat each other.
+    private var noRunHero: some View {
         ZStack {
-            Map(position: $cameraPosition, interactionModes: [.pan, .zoom])
-                .mapStyle(.standard(elevation: .realistic, pointsOfInterest: .excludingAll))
-
+            LinearGradient(
+                colors: [Color.accentColor.opacity(0.28), Color.accentColor.opacity(0.06)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
             VStack(spacing: 10) {
-                Image(systemName: "figure.run.circle")
-                    .font(.system(size: 40, weight: .light))
-                    .foregroundStyle(.primary)
-                Text("No run today")
+                Image(systemName: noRunGlyph)
+                    .font(.system(size: 42, weight: .semibold))
+                    .foregroundStyle(todayVM.readiness.map { readinessColor($0.level) } ?? .secondary)
+                    .padding(.bottom, 2)
+                Text(noRunHeadline)
                     .font(.system(.title3, design: .rounded, weight: .semibold))
                     .foregroundStyle(.primary)
                 Text("Your route will appear here once you run.")
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
             .padding(.horizontal, 24)
         }
     }
 
-    /// Fit the camera to the full route plus a little padding. When the route is
-    /// empty (no run today), fall back to the Berlin region so the map still
-    /// shows something recognizable.
-    private func updateCamera(for coords: [CLLocationCoordinate2D]) {
-        guard !coords.isEmpty else {
-            cameraPosition = .region(TodayView.berlinRegion)
-            return
+    private var noRunGlyph: String {
+        switch todayVM.readiness?.level {
+        case .green:   return "checkmark.circle.fill"
+        case .yellow:  return "exclamationmark.circle.fill"
+        case .red:     return "moon.zzz.fill"
+        case nil:      return "figure.run.circle"
         }
+    }
+
+    private var noRunHeadline: String {
+        switch todayVM.readiness?.level {
+        case .green:   return "Ready when you are"
+        case .yellow:  return "Ease into today"
+        case .red:     return "Rest is the workout"
+        case nil:      return "No run today"
+        }
+    }
+
+    /// Fit the camera to the full route plus a little padding. Called only
+    /// when there IS a route — no-op otherwise, since the map isn't in the
+    /// view tree without one.
+    private func updateCamera(for coords: [CLLocationCoordinate2D]) {
+        guard !coords.isEmpty else { return }
         var minLat = coords[0].latitude, maxLat = coords[0].latitude
         var minLng = coords[0].longitude, maxLng = coords[0].longitude
         for c in coords {
