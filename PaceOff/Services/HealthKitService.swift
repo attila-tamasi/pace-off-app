@@ -453,6 +453,100 @@ public final class HealthKitService {
             .map(\.coordinate)
     }
 
+    /// Fetch the timestamped route points for a given RunRecord — same
+    /// matching logic as `fetchRunRoute` but returns the raw `CLLocation`
+    /// values so callers can compute per-km splits from timestamps + coords.
+    public func fetchRunLocations(for record: RunRecord) async -> [CLLocation] {
+        let windowStart = record.startDate.addingTimeInterval(-60)
+        let windowEnd = record.endDate.addingTimeInterval(60)
+
+        let runPred = HKQuery.predicateForWorkouts(with: .running)
+        let datePred = HKQuery.predicateForSamples(withStart: windowStart, end: windowEnd, options: [])
+        let combined = NSCompoundPredicate(andPredicateWithSubpredicates: [runPred, datePred])
+
+        let workout: HKWorkout? = await withCheckedContinuation { continuation in
+            let q = HKSampleQuery(
+                sampleType: .workoutType(),
+                predicate: combined,
+                limit: 20,
+                sortDescriptors: nil
+            ) { _, samples, _ in
+                let workouts = (samples as? [HKWorkout]) ?? []
+                let match = workouts.min { lhs, rhs in
+                    abs(lhs.startDate.timeIntervalSince(record.startDate)) <
+                    abs(rhs.startDate.timeIntervalSince(record.startDate))
+                }
+                continuation.resume(returning: match)
+            }
+            store.execute(q)
+        }
+        guard let workout else { return [] }
+        return await routeLocations(for: workout)
+    }
+
+    /// Timestamped `CLLocation` samples from a workout's attached route
+    /// series, sorted chronologically. Shares plumbing with
+    /// `routeCoordinates(for:)` but preserves the full `CLLocation`.
+    private func routeLocations(for workout: HKWorkout) async -> [CLLocation] {
+        let routeType = HKSeriesType.workoutRoute()
+        let routePred = HKQuery.predicateForObjects(from: workout)
+        let routes: [HKWorkoutRoute] = await withCheckedContinuation { continuation in
+            let q = HKAnchoredObjectQuery(
+                type: routeType,
+                predicate: routePred,
+                anchor: nil,
+                limit: HKObjectQueryNoLimit
+            ) { _, samples, _, _, _ in
+                continuation.resume(returning: (samples as? [HKWorkoutRoute]) ?? [])
+            }
+            store.execute(q)
+        }
+        guard !routes.isEmpty else { return [] }
+
+        var all: [CLLocation] = []
+        for route in routes {
+            let locations: [CLLocation] = await withCheckedContinuation { continuation in
+                final class LocationCollector: @unchecked Sendable {
+                    var items: [CLLocation] = []
+                }
+                let collector = LocationCollector()
+                let q = HKWorkoutRouteQuery(route: route) { _, batch, done, _ in
+                    if let batch { collector.items.append(contentsOf: batch) }
+                    if done { continuation.resume(returning: collector.items) }
+                }
+                store.execute(q)
+            }
+            all.append(contentsOf: locations)
+        }
+
+        return all.sorted { $0.timestamp < $1.timestamp }
+    }
+
+    /// Timestamped heart-rate samples across a date range — the raw feed
+    /// the pace-decay analyser averages into per-km HR values.
+    public func fetchHeartRateSamples(from startDate: Date, to endDate: Date)
+        async -> [(date: Date, bpm: Double)]
+    {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .heartRate) else { return [] }
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: [])
+        let unit = HKUnit.count().unitDivided(by: .minute())
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: type,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+            ) { _, samples, _ in
+                let list = (samples as? [HKQuantitySample] ?? []).map {
+                    (date: $0.startDate, bpm: $0.quantity.doubleValue(for: unit))
+                }
+                continuation.resume(returning: list)
+            }
+            store.execute(query)
+        }
+    }
+
     // MARK: - User profile (read-only characteristics)
 
     /// User's age in whole years, derived from `HKCharacteristicTypeIdentifier.dateOfBirth`.
