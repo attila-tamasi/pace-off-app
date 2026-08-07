@@ -27,7 +27,12 @@ public final class TodayViewModel {
     public private(set) var yesterdayAvgHeartRate: Double?
     public private(set) var latestRestingHeartRate: Double?
 
+    // Daily traffic light. Nil until there's enough HRV/RHR history to
+    // trust a baseline — the card stays hidden rather than guessing.
+    public private(set) var readiness: DailyReadiness?
+
     @ObservationIgnored private let engine = PushTargetEngine()
+    @ObservationIgnored private let readinessEngine = ReadinessEngine()
     @ObservationIgnored private let voice = VoiceCopy()
 
     public init() {}
@@ -109,6 +114,9 @@ public final class TodayViewModel {
         )
         let computed = engine.compute(inputs)
         self.target = computed
+        self.readiness = readinessEngine.compute(
+            ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr)
+        )
         self.yesterday = mostRecentRunBefore(today: now, in: runs)
         self.todayRun = mostRecentRunOn(day: now, in: runs)
         self.currentVO2Max = vo2.last?.value
@@ -166,7 +174,8 @@ public final class TodayViewModel {
         age: Int? = 33,
         hrv: Double? = 62,
         avgHR: Double? = 68,
-        restingHR: Double? = 51
+        restingHR: Double? = 51,
+        readiness: DailyReadiness? = .sample
     ) -> TodayViewModel {
         let vm = TodayViewModel()
         vm.target = target
@@ -179,6 +188,7 @@ public final class TodayViewModel {
         vm.yesterdayHRV = hrv
         vm.yesterdayAvgHeartRate = avgHR
         vm.latestRestingHeartRate = restingHR
+        vm.readiness = readiness
         return vm
     }
     #endif

@@ -103,6 +103,36 @@ extension RunTarget {
     }
 }
 
+// MARK: - Sample readiness
+
+extension DailyReadiness {
+    /// A yellow "ease off" day — HRV dipped below baseline overnight.
+    static var sample: DailyReadiness {
+        DailyReadiness(
+            level: .yellow,
+            sentence: "HRV below your baseline — easy day.",
+            hrvMs: 54,
+            hrvBaselineMs: 63,
+            restingHR: 52,
+            restingHRBaseline: 51,
+            computedAt: Date()
+        )
+    }
+
+    /// A red rest day — both signals off baseline.
+    static var sampleRed: DailyReadiness {
+        DailyReadiness(
+            level: .red,
+            sentence: "HRV down and resting heart rate up — your body is asking for rest.",
+            hrvMs: 44,
+            hrvBaselineMs: 63,
+            restingHR: 56,
+            restingHRBaseline: 51,
+            computedAt: Date()
+        )
+    }
+}
+
 // MARK: - Sample VO₂ max series
 
 extension VO2MaxSnapshot {

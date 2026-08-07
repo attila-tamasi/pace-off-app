@@ -16,6 +16,7 @@ final class HealthDataCacheTests: XCTestCase {
             runsWindowDays: 90,
             vo2WindowDays: 90,
             restingHRWindowDays: 14,
+            hrvWindowDays: 35,
             runs: [
                 RunRecord(
                     startDate: Date(timeIntervalSince1970: 1_699_000_000),
@@ -27,6 +28,7 @@ final class HealthDataCacheTests: XCTestCase {
             ],
             vo2Max: [VO2MaxSnapshot(date: Date(timeIntervalSince1970: 1_699_500_000), value: 49.2)],
             restingHR: [RestingHeartRateSnapshot(date: Date(timeIntervalSince1970: 1_699_800_000), bpm: 51)],
+            hrv: [HRVSnapshot(date: Date(timeIntervalSince1970: 1_699_850_000), sdnnMs: 62)],
             yesterdayHRV: 62,
             yesterdayAvgHeartRate: 68,
             latestRestingHeartRate: 51,

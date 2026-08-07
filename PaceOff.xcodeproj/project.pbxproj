@@ -9,6 +9,11 @@
 /* Begin PBXBuildFile section */
 		025D334D3521CD59D588F3C6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3775666DE353724E74AC3428 /* Assets.xcassets */; };
 		028ECB6B514692128DF88BEF /* GoalPredictionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A52AE8AB7F745113C8CEAA1B /* GoalPredictionService.swift */; };
+		3A7D1E00C0FFEE00000000B1 /* ReadinessEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D1E00C0FFEE00000000A1 /* ReadinessEngine.swift */; };
+		3A7D1E00C0FFEE00000000B2 /* ReadinessEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D1E00C0FFEE00000000A1 /* ReadinessEngine.swift */; };
+		3A7D1E00C0FFEE00000000B3 /* ReadinessEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D1E00C0FFEE00000000A1 /* ReadinessEngine.swift */; };
+		3A7D1E00C0FFEE00000000B4 /* ReadinessEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D1E00C0FFEE00000000A1 /* ReadinessEngine.swift */; };
+		3A7D1E00C0FFEE00000000B5 /* ReadinessEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D1E00C0FFEE00000000A2 /* ReadinessEngineTests.swift */; };
 		05198CE9E2F4B2EC20E5A128 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 89F34D18B0856E30B0FC3C66 /* Assets.xcassets */; };
 		054C9D4ABE2FF5D749B72468 /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E54D917FE4AF4A958C7514C /* Tone.swift */; };
 		0D2030447FE0FC10DACBED56 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CADA1657036D930B2CE2B499 /* UserProfile.swift */; };
@@ -202,6 +207,8 @@
 		9EC37486993AB6E5BF014496 /* BrandPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandPalette.swift; sourceTree = "<group>"; };
 		A2E8AEAFE18A69ACE7A052C9 /* PaceOffWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceOffWidget.swift; sourceTree = "<group>"; };
 		A52AE8AB7F745113C8CEAA1B /* GoalPredictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalPredictionService.swift; sourceTree = "<group>"; };
+		3A7D1E00C0FFEE00000000A1 /* ReadinessEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadinessEngine.swift; sourceTree = "<group>"; };
+		3A7D1E00C0FFEE00000000A2 /* ReadinessEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadinessEngineTests.swift; sourceTree = "<group>"; };
 		A8BCA23E5158FE3AEC620739 /* HealthKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitService.swift; sourceTree = "<group>"; };
 		ABB6D659BA61C433C6FB057B /* PaceOffWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PaceOffWatch.entitlements; sourceTree = "<group>"; };
 		ABDB8214000CC27FE8C14D49 /* PaceDecayAnalyserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceDecayAnalyserTests.swift; sourceTree = "<group>"; };
@@ -264,6 +271,7 @@
 				1B8DCC13B665D6EEEA4E6DD3 /* HealthDataCache.swift */,
 				64030BDFC3526A70D106713F /* PaceDecayAnalyser.swift */,
 				B660CA74C9022FE7AF28527A /* PushTargetEngine.swift */,
+				3A7D1E00C0FFEE00000000A1 /* ReadinessEngine.swift */,
 				F219E095BD73A1C339F5D8D4 /* RunRecord.swift */,
 				41FAD3317ACDC75A0999F6D8 /* RunTarget.swift */,
 				8E54D917FE4AF4A958C7514C /* Tone.swift */,
@@ -283,6 +291,7 @@
 				CC2EFED0A8A82FC128DFCAEB /* HealthDataCacheTests.swift */,
 				ABDB8214000CC27FE8C14D49 /* PaceDecayAnalyserTests.swift */,
 				62929CE88A3549DB529E3FEE /* PushTargetEngineTests.swift */,
+				3A7D1E00C0FFEE00000000A2 /* ReadinessEngineTests.swift */,
 				5B7A0CF681D2AE1B651C189C /* TrainingPlanGeneratorTests.swift */,
 			);
 			path = PaceOffTests;
@@ -640,6 +649,8 @@
 				5619BD697D1B40213298F908 /* PaceDecayAnalyserTests.swift in Sources */,
 				AB78570747668D2D0FFD95AD /* PushTargetEngine.swift in Sources */,
 				69AFA428DC7571D79F144E60 /* PushTargetEngineTests.swift in Sources */,
+				3A7D1E00C0FFEE00000000B1 /* ReadinessEngine.swift in Sources */,
+				3A7D1E00C0FFEE00000000B5 /* ReadinessEngineTests.swift in Sources */,
 				FA615BE7BE7EE44E6C750C1B /* RunRecord.swift in Sources */,
 				B556B4AFE3D379360DD042C8 /* RunTarget.swift in Sources */,
 				054C9D4ABE2FF5D749B72468 /* Tone.swift in Sources */,
@@ -663,6 +674,7 @@
 				41CC25C427F34329011D4E74 /* PaceOffWidget.swift in Sources */,
 				25015CBC6D64D8F4C0968487 /* PaceOffWidgetBundle.swift in Sources */,
 				8DB1AF3961252E3C9D7ECB09 /* PushTargetEngine.swift in Sources */,
+				3A7D1E00C0FFEE00000000B2 /* ReadinessEngine.swift in Sources */,
 				5D15127CC4FE3B59AC73E83F /* RunRecord.swift in Sources */,
 				C937A79D0B985D6A9445569F /* RunTarget.swift in Sources */,
 				D5BA6108703C8529C9C2065E /* Tone.swift in Sources */,
@@ -685,6 +697,7 @@
 				831429E77DAF4D658D1B077A /* PaceOffWatchApp.swift in Sources */,
 				EF487B004A27730CB84F52ED /* PostRunView.swift in Sources */,
 				10FD6FF06B176AD8F3668CF9 /* PushTargetEngine.swift in Sources */,
+				3A7D1E00C0FFEE00000000B3 /* ReadinessEngine.swift in Sources */,
 				1C4E11A23401FEAB2455E352 /* RunRecord.swift in Sources */,
 				FC42B40AAD6DBDB87981CE29 /* RunTarget.swift in Sources */,
 				B2FF357DD79EB6CE91504C87 /* RunningWorkoutView.swift in Sources */,
@@ -727,6 +740,7 @@
 				1B1B4B7B8C3A3E9ABCA62020 /* ProfileStore.swift in Sources */,
 				BA3605889173D2970209D36C /* ProfileView.swift in Sources */,
 				AFF783DAD8B26413E5686038 /* PushTargetEngine.swift in Sources */,
+				3A7D1E00C0FFEE00000000B4 /* ReadinessEngine.swift in Sources */,
 				A9B8A0E3AABB46843585D58F /* RootView.swift in Sources */,
 				D09508FE79702E88CF82D023 /* RunDetailView.swift in Sources */,
 				3B263CD0BA0F37D56C9C8EBF /* RunRecord.swift in Sources */,
