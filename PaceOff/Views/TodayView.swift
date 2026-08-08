@@ -5,6 +5,11 @@
 //     card, supporting grid)
 //   • With no run today, the map is replaced by a lightweight graphic hero
 //     so we don't burn half the screen on a stock map region.
+//
+// Chrome is iOS 26 Liquid Glass: every card is a `.glassEffect` shape
+// inside one `GlassEffectContainer`, sampling a quiet brand backdrop
+// (soft orbs over the system background). No manual materials, no
+// blur/opacity fakes — per the project design rules.
 
 import SwiftUI
 import MapKit
@@ -35,8 +40,9 @@ struct TodayView: View {
                 }
             }
             .scrollIndicators(.hidden)
+            .scrollEdgeEffectStyle(.soft, for: .top)
             .ignoresSafeArea(edges: .top)
-            .background(Color(.systemGroupedBackground))
+            .background { ambientBackground }
         }
         .navigationTitle("Pace Off")
         .navigationBarTitleDisplayMode(.inline)
@@ -46,10 +52,11 @@ struct TodayView: View {
                 Button {
                     Task { await todayVM.refresh() }
                 } label: {
+                    // iOS 26 toolbars give items their own Liquid Glass
+                    // treatment — no manual padding or backdrop needed.
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.primary)
-                        .padding(10)
                 }
                 .disabled(todayVM.isRefreshing)
             }
@@ -116,6 +123,12 @@ struct TodayView: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
+            BrandPalette.driftingOrb(color: Color.accentColor.opacity(0.35), size: 220)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .offset(x: 60, y: -40)
+            // Glass chip over the gradient — the one spot on this screen
+            // where the material has something colourful to refract even
+            // before the user has any data.
             VStack(spacing: 10) {
                 Image(systemName: noRunGlyph)
                     .font(.system(size: 42, weight: .semibold))
@@ -128,9 +141,11 @@ struct TodayView: View {
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 24)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(.horizontal, 28)
+            .padding(.vertical, 20)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
             .padding(.horizontal, 24)
         }
     }
@@ -177,24 +192,45 @@ struct TodayView: View {
 
     // MARK: - Content section (scrolls below the map)
 
+    /// One container for every glass shape on the screen so the system
+    /// samples the backdrop consistently and can blend neighbouring shapes
+    /// during transitions.
     private var contentSection: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            dateRibbon
+        GlassEffectContainer {
+            VStack(alignment: .leading, spacing: 22) {
+                dateRibbon
 
-            recoveryCard
+                recoveryCard
 
-            if let readiness = todayVM.readiness {
-                readinessCard(readiness)
+                if let readiness = todayVM.readiness {
+                    readinessCard(readiness)
+                }
+
+                heroCard
+
+                if let run = todayVM.todayRun {
+                    todayRunCard(run)
+                }
+
+                supportingGrid
             }
-
-            heroCard
-
-            if let run = todayVM.todayRun {
-                todayRunCard(run)
-            }
-
-            supportingGrid
         }
+    }
+
+    /// Quiet backdrop the Liquid Glass cards sample from: the grouped
+    /// system background with two soft brand orbs parked in the corners.
+    /// Static on purpose — the home screen is a dashboard, not the splash.
+    private var ambientBackground: some View {
+        ZStack {
+            Color(.systemGroupedBackground)
+            BrandPalette.driftingOrb(color: Color.accentColor.opacity(0.22), size: 340)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .offset(x: -80, y: 40)
+            BrandPalette.driftingOrb(color: .pink.opacity(0.14), size: 300)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                .offset(x: 90, y: 60)
+        }
+        .ignoresSafeArea()
     }
 
     /// Date line. When the user has a goal date set, also shows a countdown
@@ -217,6 +253,9 @@ struct TodayView: View {
                     .foregroundStyle(Color.accentColor)
             }
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .glassEffect()
         .frame(maxWidth: .infinity, alignment: .center)
     }
 
@@ -272,11 +311,7 @@ struct TodayView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(.background)
-                .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 3)
-        }
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
     private func recoveryStat(label: String, value: String, unit: String) -> some View {
@@ -339,11 +374,10 @@ struct TodayView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(.background)
-                .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 3)
-        }
+        // The traffic-light state tints the material itself — legible at a
+        // glance without adding another colored view on top.
+        .glassEffect(.regular.tint(readinessColor(readiness.level).opacity(0.10)),
+                     in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Today's readiness: \(readinessLabel(readiness.level)). \(readiness.sentence)")
     }
@@ -412,11 +446,9 @@ struct TodayView: View {
         }
         .padding(22)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(.background)
-                .shadow(color: .black.opacity(0.08), radius: 14, x: 0, y: 6)
-        }
+        // Brand-tinted glass marks this as the screen's one hero surface.
+        .glassEffect(.regular.tint(Color.accentColor.opacity(0.12)),
+                     in: RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 
     /// "Toward Half Marathon" — only when a profile goal is set. The home
@@ -489,11 +521,7 @@ struct TodayView: View {
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(.background)
-                .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 3)
-        }
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
     private func runStat(label: String, value: String) -> some View {
@@ -522,7 +550,8 @@ struct TodayView: View {
                         label: "VO₂ MAX",
                         value: todayVM.currentVO2Max.map { String(format: "%.1f", $0) } ?? "—",
                         icon: "lungs.fill",
-                        showsChevron: true
+                        showsChevron: true,
+                        interactive: true
                     )
                 }
                 .buttonStyle(.plain)
@@ -542,8 +571,15 @@ struct TodayView: View {
         }
     }
 
-    private func statCard(label: String, value: String, icon: String, showsChevron: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
+    /// `interactive` opts the glass into touch response (scale/shimmer on
+    /// press) — only the tappable VO₂ MAX card wants that.
+    private func statCard(label: String,
+                          value: String,
+                          icon: String,
+                          showsChevron: Bool = false,
+                          interactive: Bool = false) -> some View {
+        let glass: Glass = interactive ? .regular.interactive() : .regular
+        return VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Image(systemName: icon)
                     .font(.caption)
@@ -565,7 +601,7 @@ struct TodayView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.background, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .glassEffect(glass, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }
 
