@@ -63,6 +63,12 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 - **Display-only in V1**: augments the existing `Tone` display, does not feed into `PushTargetEngine`'s prescribed distance (follow-up decision)
 - HRV series cached in `HealthDataSnapshot` (schema v2); no new HealthKit read scope — SDNN was already requested for the morning check-in card
 
+### 12. Background plan sync
+- The existing `BGAppRefreshTask` (~4×/day) now reconciles the active training plan against each fresh Health download, via `TrainingPlanReconciler` (pure Swift in `PaceOffShared`, unit-tested)
+- **Today's workout status** — did a recorded run cover ≥85% of today's prescription? Cached to App Group defaults (`lastPlanWorkoutSummary`, `planWorkoutCompletedToday`) for the widget / cold launch
+- **Pace retune** — when the runner's current VDOT (fresh VO₂ max or PB, resolved exactly like the plan picker) drifts ≥1.0 from the plan's anchor, the *remaining* weeks' pace bands are recomputed; past weeks, structure, and distances never change; the user gets a one-shot "plan retuned" notification. A beginner-default plan retunes on the first real VDOT.
+- **Plan-aware notifications** — morning/afternoon pushes lead with today's prescribed workout; planned rest days suppress the reminder and "last call" nags; a completed plan workout silences the rest of the day. Foreground refresh (`TodayViewModel`) applies the same logic so the two paths never disagree.
+
 ---
 
 ## Proposals — V2+ / needs decision

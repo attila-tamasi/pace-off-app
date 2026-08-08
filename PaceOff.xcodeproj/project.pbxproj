@@ -14,6 +14,11 @@
 		3A7D1E00C0FFEE00000000B3 /* ReadinessEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D1E00C0FFEE00000000A1 /* ReadinessEngine.swift */; };
 		3A7D1E00C0FFEE00000000B4 /* ReadinessEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D1E00C0FFEE00000000A1 /* ReadinessEngine.swift */; };
 		3A7D1E00C0FFEE00000000B5 /* ReadinessEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D1E00C0FFEE00000000A2 /* ReadinessEngineTests.swift */; };
+		3A7D1E01C0FFEE00000000B1 /* TrainingPlanReconciler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D1E01C0FFEE00000000A1 /* TrainingPlanReconciler.swift */; };
+		3A7D1E01C0FFEE00000000B2 /* TrainingPlanReconciler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D1E01C0FFEE00000000A1 /* TrainingPlanReconciler.swift */; };
+		3A7D1E01C0FFEE00000000B3 /* TrainingPlanReconciler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D1E01C0FFEE00000000A1 /* TrainingPlanReconciler.swift */; };
+		3A7D1E01C0FFEE00000000B4 /* TrainingPlanReconciler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D1E01C0FFEE00000000A1 /* TrainingPlanReconciler.swift */; };
+		3A7D1E01C0FFEE00000000B5 /* TrainingPlanReconcilerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7D1E01C0FFEE00000000A2 /* TrainingPlanReconcilerTests.swift */; };
 		05198CE9E2F4B2EC20E5A128 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 89F34D18B0856E30B0FC3C66 /* Assets.xcassets */; };
 		054C9D4ABE2FF5D749B72468 /* Tone.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E54D917FE4AF4A958C7514C /* Tone.swift */; };
 		0D2030447FE0FC10DACBED56 /* UserProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = CADA1657036D930B2CE2B499 /* UserProfile.swift */; };
@@ -209,6 +214,8 @@
 		A52AE8AB7F745113C8CEAA1B /* GoalPredictionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalPredictionService.swift; sourceTree = "<group>"; };
 		3A7D1E00C0FFEE00000000A1 /* ReadinessEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadinessEngine.swift; sourceTree = "<group>"; };
 		3A7D1E00C0FFEE00000000A2 /* ReadinessEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadinessEngineTests.swift; sourceTree = "<group>"; };
+		3A7D1E01C0FFEE00000000A1 /* TrainingPlanReconciler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingPlanReconciler.swift; sourceTree = "<group>"; };
+		3A7D1E01C0FFEE00000000A2 /* TrainingPlanReconcilerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingPlanReconcilerTests.swift; sourceTree = "<group>"; };
 		A8BCA23E5158FE3AEC620739 /* HealthKitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitService.swift; sourceTree = "<group>"; };
 		ABB6D659BA61C433C6FB057B /* PaceOffWatch.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PaceOffWatch.entitlements; sourceTree = "<group>"; };
 		ABDB8214000CC27FE8C14D49 /* PaceDecayAnalyserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceDecayAnalyserTests.swift; sourceTree = "<group>"; };
@@ -277,6 +284,7 @@
 				8E54D917FE4AF4A958C7514C /* Tone.swift */,
 				37A5993CF8F22DFB58A54E5F /* TrainingPlan.swift */,
 				8E20537271AAE9E2A98CA427 /* TrainingPlanGenerator.swift */,
+				3A7D1E01C0FFEE00000000A1 /* TrainingPlanReconciler.swift */,
 				CADA1657036D930B2CE2B499 /* UserProfile.swift */,
 				8BC1F9890EFFEAF60A30369C /* VO2MaxSnapshot.swift */,
 				2E335304F4441E01CAF8C1D7 /* VoiceCopy.swift */,
@@ -293,6 +301,7 @@
 				62929CE88A3549DB529E3FEE /* PushTargetEngineTests.swift */,
 				3A7D1E00C0FFEE00000000A2 /* ReadinessEngineTests.swift */,
 				5B7A0CF681D2AE1B651C189C /* TrainingPlanGeneratorTests.swift */,
+				3A7D1E01C0FFEE00000000A2 /* TrainingPlanReconcilerTests.swift */,
 			);
 			path = PaceOffTests;
 			sourceTree = "<group>";
@@ -657,6 +666,8 @@
 				1022BBEEB0D9717188F5169F /* TrainingPlan.swift in Sources */,
 				56CD1F518413E2600B15BF37 /* TrainingPlanGenerator.swift in Sources */,
 				4E76CD1099AFFD4916B216B0 /* TrainingPlanGeneratorTests.swift in Sources */,
+				3A7D1E01C0FFEE00000000B1 /* TrainingPlanReconciler.swift in Sources */,
+				3A7D1E01C0FFEE00000000B5 /* TrainingPlanReconcilerTests.swift in Sources */,
 				C2C642EC750AF4FB8E72FAF3 /* UserProfile.swift in Sources */,
 				5D15621F6A618B2B98422611 /* VO2MaxSnapshot.swift in Sources */,
 				D8FA2EFCE6D1183D38BB41FF /* VoiceCopy.swift in Sources */,
@@ -680,6 +691,7 @@
 				D5BA6108703C8529C9C2065E /* Tone.swift in Sources */,
 				BCC50FAC327686B48885FBE9 /* TrainingPlan.swift in Sources */,
 				6C103161B1CDD9AABF0EECC1 /* TrainingPlanGenerator.swift in Sources */,
+				3A7D1E01C0FFEE00000000B2 /* TrainingPlanReconciler.swift in Sources */,
 				BD9703C0E37574E7EC553A62 /* UserProfile.swift in Sources */,
 				8635BD77DDF7D83B44FBAD3C /* VO2MaxSnapshot.swift in Sources */,
 				2C62603907421D9986B63000 /* VoiceCopy.swift in Sources */,
@@ -704,6 +716,7 @@
 				F74CDC7FAE8CD24A90AAEC26 /* Tone.swift in Sources */,
 				59F425E8897F7B40AF23ED14 /* TrainingPlan.swift in Sources */,
 				2C9AD7E9FC1FA638D00D0800 /* TrainingPlanGenerator.swift in Sources */,
+				3A7D1E01C0FFEE00000000B3 /* TrainingPlanReconciler.swift in Sources */,
 				66F7E99D4BFFD957DFBBAACA /* UserProfile.swift in Sources */,
 				8D820987E8CC3C6ED6950F20 /* VO2MaxSnapshot.swift in Sources */,
 				8365B24A66E0C6048CCD1BCD /* VoiceCopy.swift in Sources */,
@@ -752,6 +765,7 @@
 				13BB208D0E61E055131CFC5C /* TrainingPlan.swift in Sources */,
 				D0B20E92AFEC4F88F6F01181 /* TrainingPlanDetailView.swift in Sources */,
 				A539A08015B24FC8A3C4A933 /* TrainingPlanGenerator.swift in Sources */,
+				3A7D1E01C0FFEE00000000B4 /* TrainingPlanReconciler.swift in Sources */,
 				FD906E42669CE2A911264D66 /* TrainingPlanPickerView.swift in Sources */,
 				2098FFCF47DB313D07CFC1BD /* TrainingPlanSettingsView.swift in Sources */,
 				1BABB453514882C42CF1CF74 /* TrainingPlanStore.swift in Sources */,

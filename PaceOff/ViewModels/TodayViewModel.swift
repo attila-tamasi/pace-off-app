@@ -89,11 +89,20 @@ public final class TodayViewModel {
         }
         AppGroup.sharedDefaults?.set(self.voiceLine, forKey: AppGroup.Keys.lastTodayVoiceLine)
 
+        // Plan-aware scheduling — the same reconciliation the background
+        // refresh does, so foreground and background never disagree about
+        // today's pushes. The in-memory plan is authoritative here; only
+        // the background task re-reads disk.
+        let planStatus = TrainingPlanStore.shared.activePlan.map {
+            TrainingPlanReconciler().todayStatus(plan: $0, runs: snapshot.runs)
+        }
+
         // Schedule today's notifications using the (possibly AI-rewritten) body.
         NotificationScheduler.shared.scheduleDailyPushes(
             target: target,
             yesterday: yesterday,
             currentStreak: currentStreak,
+            planStatus: planStatus,
             overrideBody: notificationBody
         )
     }
