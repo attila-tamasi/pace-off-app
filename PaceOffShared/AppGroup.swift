@@ -22,6 +22,8 @@ public enum AppGroup {
         public static let notificationAfternoonHour = "paceoff.notif.afternoon"
         public static let notificationEveningHour = "paceoff.notif.evening"
         public static let userProfile = "paceoff.userProfile"
+        public static let lastPlanWorkoutSummary = "paceoff.lastPlanWorkoutSummary"
+        public static let planWorkoutCompletedToday = "paceoff.planWorkoutCompletedToday"
     }
 
     /// Filename of the profile photo JPEG, stored in the App Group container

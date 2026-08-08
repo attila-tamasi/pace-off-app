@@ -8,11 +8,15 @@
 // based on user habits, charging state, and network conditions.
 //
 // Each run:
-//   1. Pulls fresh runs / VO₂ max / RHR from HealthKit
+//   1. Pulls fresh runs / VO₂ max / RHR / HRV from HealthKit
 //   2. Recomputes the RunTarget and voice copy
-//   3. Persists both to App Group UserDefaults so the widget and the next
-//      app launch see them instantly
-//   4. Reschedules the next BGAppRefreshTask
+//   3. Reconciles the active training plan: marks today's planned workout
+//      done/pending and retunes remaining pace bands when the runner's
+//      VDOT has drifted from the plan's anchor
+//   4. Persists everything to App Group UserDefaults so the widget and the
+//      next app launch see it instantly
+//   5. Reschedules the daily notifications (plan-aware) and the next
+//      BGAppRefreshTask
 //
 // We intentionally use BGAppRefreshTask (not BGProcessingTask): app-refresh
 // has a ~30s wall-clock budget and runs frequently, which matches "fetch a
@@ -149,17 +153,77 @@ public final class BackgroundRefreshService {
         AppGroup.sharedDefaults?.set(voiceLine, forKey: AppGroup.Keys.lastTodayVoiceLine)
         AppGroup.sharedDefaults?.set(todayRun != nil, forKey: AppGroup.Keys.runCompletedToday)
 
+        // Training plan: reconcile today's workout and retune stale paces
+        // against the data we just pulled.
+        let planStatus = reconcileTrainingPlan(runs: runs, vo2Max: vo2)
+
         // Reschedule today's notifications with the freshly enriched body so
         // the user gets the updated copy on the next push.
         NotificationScheduler.shared.scheduleDailyPushes(
             target: target,
             yesterday: yesterday,
             currentStreak: streak,
+            planStatus: planStatus,
             overrideBody: notificationLine
         )
 
         log.info("Background refresh completed — target=\(target.displayedDistanceKm)km")
         return true
+    }
+
+    // MARK: - Training plan reconciliation
+
+    /// Sync the active plan with fresh Health data. Returns today's plan
+    /// status (nil when no plan is active) so notification scheduling can
+    /// be plan-aware.
+    ///
+    /// Retuning: the plan's paces were anchored to a VDOT captured at
+    /// generation time. When the runner's current VDOT (fresh VO₂ max, or
+    /// their PB) has drifted past the reconciler's threshold, the remaining
+    /// weeks are re-paced and the user gets a one-shot notification. The
+    /// beginner-default fallback VDOT never overwrites a real anchor.
+    private func reconcileTrainingPlan(runs: [RunRecord], vo2Max: [VO2MaxSnapshot]) -> PlanDayStatus? {
+        let store = TrainingPlanStore.shared
+        store.load() // re-read disk — the app may have written since our launch
+        guard let plan = store.activePlan else {
+            AppGroup.sharedDefaults?.removeObject(forKey: AppGroup.Keys.lastPlanWorkoutSummary)
+            AppGroup.sharedDefaults?.set(false, forKey: AppGroup.Keys.planWorkoutCompletedToday)
+            return nil
+        }
+
+        let reconciler = TrainingPlanReconciler()
+        let status = reconciler.todayStatus(plan: plan, runs: runs, today: Date())
+
+        // Cache for the widget / next cold launch.
+        if let summary = status.workout?.summary {
+            AppGroup.sharedDefaults?.set(summary, forKey: AppGroup.Keys.lastPlanWorkoutSummary)
+        } else {
+            AppGroup.sharedDefaults?.removeObject(forKey: AppGroup.Keys.lastPlanWorkoutSummary)
+        }
+        AppGroup.sharedDefaults?.set(status.isCompleted, forKey: AppGroup.Keys.planWorkoutCompletedToday)
+
+        // Resolve the runner's current VDOT the same way the picker does.
+        // The profile's PB only applies when it's for the plan's distance.
+        let profile = ProfileStore.shared.profile
+        let pb = (profile?.goal == plan.goal) ? profile?.personalBest : nil
+        let inputs = TrainingPlanInputs(
+            goal: plan.goal,
+            tier: plan.tier,
+            longRunDay: plan.longRunDay,
+            vo2Max: vo2Max.last?.value,
+            personalBest: pb
+        )
+        let (currentVDOT, usedFallback) = TrainingPlanGenerator().resolveVDOT(inputs)
+        guard !usedFallback else { return status }
+
+        if let retuned = reconciler.retunedPlan(plan, toVDOT: currentVDOT, today: Date()) {
+            store.setActive(retuned)
+            if abs(currentVDOT - plan.vdot) >= TrainingPlanReconciler.vdotDriftThreshold {
+                NotificationScheduler.shared.notifyPlanRetuned(fromVDOT: plan.vdot, toVDOT: currentVDOT)
+            }
+            log.info("Retuned training plan paces: VDOT \(plan.vdot, privacy: .public) → \(currentVDOT, privacy: .public)")
+        }
+        return status
     }
 
     // MARK: - Helpers (mirror TodayViewModel)
