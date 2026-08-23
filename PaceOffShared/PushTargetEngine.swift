@@ -11,17 +11,23 @@ public struct PushTargetEngine: Sendable {
         public let runs: [RunRecord]                       // last 90 days, sorted ascending
         public let vo2Max: [VO2MaxSnapshot]                // last 90 days, sorted ascending
         public let restingHeartRate: [RestingHeartRateSnapshot]  // last 14 days
+        /// Today's readiness verdict from ReadinessEngine. Nil when there's
+        /// not enough HRV/RHR history — the target then computes exactly as
+        /// it did before readiness existed.
+        public let readiness: ReadinessLevel?
 
         public init(
             today: Date = Date(),
             runs: [RunRecord],
             vo2Max: [VO2MaxSnapshot],
-            restingHeartRate: [RestingHeartRateSnapshot]
+            restingHeartRate: [RestingHeartRateSnapshot],
+            readiness: ReadinessLevel? = nil
         ) {
             self.today = today
             self.runs = runs
             self.vo2Max = vo2Max
             self.restingHeartRate = restingHeartRate
+            self.readiness = readiness
         }
     }
 
@@ -32,6 +38,9 @@ public struct PushTargetEngine: Sendable {
     private static let restingHRElevationThreshold = 0.07
     private static let longRunMultiplier = 1.5
     private static let restartFloorMeters = 3000.0  // 3.0 km restart floor
+    /// Red readiness caps the day at this fraction of baseline — the same
+    /// reduction a post-long-run recovery day gets.
+    private static let redReadinessCapFactor = 0.6
 
     // VO2Max slope thresholds (ml/kg/min per WEEK)
     private static let vo2MaxDecliningSlope = -0.05
@@ -98,6 +107,30 @@ public struct PushTargetEngine: Sendable {
             tone = .recovery
         }
 
+        // 5b. Readiness traffic light (SPEC §11 follow-up). Red means the
+        // body asked for rest: cap hard and speak in the recovery register.
+        // Yellow means don't push *above* baseline today. Green/unknown
+        // changes nothing. A restart day keeps its restart tone — the cap
+        // still applies to the distance.
+        var readinessCapApplied = false
+        switch inputs.readiness {
+        case .red:
+            let cap = baseline * Self.redReadinessCapFactor
+            if target > cap {
+                target = cap
+                readinessCapApplied = true
+            }
+            if tone != .restart { tone = .recovery }
+        case .yellow:
+            if target > baseline {
+                target = baseline
+                readinessCapApplied = true
+            }
+            if tone == .aggressive { tone = .firm }
+        case .green, nil:
+            break
+        }
+
         // 6. Hard ceiling
         let ceiling = baseline * Self.hardCeilingMultiplier
         if target > ceiling && tone != .restart {
@@ -116,6 +149,7 @@ public struct PushTargetEngine: Sendable {
             baselineMeters: baseline,
             ceilingClamped: ceilingClamped,
             fatigueGuardActive: fatigueGuardActive,
+            readinessCapApplied: readinessCapApplied,
             computedAt: inputs.today
         )
     }

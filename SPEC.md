@@ -46,6 +46,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 
 ### 8. Widget
 - Lock Screen + Home Screen widget rendering today's target from the shared App Group snapshot
+- Plan-aware: shows today's plan workout (summary + ✓ when completed) from the background-sync cache; planned rest days keep the status dot green instead of the after-noon red nag
 - Time-of-day-based accent color; no live "in-progress run" state yet
 
 ### 9. Profile + preferences
@@ -60,7 +61,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 ### 11. Daily readiness traffic light
 - Green / Yellow / Red readiness card on Today — HRV (SDNN) + resting HR versus rolling personal baselines (30-day HRV, 14-day RHR), with one supporting sentence ("HRV below your baseline — easy day.")
 - `ReadinessEngine` — pure Swift in `PaceOffShared`, unit-tested; two independently degraded signals escalate to red; hides entirely (returns nil) until ≥7 days of HRV or ≥5 days of RHR history
-- **Display-only in V1**: augments the existing `Tone` display, does not feed into `PushTargetEngine`'s prescribed distance (follow-up decision)
+- **Feeds the push target** (since the readiness-integration follow-up): red caps the day at 0.6× baseline and shifts tone to recovery; yellow refuses to push above baseline and softens an aggressive tone; green/unknown changes nothing. `RunTarget.readinessCapApplied` records when the cap fired.
 - HRV series cached in `HealthDataSnapshot` (schema v2); no new HealthKit read scope — SDNN was already requested for the morning check-in card
 
 ### 12. Background plan sync
@@ -76,7 +77,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 Everything below came out of a brainstorm and would extend Pace Off's positioning toward accountability. **None of these are approved.** Each is tagged with the dependency cost so a decision can be made deliberately.
 
 ### A. Daily traffic-light (HRV + resting HR) — ✅ shipped
-Shipped as **§11** above (decision: augments the tone display, display-only in V1). Remaining open question for a follow-up: should a red day cap or reduce `PushTargetEngine`'s prescribed distance?
+Shipped as **§11** above (decision: augments the tone display). The follow-up question — should a red day cap the prescribed distance? — was answered **yes**: readiness now feeds `PushTargetEngine` (see §11).
 
 ### B. Buddy pairing + shared weekly goal progress
 - Invite a running buddy via share link (iMessage flow); no random matching

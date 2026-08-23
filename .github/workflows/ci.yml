@@ -1,0 +1,61 @@
+# CI — build + unit tests on every PR and push to main.
+#
+# The project needs the iOS 26 SDK, so we select the newest Xcode present
+# on the runner image rather than trusting the image default. Simulator
+# builds need no signing; CODE_SIGNING_ALLOWED=NO keeps the DEVELOPMENT_TEAM
+# in project.yml from requiring credentials on CI.
+#
+# CLAUDE.md warns against `xcodebuild test` in ad-hoc automation because it
+# can hang on host-device discovery in sandboxed environments — GitHub's
+# macOS runners have real simulators, so the test job pins an explicit
+# simulator destination, which avoids that failure mode.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & test (iOS Simulator)
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest Xcode on the image
+        run: |
+          XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Selecting $XCODE"
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+
+      - name: Build (all targets via PaceOff scheme)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project PaceOff.xcodeproj \
+            -scheme PaceOff \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            | tail -n 200
+
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          # Pick the first available iPhone simulator on the image — device
+          # names change with every Xcode release, so don't hardcode one.
+          DEVICE=$(xcrun simctl list devices available | grep -E '^\s+iPhone' | grep -vE 'SE|\(unavailable' | head -1 | sed -E 's/^ +//; s/ \([0-9A-F-]+\).*$//')
+          echo "Using simulator: $DEVICE"
+          xcodebuild test \
+            -project PaceOff.xcodeproj \
+            -scheme PaceOff \
+            -destination "platform=iOS Simulator,name=$DEVICE" \
+            CODE_SIGNING_ALLOWED=NO \
+            | tail -n 300

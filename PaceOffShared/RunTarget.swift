@@ -18,6 +18,10 @@ public struct RunTarget: Codable, Sendable, Equatable {
     public let ceilingClamped: Bool
     /// Whether resting HR fatigue guard fired.
     public let fatigueGuardActive: Bool
+    /// Whether the readiness traffic light reduced the distance (red caps
+    /// hard, yellow holds the baseline). Optional so RunTarget JSON cached
+    /// before this field existed still decodes — nil means "unknown".
+    public let readinessCapApplied: Bool?
     /// When this target was computed.
     public let computedAt: Date
 
@@ -29,6 +33,7 @@ public struct RunTarget: Codable, Sendable, Equatable {
         baselineMeters: Double,
         ceilingClamped: Bool,
         fatigueGuardActive: Bool,
+        readinessCapApplied: Bool? = nil,
         computedAt: Date = Date()
     ) {
         self.distanceMeters = distanceMeters
@@ -38,6 +43,7 @@ public struct RunTarget: Codable, Sendable, Equatable {
         self.baselineMeters = baselineMeters
         self.ceilingClamped = ceilingClamped
         self.fatigueGuardActive = fatigueGuardActive
+        self.readinessCapApplied = readinessCapApplied
         self.computedAt = computedAt
     }
 
