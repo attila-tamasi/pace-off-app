@@ -39,12 +39,13 @@ final class GoalPredictionServiceTests: XCTestCase {
     }
 
     func test_riegel_10kToHalfMarathon() {
-        // 10K in 45:00 (2700s) → half marathon should be ~1:39:50.
+        // 10K in 45:00 (2700s) → half via Riegel with the service's 1.06
+        // exponent: 2700 × (21.0975/10)^1.06 ≈ 5957 s (~1:39:17).
         let t = service.riegel(fromDistanceMeters: 10_000,
                                timeSeconds: 2700,
                                toDistanceMeters: 21_097.5)
         XCTAssertNotNil(t)
-        XCTAssertEqual(t!, 5_988, accuracy: 30)
+        XCTAssertEqual(t!, 5_957, accuracy: 30)
     }
 
     func test_riegel_rejectsTooShortSource() {
