@@ -10,12 +10,20 @@ struct PaceOffEntry: TimelineEntry {
     let target: RunTarget?
     let voiceLine: String
     let runCompletedToday: Bool
+    /// Today's plan workout summary ("8.0 km · 5:25–5:45/km", "Rest"),
+    /// written by the background sync. Nil when no plan is active.
+    let planSummary: String?
+    /// Whether a recorded run already covered today's plan workout.
+    let planCompletedToday: Bool
+
+    var isPlanRestDay: Bool { planSummary == "Rest" }
 }
 
 struct PaceOffProvider: TimelineProvider {
 
     func placeholder(in context: Context) -> PaceOffEntry {
-        PaceOffEntry(date: Date(), target: nil, voiceLine: "Lace up.", runCompletedToday: false)
+        PaceOffEntry(date: Date(), target: nil, voiceLine: "Lace up.",
+                     runCompletedToday: false, planSummary: nil, planCompletedToday: false)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (PaceOffEntry) -> Void) {
@@ -37,7 +45,11 @@ struct PaceOffProvider: TimelineProvider {
         }
         let voice = defaults?.string(forKey: AppGroup.Keys.lastTodayVoiceLine) ?? "Open Pace Off."
         let done = defaults?.bool(forKey: AppGroup.Keys.runCompletedToday) ?? false
-        return PaceOffEntry(date: Date(), target: target, voiceLine: voice, runCompletedToday: done)
+        let planSummary = defaults?.string(forKey: AppGroup.Keys.lastPlanWorkoutSummary)
+        let planDone = defaults?.bool(forKey: AppGroup.Keys.planWorkoutCompletedToday) ?? false
+        return PaceOffEntry(date: Date(), target: target, voiceLine: voice,
+                            runCompletedToday: done, planSummary: planSummary,
+                            planCompletedToday: planDone)
     }
 }
 
@@ -87,7 +99,9 @@ struct PaceOffWidgetView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(distanceShort) km")
                         .font(.system(.headline, design: .rounded, weight: .bold))
-                    Text(entry.voiceLine)
+                    // The plan line beats the voice line when a plan is
+                    // active — it's the more actionable of the two.
+                    Text(planLine ?? entry.voiceLine)
                         .font(.system(.caption2, design: .rounded))
                         .lineLimit(2)
                 }
@@ -104,12 +118,34 @@ struct PaceOffWidgetView: View {
                 }
                 Text("\(distanceShort) km")
                     .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                if let planLine {
+                    HStack(spacing: 4) {
+                        Image(systemName: entry.planCompletedToday
+                              ? "checkmark.circle.fill"
+                              : "calendar")
+                            .font(.system(.caption2, weight: .semibold))
+                            .foregroundStyle(entry.planCompletedToday ? .green : .secondary)
+                        Text(planLine)
+                            .font(.system(.caption2, design: .rounded, weight: .semibold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                }
                 Text(entry.voiceLine)
                     .font(.system(.caption, design: .rounded))
-                    .lineLimit(3)
+                    .lineLimit(planLine == nil ? 3 : 2)
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    /// "Plan: 8.0 km · 5:25–5:45/km", "Plan: 8.0 km ✓" once completed,
+    /// "Rest day" on planned rest. Nil when no plan is active.
+    private var planLine: String? {
+        guard let summary = entry.planSummary else { return nil }
+        if entry.isPlanRestDay { return "Rest day" }
+        if entry.planCompletedToday { return "Plan: \(summary) ✓" }
+        return "Plan: \(summary)"
     }
 
     private var distanceShort: String {
@@ -123,7 +159,10 @@ struct PaceOffWidgetView: View {
     }
 
     private var statusColor: Color {
-        if entry.runCompletedToday { return .green }
+        if entry.runCompletedToday || entry.planCompletedToday { return .green }
+        // A planned rest day is a job well done by doing nothing — never
+        // show the after-noon red nag on one.
+        if entry.isPlanRestDay { return .green }
         let hour = Calendar.current.component(.hour, from: entry.date)
         if hour >= 12 { return .red }
         return .orange
@@ -146,7 +185,9 @@ private extension PaceOffEntry {
                 computedAt: Date()
             ),
             voiceLine: "Easy 8K. Keep the pace conversational.",
-            runCompletedToday: false
+            runCompletedToday: false,
+            planSummary: "8.0 km · 5:25–5:45/km",
+            planCompletedToday: false
         )
     }
 
@@ -155,7 +196,20 @@ private extension PaceOffEntry {
             date: Date(),
             target: samplePending.target,
             voiceLine: "Done. Recovery walk later if you can.",
-            runCompletedToday: true
+            runCompletedToday: true,
+            planSummary: "8.0 km · 5:25–5:45/km",
+            planCompletedToday: true
+        )
+    }
+
+    static var sampleRestDay: PaceOffEntry {
+        PaceOffEntry(
+            date: Date(),
+            target: samplePending.target,
+            voiceLine: "Recovery is training too.",
+            runCompletedToday: false,
+            planSummary: "Rest",
+            planCompletedToday: false
         )
     }
 }
@@ -165,6 +219,7 @@ private extension PaceOffEntry {
 } timeline: {
     PaceOffEntry.samplePending
     PaceOffEntry.sampleDone
+    PaceOffEntry.sampleRestDay
 }
 
 #Preview("Widget — accessory rectangular", as: .accessoryRectangular) {

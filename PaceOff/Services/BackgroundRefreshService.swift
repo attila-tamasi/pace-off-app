@@ -119,11 +119,17 @@ public final class BackgroundRefreshService {
         let vo2 = snapshot.vo2Max
         let rhr = snapshot.restingHR
 
+        // Same readiness → target pipeline the foreground refresh uses.
+        let readiness = ReadinessEngine().compute(
+            ReadinessEngine.Inputs(today: Date(), hrv: snapshot.hrv, restingHeartRate: rhr)
+        )
+
         let inputs = PushTargetEngine.Inputs(
             today: Date(),
             runs: runs,
             vo2Max: vo2,
-            restingHeartRate: rhr
+            restingHeartRate: rhr,
+            readiness: readiness?.level
         )
         let target = PushTargetEngine().compute(inputs)
 

@@ -211,4 +211,85 @@ final class PushTargetEngineTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(target.distanceMeters, 3000)
         XCTAssertEqual(target.tone, .restart)
     }
+
+    // MARK: - Readiness traffic light (SPEC §11 follow-up)
+
+    func test_redReadiness_capsAtSixtyPercentAndSetsRecovery() {
+        let today = Date()
+        // Ran yesterday: baseline 5 km, skip factor 1.05 → 5.25 km, tone firm.
+        let runs = (1...12).map { run(daysAgo: $0, km: 5.0, today: today) }
+        let inputs = PushTargetEngine.Inputs(
+            today: today, runs: runs, vo2Max: [], restingHeartRate: [],
+            readiness: .red
+        )
+        let target = engine.compute(inputs)
+        XCTAssertEqual(target.distanceMeters, 3000, accuracy: 100) // 5.0 * 0.6
+        XCTAssertEqual(target.tone, .recovery)
+        XCTAssertEqual(target.readinessCapApplied, true)
+    }
+
+    func test_yellowReadiness_holdsBaseline() {
+        let today = Date()
+        let runs = (1...12).map { run(daysAgo: $0, km: 5.0, today: today) }
+        // Declining VO2 would push the target to 5.0 * 1.15 * 1.05 ≈ 6.0 km.
+        let vo2Series: [VO2MaxSnapshot] = (0..<14).map { i in
+            vo2(daysAgo: i * 2, value: 50.0 - Double(i) * 0.5, today: today)
+        }
+        let inputs = PushTargetEngine.Inputs(
+            today: today, runs: runs, vo2Max: vo2Series, restingHeartRate: [],
+            readiness: .yellow
+        )
+        let target = engine.compute(inputs)
+        XCTAssertEqual(target.distanceMeters, target.baselineMeters, accuracy: 100)
+        XCTAssertEqual(target.readinessCapApplied, true)
+        XCTAssertNotEqual(target.tone, .aggressive, "Yellow softens an aggressive push")
+    }
+
+    func test_greenReadiness_changesNothing() {
+        let today = Date()
+        let runs = (1...12).map { run(daysAgo: $0, km: 5.0, today: today) }
+        let plain = engine.compute(PushTargetEngine.Inputs(
+            today: today, runs: runs, vo2Max: [], restingHeartRate: []
+        ))
+        let green = engine.compute(PushTargetEngine.Inputs(
+            today: today, runs: runs, vo2Max: [], restingHeartRate: [],
+            readiness: .green
+        ))
+        XCTAssertEqual(green.distanceMeters, plain.distanceMeters)
+        XCTAssertEqual(green.tone, plain.tone)
+        XCTAssertEqual(green.readinessCapApplied, false)
+    }
+
+    func test_redReadiness_noCapFlag_whenAlreadyBelowCap() {
+        let today = Date()
+        // Yesterday was a long run → recovery already set the target to
+        // 0.6 × baseline; red readiness has nothing left to cap.
+        var runs = (2...12).map { run(daysAgo: $0, km: 5.0, today: today) }
+        runs.append(run(daysAgo: 1, km: 10.0, today: today))
+        let inputs = PushTargetEngine.Inputs(
+            today: today, runs: runs, vo2Max: [], restingHeartRate: [],
+            readiness: .red
+        )
+        let target = engine.compute(inputs)
+        XCTAssertEqual(target.distanceMeters, 3000, accuracy: 100)
+        XCTAssertEqual(target.tone, .recovery)
+        XCTAssertEqual(target.readinessCapApplied, false)
+    }
+
+    // MARK: - RunTarget backward compatibility
+
+    func test_runTarget_codableTolerantOfMissingReadinessField() throws {
+        // Cached widget JSON written before readinessCapApplied existed has
+        // no such key — encoding a nil optional omits it, so a round-trip
+        // with nil proves both directions of the compatibility story.
+        let legacy = RunTarget(
+            distanceMeters: 5000, tone: .firm, daysSinceLastRun: 1,
+            vo2MaxSlope: nil, baselineMeters: 5000,
+            ceilingClamped: false, fatigueGuardActive: false
+        )
+        let data = try JSONEncoder().encode(legacy)
+        XCTAssertFalse(String(data: data, encoding: .utf8)!.contains("readinessCapApplied"))
+        let decoded = try JSONDecoder().decode(RunTarget.self, from: data)
+        XCTAssertNil(decoded.readinessCapApplied)
+    }
 }

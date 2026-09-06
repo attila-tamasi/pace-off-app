@@ -115,17 +115,21 @@ public final class TodayViewModel {
         let rhr = snapshot.restingHR
         let now = Date()
 
+        // Readiness first — its verdict feeds the target computation (red
+        // caps the day, yellow holds the baseline).
+        self.readiness = readinessEngine.compute(
+            ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr)
+        )
+
         let inputs = PushTargetEngine.Inputs(
             today: now,
             runs: runs,
             vo2Max: vo2,
-            restingHeartRate: rhr
+            restingHeartRate: rhr,
+            readiness: self.readiness?.level
         )
         let computed = engine.compute(inputs)
         self.target = computed
-        self.readiness = readinessEngine.compute(
-            ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr)
-        )
         self.yesterday = mostRecentRunBefore(today: now, in: runs)
         self.todayRun = mostRecentRunOn(day: now, in: runs)
         self.currentVO2Max = vo2.last?.value
