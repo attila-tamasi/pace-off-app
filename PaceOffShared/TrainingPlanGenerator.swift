@@ -360,10 +360,12 @@ public struct TrainingPlanGenerator: Sendable {
             ]
 
         case .aggressive:
-            // 5 runs: Mon easy, Tue quality1, Wed easy, Thu quality2,
-            //         Fri rest, Sat easy, Sun long.
+            // 5 runs: Mon rest (day after the long run — even the aggressive
+            //         tier gets its recovery day), Tue quality1, Wed easy,
+            //         Thu quality2, Fri rest, Sat easy, Sun long. Matches
+            //         PlanTier.aggressive.runsPerWeek == 5 and the blurb.
             return [
-                .easy,
+                .rest,
                 qualityForWeek,
                 .easy,
                 secondQuality,

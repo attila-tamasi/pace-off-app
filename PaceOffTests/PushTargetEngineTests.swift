@@ -43,10 +43,12 @@ final class PushTargetEngineTests: XCTestCase {
 
     // MARK: - VO2Max slope
 
+    // Note the index direction: larger `i` means further back in time, so a
+    // DECLINING trend needs older samples to be HIGHER than today's.
     func test_vo2MaxSlope_declining() {
         let today = Date()
         let samples = (0..<14).map { i in
-            vo2(daysAgo: i * 2, value: 50.0 - Double(i) * 0.2, today: today)
+            vo2(daysAgo: i * 2, value: 50.0 + Double(i) * 0.2, today: today)
         }
         let slope = engine.vo2MaxSlopePerWeek(samples, asOf: today)
         XCTAssertNotNil(slope)
@@ -56,7 +58,7 @@ final class PushTargetEngineTests: XCTestCase {
     func test_vo2MaxSlope_improving() {
         let today = Date()
         let samples = (0..<14).map { i in
-            vo2(daysAgo: i * 2, value: 50.0 + Double(i) * 0.2, today: today)
+            vo2(daysAgo: i * 2, value: 50.0 - Double(i) * 0.2, today: today)
         }
         let slope = engine.vo2MaxSlopePerWeek(samples, asOf: today)
         XCTAssertNotNil(slope)
@@ -139,12 +141,17 @@ final class PushTargetEngineTests: XCTestCase {
 
     // MARK: - Hard ceiling
 
-    func test_hardCeiling_clamps() {
+    func test_hardCeiling_boundsCompoundedMultipliers() {
+        // The worst legal compounding is VO2-decline (×1.15) × 2-day skip
+        // (×1.12) = ×1.288, which sits UNDER the 1.4 ceiling — so the
+        // ceiling is a defensive invariant, not a path the current
+        // multipliers can trip. Assert the invariant and the exact
+        // compounded value rather than a clamp that cannot occur.
         let today = Date()
-        // Many small runs (1 km baseline) but VO2Max plummeting AND 2 days skipped
         let runs = (2...12).map { run(daysAgo: $0, km: 1.0, today: today) }
+        // Genuinely declining: older samples higher, today lowest.
         let vo2Series: [VO2MaxSnapshot] = (0..<14).map { i in
-            vo2(daysAgo: i * 2, value: 60.0 - Double(i) * 1.0, today: today)
+            vo2(daysAgo: i * 2, value: 47.0 + Double(i) * 1.0, today: today)
         }
         let inputs = PushTargetEngine.Inputs(
             today: today,
@@ -153,9 +160,10 @@ final class PushTargetEngineTests: XCTestCase {
             restingHeartRate: []
         )
         let target = engine.compute(inputs)
-        // Baseline 1.0 km, ceiling = 1.4 km
-        XCTAssertEqual(target.distanceMeters, 1400, accuracy: 100)
-        XCTAssertTrue(target.ceilingClamped)
+        // Baseline 1.0 km → 1.0 × 1.15 × 1.12 = 1.288 km, rounded to 1.3 km
+        XCTAssertEqual(target.distanceMeters, 1300, accuracy: 50)
+        XCTAssertLessThanOrEqual(target.distanceMeters, target.baselineMeters * 1.4 + 0.1)
+        XCTAssertFalse(target.ceilingClamped)
     }
 
     // MARK: - Long run recovery

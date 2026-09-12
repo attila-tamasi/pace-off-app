@@ -84,7 +84,7 @@ public struct PaceDecayAnalyser: Sendable {
         var results: [KilometerSplit] = []
 
         var lastBoundaryDate = startDate
-        var lastBoundaryMeters: Double = 0
+        var lastEmittedBoundary = 0
 
         // Walk each consecutive pair.
         for i in 1..<locations.count {
@@ -96,8 +96,12 @@ public struct PaceDecayAnalyser: Sendable {
                   curr.date > prev.date
             else { continue }
 
-            // How many km boundaries does this segment cross?
-            let firstBoundary = Int(prev.cumulativeMeters / 1000) + 1
+            // How many km boundaries does this segment cross? Never re-emit
+            // a boundary already produced — a noisy backward sample can put
+            // `prev` below a boundary we've crossed, and without this floor
+            // that boundary would be counted twice as a phantom split.
+            let firstBoundary = max(Int(prev.cumulativeMeters / 1000) + 1,
+                                    lastEmittedBoundary + 1)
             let lastBoundary = Int(curr.cumulativeMeters / 1000)
             guard lastBoundary >= firstBoundary else { continue }
 
@@ -122,8 +126,7 @@ public struct PaceDecayAnalyser: Sendable {
                     )
                 )
                 lastBoundaryDate = boundaryDate
-                lastBoundaryMeters = boundaryMeters
-                _ = lastBoundaryMeters // silence unused-value warning; kept for readability
+                lastEmittedBoundary = boundary
             }
         }
         return results

@@ -41,11 +41,12 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         XCTAssertGreaterThan(t, i, "threshold should be slower than interval")
     }
 
-    func test_pace_thresholdFor50VDOT_isAroundFourMinutesPerKm() {
-        // Daniels' table at VDOT 50: T pace ≈ 4:00/km (3:54–4:01 range).
+    func test_pace_thresholdFor50VDOT_matchesDanielsTable() {
+        // Daniels' published table at VDOT 50: T pace ≈ 4:15/km (255 s/km).
+        // (4:00/km would be the T pace of a ~VDOT 55 runner.)
         let p = vdot.paceSecPerKm(vdot: 50,
                                   fractionOfVDOT: TrainingIntensity.threshold.fractionOfVDOT)
-        XCTAssertEqual(p, 240, accuracy: 10) // ±10 s/km tolerance
+        XCTAssertEqual(p, 255, accuracy: 10) // ±10 s/km tolerance
     }
 
     // MARK: - Plan length
