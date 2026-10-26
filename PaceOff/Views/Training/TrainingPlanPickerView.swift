@@ -110,7 +110,7 @@ struct TrainingPlanPickerView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(.background)
+                .fill(Color(.secondarySystemGroupedBackground))
                 .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
         }
     }
@@ -158,7 +158,7 @@ struct TrainingPlanPickerView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(.background)
+                    .fill(Color(.secondarySystemGroupedBackground))
                     .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
             }
             .foregroundStyle(.primary)

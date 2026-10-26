@@ -210,7 +210,7 @@ private struct WelcomeStep: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(.background)
+                .fill(Color(.secondarySystemGroupedBackground))
                 .shadow(color: .black.opacity(0.06), radius: 12, x: 0, y: 4)
         )
     }
@@ -269,7 +269,7 @@ private struct NameStep: View {
                     .padding(.vertical, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(.background)
+                            .fill(Color(.secondarySystemGroupedBackground))
                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 2)
                     )
                     .focused($nameFocused)
@@ -311,7 +311,7 @@ private struct BirthdayStep: View {
                     .padding(16)
                     .background(
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(.background)
+                            .fill(Color(.secondarySystemGroupedBackground))
                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 2)
                     )
             }
@@ -365,7 +365,7 @@ private struct RaceDayStep: View {
                     .padding(16)
                     .background(
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(.background)
+                            .fill(Color(.secondarySystemGroupedBackground))
                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 2)
                     )
             }
@@ -397,7 +397,7 @@ private struct PersonalBestStep: View {
                     .padding(16)
                     .background(
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(.background)
+                            .fill(Color(.secondarySystemGroupedBackground))
                             .shadow(color: .black.opacity(0.05), radius: 6, x: 0, y: 2)
                     )
             }
@@ -445,7 +445,7 @@ private struct HealthPermissionStep: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(.background)
+                .fill(Color(.secondarySystemGroupedBackground))
                 .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
     }
@@ -571,7 +571,7 @@ private struct DoneStep: View {
         .padding(18)
         .background(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(.background)
+                .fill(Color(.secondarySystemGroupedBackground))
                 .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
         )
     }

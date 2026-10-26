@@ -56,6 +56,12 @@ public enum Weekday: Int, Codable, Sendable, CaseIterable, Identifiable {
 
     public var id: Int { rawValue }
 
+    /// The weekday `date` falls on. Calendar.weekday returns 1 = Sunday …
+    /// 7 = Saturday on Gregorian; ours runs Monday = 0 … Sunday = 6.
+    public init(date: Date, calendar: Calendar = .current) {
+        self = Weekday(rawValue: (calendar.component(.weekday, from: date) + 5) % 7) ?? .monday
+    }
+
     public var shortName: String {
         switch self {
         case .monday:    return "Mon"
@@ -272,13 +278,7 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
     /// Today's prescribed workout, or nil when the plan isn't active today.
     public func todayWorkout(today: Date = Date()) -> Workout? {
         guard let weekIdx = currentWeekIndex(today: today) else { return nil }
-        // Map calendar weekday → our Mon..Sun ordering. Calendar.weekday
-        // returns 1 = Sunday … 7 = Saturday on Gregorian.
-        let cal = Calendar.current
-        let calWeekday = cal.component(.weekday, from: today)
-        // Sunday(1) → 6 (sunday=6 in our enum), Monday(2) → 0, etc.
-        let mappedRaw = (calWeekday + 5) % 7
-        guard let weekday = Weekday(rawValue: mappedRaw) else { return nil }
+        let weekday = Weekday(date: today)
         return weeks[weekIdx].days.first(where: { $0.weekday == weekday })?.workout
     }
 }

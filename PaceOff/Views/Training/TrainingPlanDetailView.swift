@@ -1,13 +1,16 @@
 // TrainingPlanDetailView.swift
-// Week-by-week preview of a generated TrainingPlan. The "Select this plan"
-// button at the bottom commits the plan to TrainingPlanStore and pops back
-// to the picker (and from there, the Profile tab).
+// Week-by-week view of a TrainingPlan. From the picker it's a preview: the
+// "Select this plan" button at the bottom commits the plan to
+// TrainingPlanStore and pops back. From the Plan tab it shows the active
+// plan, without the button.
 
 import SwiftUI
 
 struct TrainingPlanDetailView: View {
 
     let plan: TrainingPlan
+    /// False when showing the plan that's already active.
+    var showsSelectButton = true
 
     @Environment(TrainingPlanStore.self) private var planStore
     @Environment(\.dismiss) private var dismiss
@@ -21,9 +24,11 @@ struct TrainingPlanDetailView: View {
                 ForEach(plan.weeks) { week in
                     weekCard(week)
                 }
-                selectButton
-                    .padding(.top, 8)
-                    .padding(.bottom, 32)
+                if showsSelectButton {
+                    selectButton
+                        .padding(.top, 8)
+                        .padding(.bottom, 32)
+                }
             }
             .padding(20)
         }
@@ -99,7 +104,7 @@ struct TrainingPlanDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(.background)
+                .fill(Color(.secondarySystemGroupedBackground))
                 .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
         }
     }

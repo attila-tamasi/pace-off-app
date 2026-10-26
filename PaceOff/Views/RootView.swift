@@ -1,7 +1,8 @@
 // RootView.swift
-// Tab bar — Today / History / Trends / Profile. Settings has been folded
-// into the Profile tab. By the time we reach this view the onboarding
-// flow has committed a valid UserProfile — no defensive setup sheet.
+// Tab bar — Today / History / Trends / Plan. Profile lives behind the
+// avatar on Today, as in the Health app. By the time we reach this view
+// the onboarding flow has committed a valid UserProfile — no defensive
+// setup sheet.
 
 import SwiftUI
 
@@ -9,7 +10,7 @@ struct RootView: View {
 
     @State private var selection: AppTab = .today
 
-    enum AppTab: Hashable { case today, history, trends, profile }
+    enum AppTab: Hashable { case today, history, trends, plan }
 
     var body: some View {
         TabView(selection: $selection) {
@@ -22,8 +23,8 @@ struct RootView: View {
             SwiftUI.Tab("Trends", systemImage: "chart.line.uptrend.xyaxis", value: AppTab.trends) {
                 NavigationStack { TrendsView() }
             }
-            SwiftUI.Tab("Profile", systemImage: "person.crop.circle", value: AppTab.profile) {
-                NavigationStack { ProfileView() }
+            SwiftUI.Tab("Plan", systemImage: "list.bullet.rectangle.portrait", value: AppTab.plan) {
+                NavigationStack { PlanTabView() }
             }
         }
     }
