@@ -34,13 +34,15 @@ The app icon is one opaque 1024×1024 PNG, the same file in the iOS, widget and 
 
 ## Design rules
 - iOS 26 **Liquid Glass** design language: prefer native materials (`.glassEffect`, `.background`, system backgrounds); never fake glass with manual blur/opacity hacks
+- Screens read like Apple's Health app: large titles, data in `MetricCard`s (solid `secondarySystemGroupedBackground` cards with a coloured symbol + category, a big value, an optional mini chart). Glass stays on the navigation layer (tab bar, toolbar, pills), as in Health. Colour by meaning: the icon's blue (accent) for fitness and the plan, the track orange for running, pink for heart data
 - Follow Apple HIG: SF Symbols only, Dynamic Type, system colors, standard navigation
 - Support Dark Mode from day one; respect safe areas
 - Minimal UI: one screen = one job. Don't stuff dashboards with stats.
 - Accessibility: VoiceOver labels on interactive elements, sensible Dynamic Type behavior
-- Brand colors/gradients are centralized in `PaceOff/Views/Design/` (`BrandPalette`, `BrandHero`, `AnimatedBlobsBackground`) — reuse them, don't hardcode hex values in views
+- Brand colors/gradients are centralized in `PaceOff/Views/Design/`: `BrandPalette` (the icon's blues and track oranges, `BrandMark`), `TrackBend` (the icon's running track, drawn, plus the full-screen `BrandBackdrop`) and `BrandHero`. Reuse them, don't hardcode hex values in views
 
 ## Architecture
+- Tabs: Today · History · Trends · Plan. Profile opens as a sheet from the avatar on Today, as in Health
 - `PaceOffApp` owns the launch-flow state machine (`.splash → .auth → .onboarding → .main`, gated by `@AppStorage` flags in App Group defaults) and injects all services via `.environment(...)`
 - Feature-based folder layout under `PaceOff/Views/` (one folder per screen or feature — e.g. `Views/Training/`, `Views/Onboarding/`, `Views/Legal/`, `Views/Design/`, `Views/Preview/`)
 - Views stay dumb; `@MainActor @Observable` singletons own state and side effects:

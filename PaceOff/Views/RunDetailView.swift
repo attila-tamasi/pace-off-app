@@ -58,7 +58,7 @@ struct RunDetailView: View {
             Map(position: $cameraPosition, interactionModes: [.pan, .zoom]) {
                 MapPolyline(coordinates: routeCoordinates)
                     .stroke(
-                        .blue.gradient,
+                        BrandPalette.track,
                         style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round)
                     )
                 if let start = routeCoordinates.first {
@@ -210,7 +210,7 @@ struct RunDetailView: View {
             .padding(.vertical, 24)
         }
         .padding(16)
-        .background(.background, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     private var splitsCard: some View {
@@ -235,7 +235,7 @@ struct RunDetailView: View {
                         x: .value("Km", split.index),
                         y: .value("sec/km", split.secondsPerKm)
                     )
-                    .foregroundStyle(Color.accentColor.gradient)
+                    .foregroundStyle(BrandPalette.trackFill)
                     .cornerRadius(4)
                     .annotation(position: .top, alignment: .center) {
                         Text(split.formattedPace)
@@ -277,7 +277,7 @@ struct RunDetailView: View {
             }
         }
         .padding(16)
-        .background(.background, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     private var heartRateRow: some View {
@@ -411,7 +411,7 @@ struct RunDetailView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.background, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 

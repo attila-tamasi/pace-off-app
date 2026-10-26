@@ -31,6 +31,19 @@ public final class TodayViewModel {
     // trust a baseline — the card stays hidden rather than guessing.
     public private(set) var readiness: DailyReadiness?
 
+    // Short series behind the Today cards' mini charts, all derived from
+    // the cached snapshot (no extra HealthKit reads).
+    /// Daily mean HRV (SDNN, ms) over the last week, days with data only.
+    public private(set) var hrvTrend: [TrendPoint] = []
+    /// Daily resting heart rate (bpm) over the last week, days with data only.
+    public private(set) var restingHRTrend: [TrendPoint] = []
+    /// The most recent VO₂ max readings, oldest first.
+    public private(set) var vo2Trend: [TrendPoint] = []
+    /// Kilometres run on each of the last seven days, today last; 0 on rest days.
+    public private(set) var weekDistances: [TrendPoint] = []
+
+    public var weekTotalKm: Double { weekDistances.reduce(0) { $0 + $1.value } }
+
     @ObservationIgnored private let engine = PushTargetEngine()
     @ObservationIgnored private let readinessEngine = ReadinessEngine()
     @ObservationIgnored private let voice = VoiceCopy()
@@ -139,7 +152,43 @@ public final class TodayViewModel {
         self.yesterdayAvgHeartRate = snapshot.yesterdayAvgHeartRate
         self.latestRestingHeartRate = snapshot.latestRestingHeartRate
 
+        self.hrvTrend = Self.dailyMeans(snapshot.hrv.map { ($0.date, $0.sdnnMs) }, days: 7, now: now)
+        self.restingHRTrend = Self.dailyMeans(rhr.map { ($0.date, $0.bpm) }, days: 7, now: now)
+        self.vo2Trend = vo2
+            .sorted { $0.date < $1.date }
+            .suffix(12)
+            .map { TrendPoint(date: $0.date, value: $0.value) }
+        self.weekDistances = Self.dailyDistances(runs, days: 7, now: now)
+
         AppGroup.sharedDefaults?.set(self.todayRun != nil, forKey: AppGroup.Keys.runCompletedToday)
+    }
+
+    /// Mean value per calendar day over the last `days` days (today
+    /// included), oldest first. Days without samples are left out.
+    private static func dailyMeans(_ samples: [(Date, Double)], days: Int, now: Date) -> [TrendPoint] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: now)
+        guard let first = cal.date(byAdding: .day, value: -(days - 1), to: today) else { return [] }
+        let byDay = Dictionary(grouping: samples.filter { $0.0 >= first }) { cal.startOfDay(for: $0.0) }
+        return byDay
+            .map { day, values in
+                TrendPoint(date: day, value: values.map { $0.1 }.reduce(0, +) / Double(values.count))
+            }
+            .sorted { $0.date < $1.date }
+    }
+
+    /// Total kilometres per calendar day for the last `days` days (today
+    /// included), oldest first, with 0 for days without a run.
+    private static func dailyDistances(_ runs: [RunRecord], days: Int, now: Date) -> [TrendPoint] {
+        let cal = Calendar.current
+        let today = cal.startOfDay(for: now)
+        return (0..<days).reversed().compactMap { offset in
+            guard let day = cal.date(byAdding: .day, value: -offset, to: today) else { return nil }
+            let km = runs
+                .filter { cal.isDate($0.startDate, inSameDayAs: day) }
+                .reduce(0) { $0 + $1.distanceKm }
+            return TrendPoint(date: day, value: km)
+        }
     }
 
     private func mostRecentRunBefore(today: Date, in runs: [RunRecord]) -> RunRecord? {
@@ -188,7 +237,8 @@ public final class TodayViewModel {
         hrv: Double? = 62,
         avgHR: Double? = 68,
         restingHR: Double? = 51,
-        readiness: DailyReadiness? = .sample
+        readiness: DailyReadiness? = .sample,
+        trends: Bool = true
     ) -> TodayViewModel {
         let vm = TodayViewModel()
         vm.target = target
@@ -202,7 +252,29 @@ public final class TodayViewModel {
         vm.yesterdayAvgHeartRate = avgHR
         vm.latestRestingHeartRate = restingHR
         vm.readiness = readiness
+        if trends {
+            let cal = Calendar.current
+            let today = cal.startOfDay(for: Date())
+            func series(_ values: [Double]) -> [TrendPoint] {
+                values.enumerated().compactMap { index, value in
+                    cal.date(byAdding: .day, value: index - values.count + 1, to: today)
+                        .map { TrendPoint(date: $0, value: value) }
+                }
+            }
+            vm.hrvTrend = series([55, 58, 54, 61, 59, 63, 62])
+            vm.restingHRTrend = series([54, 53, 53, 52, 52, 51, 51])
+            vm.vo2Trend = series([47.9, 48.2, 48.1, 48.6, 48.8, 49.0, 49.2])
+            vm.weekDistances = series([6.1, 0, 8.4, 0, 5.2, 12.3, todayRun?.distanceKm ?? 0])
+        }
         return vm
     }
     #endif
+}
+
+/// One point of a Today mini chart: a calendar day (or reading date) and
+/// its value.
+public struct TrendPoint: Identifiable, Equatable, Sendable {
+    public let date: Date
+    public let value: Double
+    public var id: Date { date }
 }

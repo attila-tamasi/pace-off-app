@@ -1,15 +1,15 @@
 // TodayView.swift
-// Home screen — single ScrollView:
-//   • Compact route strip at the top (today's route when there is one)
-//   • Content below (date, recovery, readiness, target hero, today's run
-//     card, supporting grid)
-//   • With no run today, the map is replaced by a lightweight graphic hero
-//     so we don't burn half the screen on a stock map region.
+// Home screen, laid out like the Health app's Summary:
+//   • Large "Today" title, the date and race countdown under it, and the
+//     profile avatar top-right (it opens Profile as a sheet)
+//   • The one hero surface: today's target on the icon's blue, with the
+//     icon's running track in the corner
+//   • "Recovery" and "Running" sections of Health-style metric cards with
+//     mini charts
 //
-// Chrome is iOS 26 Liquid Glass: every card is a `.glassEffect` shape
-// inside one `GlassEffectContainer`, sampling a quiet brand backdrop
-// (soft orbs over the system background). No manual materials, no
-// blur/opacity fakes — per the project design rules.
+// Liquid Glass stays on the navigation layer (toolbar, tab bar, the tone
+// pill on the hero), as in Health; the data cards are solid grouped
+// surfaces so the numbers stay crisp.
 
 import SwiftUI
 import MapKit
@@ -19,46 +19,44 @@ struct TodayView: View {
 
     @Environment(TodayViewModel.self) private var todayVM
     @Environment(ProfileStore.self) private var profileStore
-    @State private var cameraPosition: MapCameraPosition = .automatic
+    @Environment(TrainingPlanStore.self) private var planStore
 
-    /// Map height as a fraction of available screen height. Compact on
-    /// purpose — the map is a preview, not the point of the screen.
-    private let mapHeightFraction: CGFloat = 0.28
+    @State private var profilePresented = false
 
     var body: some View {
-        GeometryReader { geo in
-            ScrollView {
-                VStack(spacing: 0) {
-                    mapLayer
-                        .frame(height: geo.size.height * mapHeightFraction)
-                        .clipped()
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                dateLine
+                    .padding(.horizontal, 4)
+                    .padding(.bottom, 14)
 
-                    contentSection
-                        .padding(.horizontal, 20)
-                        .padding(.top, 18)
-                        .padding(.bottom, 40)
-                }
+                heroCard
+
+                recoverySection
+                runningSection
             }
-            .scrollIndicators(.hidden)
-            .scrollEdgeEffectStyle(.soft, for: .top)
-            .ignoresSafeArea(edges: .top)
-            .background { ambientBackground }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 32)
         }
-        .navigationTitle("Pace Off")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.hidden, for: .navigationBar)
+        .background { ambientBackground }
+        .refreshable { await todayVM.refresh() }
+        .navigationTitle("Today")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    Task { await todayVM.refresh() }
-                } label: {
-                    // iOS 26 toolbars give items their own Liquid Glass
-                    // treatment — no manual padding or backdrop needed.
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.primary)
+                Button { profilePresented = true } label: {
+                    ProfileAvatar(photo: profileStore.photo, name: profileStore.profile?.displayName)
                 }
-                .disabled(todayVM.isRefreshing)
+                .accessibilityLabel("Profile")
+            }
+        }
+        .sheet(isPresented: $profilePresented) {
+            NavigationStack {
+                ProfileView()
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { profilePresented = false }
+                        }
+                    }
             }
         }
         .navigationDestination(for: TodayDestination.self) { dest in
@@ -66,354 +64,70 @@ struct TodayView: View {
             case .vo2Max: VO2MaxDetailView()
             }
         }
-        .onChange(of: routeCoordinateSnapshot) { _, _ in
-            updateCamera(for: todayVM.todayRouteCoordinates)
-        }
-        .onAppear { updateCamera(for: todayVM.todayRouteCoordinates) }
     }
 
-    private var routeCoordinateSnapshot: [RouteCoordinateSnapshot] {
-        todayVM.todayRouteCoordinates.map(RouteCoordinateSnapshot.init)
-    }
+    // MARK: - Backdrop
 
-    // MARK: - Map
-
-    @ViewBuilder
-    private var mapLayer: some View {
-        if todayVM.todayRouteCoordinates.isEmpty {
-            noRunHero
-        } else {
-            Map(position: $cameraPosition, interactionModes: [.pan, .zoom]) {
-                MapPolyline(coordinates: todayVM.todayRouteCoordinates)
-                    .stroke(
-                        .blue.gradient,
-                        style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round)
-                    )
-                if let start = todayVM.todayRouteCoordinates.first {
-                    Annotation("Start", coordinate: start) {
-                        Circle()
-                            .fill(.green)
-                            .frame(width: 14, height: 14)
-                            .overlay(Circle().stroke(.white, lineWidth: 2))
-                    }
-                }
-                if let end = todayVM.todayRouteCoordinates.last,
-                   todayVM.todayRouteCoordinates.count > 1 {
-                    Annotation("Finish", coordinate: end) {
-                        Circle()
-                            .fill(.red)
-                            .frame(width: 14, height: 14)
-                            .overlay(Circle().stroke(.white, lineWidth: 2))
-                    }
-                }
-            }
-            .mapStyle(.standard(elevation: .realistic, pointsOfInterest: .excludingAll))
-        }
-    }
-
-    /// Lightweight non-map hero shown when there's no run today. Replaces the
-    /// previous "stock map parked over Berlin" — that ate a lot of pixels for
-    /// something the user didn't relate to. The glyph and headline follow
-    /// today's readiness; the detailed sentence stays on the readiness card
-    /// below so the two surfaces don't repeat each other.
-    private var noRunHero: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Color.accentColor.opacity(0.28), Color.accentColor.opacity(0.06)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            BrandPalette.driftingOrb(color: Color.accentColor.opacity(0.35), size: 220)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
-                .offset(x: 60, y: -40)
-            // Glass chip over the gradient — the one spot on this screen
-            // where the material has something colourful to refract even
-            // before the user has any data.
-            VStack(spacing: 10) {
-                Image(systemName: noRunGlyph)
-                    .font(.system(size: 42, weight: .semibold))
-                    .foregroundStyle(todayVM.readiness.map { readinessColor($0.level) } ?? .secondary)
-                    .padding(.bottom, 2)
-                Text(noRunHeadline)
-                    .font(.system(.title3, design: .rounded, weight: .semibold))
-                    .foregroundStyle(.primary)
-                Text("Your route will appear here once you run.")
-                    .font(.system(.subheadline, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 20)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .padding(.horizontal, 24)
-        }
-    }
-
-    private var noRunGlyph: String {
-        switch todayVM.readiness?.level {
-        case .green:   return "checkmark.circle.fill"
-        case .yellow:  return "exclamationmark.circle.fill"
-        case .red:     return "moon.zzz.fill"
-        case nil:      return "figure.run.circle"
-        }
-    }
-
-    private var noRunHeadline: String {
-        switch todayVM.readiness?.level {
-        case .green:   return "Ready when you are"
-        case .yellow:  return "Ease into today"
-        case .red:     return "Rest is the workout"
-        case nil:      return "No run today"
-        }
-    }
-
-    /// Fit the camera to the full route plus a little padding. Called only
-    /// when there IS a route — no-op otherwise, since the map isn't in the
-    /// view tree without one.
-    private func updateCamera(for coords: [CLLocationCoordinate2D]) {
-        guard !coords.isEmpty else { return }
-        var minLat = coords[0].latitude, maxLat = coords[0].latitude
-        var minLng = coords[0].longitude, maxLng = coords[0].longitude
-        for c in coords {
-            minLat = min(minLat, c.latitude); maxLat = max(maxLat, c.latitude)
-            minLng = min(minLng, c.longitude); maxLng = max(maxLng, c.longitude)
-        }
-        let center = CLLocationCoordinate2D(
-            latitude: (minLat + maxLat) / 2,
-            longitude: (minLng + maxLng) / 2
-        )
-        let span = MKCoordinateSpan(
-            latitudeDelta: max((maxLat - minLat) * 1.6, 0.005),
-            longitudeDelta: max((maxLng - minLng) * 1.6, 0.005)
-        )
-        cameraPosition = .region(MKCoordinateRegion(center: center, span: span))
-    }
-
-    // MARK: - Content section (scrolls below the map)
-
-    /// One container for every glass shape on the screen so the system
-    /// samples the backdrop consistently and can blend neighbouring shapes
-    /// during transitions.
-    private var contentSection: some View {
-        GlassEffectContainer {
-            VStack(alignment: .leading, spacing: 22) {
-                dateRibbon
-
-                recoveryCard
-
-                if let readiness = todayVM.readiness {
-                    readinessCard(readiness)
-                }
-
-                heroCard
-
-                if let run = todayVM.todayRun {
-                    todayRunCard(run)
-                }
-
-                supportingGrid
-            }
-        }
-    }
-
-    /// Quiet backdrop the Liquid Glass cards sample from: the grouped
-    /// system background with two soft brand orbs parked in the corners.
-    /// Static on purpose — the home screen is a dashboard, not the splash.
+    /// The grouped system background with a soft wash of the icon's blue
+    /// behind the title, like the tinted top of Health's Summary.
     private var ambientBackground: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             Color(.systemGroupedBackground)
-            BrandPalette.driftingOrb(color: Color.accentColor.opacity(0.22), size: 340)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .offset(x: -80, y: 40)
-            BrandPalette.driftingOrb(color: .pink.opacity(0.14), size: 300)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                .offset(x: 90, y: 60)
+            LinearGradient(
+                colors: [Color.accentColor.opacity(0.22), Color.accentColor.opacity(0)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 420)
         }
         .ignoresSafeArea()
     }
 
-    /// Date line. When the user has a goal date set, also shows a countdown
-    /// chip ("RACE IN 12 WEEKS") so the home screen always reminds them why
-    /// they're being pushed.
-    private var dateRibbon: some View {
-        let date = Date().formatted(.dateTime.weekday(.wide).month().day()).uppercased()
-        return HStack(spacing: 10) {
-            Text(date)
-                .font(.system(.caption, design: .rounded, weight: .semibold))
+    // MARK: - Date line
+
+    /// "Monday, 26 October · Race in 9 weeks". The countdown keeps the
+    /// reason for the push on screen whenever a race date is set.
+    private var dateLine: some View {
+        HStack(spacing: 0) {
+            Text(Date().formatted(.dateTime.weekday(.wide).day().month(.wide)))
                 .foregroundStyle(.secondary)
-                .kerning(1.2)
             if let countdown = goalCountdownLabel {
-                Text("·")
+                Text(" · ")
                     .foregroundStyle(.tertiary)
-                    .font(.system(.caption, weight: .semibold))
                 Text(countdown)
-                    .font(.system(.caption, design: .rounded, weight: .bold))
-                    .kerning(0.8)
-                    .foregroundStyle(Color.accentColor)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(BrandPalette.track)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .glassEffect()
-        .frame(maxWidth: .infinity, alignment: .center)
+        .font(.system(.subheadline, weight: .medium))
     }
 
-    /// "RACE IN 12 WEEKS" / "RACE IN 4 DAYS", or nil if no goal date is set.
+    /// "Race in 12 weeks" / "Race in 4 days", or nil if no goal date is set.
     private var goalCountdownLabel: String? {
         guard let goalDate = profileStore.profile?.goalDate, goalDate > Date() else { return nil }
         let days = Calendar.current.dateComponents([.day], from: Date(), to: goalDate).day ?? 0
         if days <= 0 { return nil }
         if days < 14 {
-            return "RACE IN \(days) DAY\(days == 1 ? "" : "S")"
+            return "Race in \(days) day\(days == 1 ? "" : "s")"
         }
         let weeks = days / 7
-        return "RACE IN \(weeks) WEEK\(weeks == 1 ? "" : "S")"
+        return "Race in \(weeks) week\(weeks == 1 ? "" : "s")"
     }
 
-    // MARK: - Yesterday's recovery (morning check-in)
-
-    /// Shown at the top of the home screen so it's the first thing the user
-    /// reads when they open the app. Three numbers from yesterday/overnight:
-    /// HRV (SDNN), average heart rate, and most-recent resting heart rate.
-    private var recoveryCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("YESTERDAY'S RECOVERY")
-                    .font(.system(.caption, design: .rounded, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .kerning(1.2)
-                Spacer()
-                Image(systemName: "heart.text.square.fill")
-                    .font(.system(.caption, weight: .semibold))
-                    .foregroundStyle(.pink)
-            }
-
-            HStack(alignment: .top, spacing: 0) {
-                recoveryStat(
-                    label: "HRV",
-                    value: todayVM.yesterdayHRV.map { "\(Int($0.rounded()))" } ?? "—",
-                    unit: "ms"
-                )
-                divider
-                recoveryStat(
-                    label: "AVG HR",
-                    value: todayVM.yesterdayAvgHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
-                    unit: "bpm"
-                )
-                divider
-                recoveryStat(
-                    label: "RESTING",
-                    value: todayVM.latestRestingHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
-                    unit: "bpm"
-                )
-            }
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-    }
-
-    private func recoveryStat(label: String, value: String, unit: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.system(.caption2, design: .rounded, weight: .semibold))
-                .kerning(0.8)
-                .foregroundStyle(.secondary)
-            HStack(alignment: .firstTextBaseline, spacing: 3) {
-                Text(value)
-                    .font(.system(.title2, design: .rounded, weight: .bold))
-                    .foregroundStyle(.primary)
-                Text(unit)
-                    .font(.system(.caption, design: .rounded, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var divider: some View {
-        Rectangle()
-            .fill(Color.secondary.opacity(0.15))
-            .frame(width: 1, height: 36)
-            .padding(.horizontal, 4)
-    }
-
-    // MARK: - Readiness traffic light
-
-    /// Green / yellow / red verdict on today's recovery, sitting between the
-    /// raw numbers above and the prescription below. Hidden entirely while
-    /// there isn't enough HRV/RHR history for a trustworthy baseline.
-    private func readinessCard(_ readiness: DailyReadiness) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("TODAY'S READINESS")
-                    .font(.system(.caption, design: .rounded, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .kerning(1.2)
-                Spacer()
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(readinessColor(readiness.level))
-                        .frame(width: 8, height: 8)
-                    Text(readinessLabel(readiness.level))
-                        .font(.system(.caption2, design: .rounded, weight: .bold))
-                        .kerning(0.8)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(readinessColor(readiness.level).opacity(0.15), in: Capsule())
-                .foregroundStyle(readinessColor(readiness.level))
-            }
-
-            Text(readiness.sentence)
-                .font(.system(.body, design: .rounded, weight: .medium))
-                .foregroundStyle(.primary)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        // The traffic-light state tints the material itself — legible at a
-        // glance without adding another colored view on top.
-        .glassEffect(.regular.tint(readinessColor(readiness.level).opacity(0.10)),
-                     in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Today's readiness: \(readinessLabel(readiness.level)). \(readiness.sentence)")
-    }
-
-    private func readinessLabel(_ level: ReadinessLevel) -> String {
-        switch level {
-        case .green: return "READY"
-        case .yellow: return "EASE OFF"
-        case .red: return "REST"
-        }
-    }
-
-    private func readinessColor(_ level: ReadinessLevel) -> Color {
-        switch level {
-        case .green: return .green
-        case .yellow: return .yellow
-        case .red: return .red
-        }
-    }
-
-    // MARK: - Hero card (today's target)
+    // MARK: - Hero (today's target)
 
     private var heroCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // Header row: label on the left, tone pill on the right — no
-            // overlap, balanced visual weight, easier to scan.
-            HStack(alignment: .center) {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("TODAY'S TARGET")
                         .font(.system(.caption, design: .rounded, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .kerning(1.2)
-                    if let goalLine {
-                        Text(goalLine)
+                        .kerning(1.1)
+                        .foregroundStyle(.white.opacity(0.85))
+                    if let goal = profileStore.profile?.goal {
+                        Text("Toward \(goal.displayName)")
                             .font(.system(.caption2, design: .rounded, weight: .medium))
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(.white.opacity(0.7))
                     }
                 }
                 Spacer(minLength: 8)
@@ -421,187 +135,376 @@ struct TodayView: View {
                     Text(tone.displayName.uppercased())
                         .font(.system(.caption2, design: .rounded, weight: .bold))
                         .kerning(0.8)
+                        .foregroundStyle(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(toneColor(tone).opacity(0.15), in: Capsule())
-                        .foregroundStyle(toneColor(tone))
+                        .glassEffect(.regular.tint(.white.opacity(0.12)), in: Capsule())
                 }
             }
 
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(todayVM.target?.formattedDistance.replacingOccurrences(of: " km", with: "") ?? "—")
-                    .font(.system(size: 88, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text(todayVM.target.map { "\($0.displayedDistanceKm)" } ?? "—")
+                    .font(.system(size: 76, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white)
                     .contentTransition(.numericText())
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                 Text("km")
-                    .font(.system(.title, design: .rounded, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .font(.system(.title2, design: .rounded, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.8))
             }
 
+            // The trailing inset keeps the copy clear of the track.
             Text(todayVM.voiceLine)
                 .font(.system(.body, design: .rounded, weight: .medium))
-                .foregroundStyle(.primary)
-                .multilineTextAlignment(.leading)
+                .foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.trailing, 96)
+
+            if let planLine {
+                HStack(spacing: 7) {
+                    Circle()
+                        .fill(BrandPalette.trackLight)
+                        .frame(width: 7, height: 7)
+                        .shadow(color: BrandPalette.trackLight, radius: 4)
+                    Text(planLine)
+                        .font(.system(.footnote, design: .rounded, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.92))
+                }
+                .padding(.top, 4)
+                .padding(.trailing, 96)
+            }
         }
-        .padding(22)
+        .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
-        // Brand-tinted glass marks this as the screen's one hero surface.
-        .glassEffect(.regular.tint(Color.accentColor.opacity(0.12)),
-                     in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .background(alignment: .bottomTrailing) {
+            ZStack(alignment: .bottomTrailing) {
+                BrandPalette.cardGradient
+                TrackBend(radius: 0.75, width: 0.27)
+                    .frame(width: 150, height: 150)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .shadow(color: BrandPalette.deepBlue.opacity(0.25), radius: 16, x: 0, y: 8)
+        .accessibilityElement(children: .combine)
     }
 
-    /// "Toward Half Marathon" — only when a profile goal is set. The home
-    /// screen now reflects the user's stated goal, not just a daily number.
-    private var goalLine: String? {
-        guard let goal = profileStore.profile?.goal else { return nil }
-        return "Toward \(goal.displayName)"
+    /// "Half Marathon plan · Tempo", or "Rest day in your plan". Nil when
+    /// no plan is active today.
+    private var planLine: String? {
+        guard let plan = planStore.activePlan, let workout = plan.todayWorkout() else { return nil }
+        if workout.kind == .rest { return "Rest day in your plan" }
+        return "\(plan.goal.displayName) plan · \(workout.kind.displayName)"
     }
 
-    private func toneColor(_ tone: Tone) -> Color {
-        switch tone {
-        case .neutral, .firm: return .accentColor
-        case .aggressive, .restart: return .red
-        case .recovery: return .orange
-        case .victory: return .green
-        case .shortfall: return .yellow
+    // MARK: - Recovery
+
+    @ViewBuilder
+    private var recoverySection: some View {
+        MetricSectionHeader(title: "Recovery")
+
+        VStack(spacing: 10) {
+            if let readiness = todayVM.readiness {
+                readinessCard(readiness)
+            }
+            HStack(alignment: .top, spacing: 10) {
+                MetricCard(
+                    title: "HRV",
+                    systemImage: "heart.fill",
+                    tint: .pink,
+                    value: todayVM.yesterdayHRV.map { "\(Int($0.rounded()))" } ?? "—",
+                    unit: "ms",
+                    note: "Yesterday",
+                    layout: .compact
+                ) {
+                    if todayVM.hrvTrend.count > 1 {
+                        Sparkline(points: todayVM.hrvTrend, tint: .pink)
+                            .frame(height: 30)
+                    }
+                }
+                MetricCard(
+                    title: "Resting HR",
+                    systemImage: "heart.fill",
+                    tint: .pink,
+                    value: todayVM.latestRestingHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
+                    unit: "bpm",
+                    note: todayVM.yesterdayAvgHeartRate.map { "Avg yesterday \(Int($0.rounded())) bpm" },
+                    layout: .compact
+                ) {
+                    if todayVM.restingHRTrend.count > 1 {
+                        Sparkline(points: todayVM.restingHRTrend, tint: .pink)
+                            .frame(height: 30)
+                    }
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
 
-    // MARK: - Today's run card
+    /// Green / yellow / red verdict on today's recovery. Hidden entirely
+    /// while there isn't enough HRV/RHR history for a trustworthy baseline.
+    private func readinessCard(_ readiness: DailyReadiness) -> some View {
+        MetricCard(
+            title: "Readiness",
+            systemImage: readinessSymbol(readiness.level),
+            tint: readinessTint(readiness.level),
+            detail: readiness.computedAt.formatted(date: .omitted, time: .shortened),
+            value: readinessLabel(readiness.level),
+            note: readiness.sentence
+        ) {
+            HStack(spacing: 6) {
+                ForEach([ReadinessLevel.green, .yellow, .red], id: \.self) { level in
+                    Circle()
+                        .fill(level == readiness.level ? readinessDot(level) : Color(.tertiarySystemFill))
+                        .frame(width: 12, height: 12)
+                }
+            }
+            .padding(.bottom, 4)
+            .accessibilityHidden(true)
+        }
+    }
+
+    private func readinessLabel(_ level: ReadinessLevel) -> String {
+        switch level {
+        case .green: return "Ready"
+        case .yellow: return "Ease off"
+        case .red: return "Rest"
+        }
+    }
+
+    private func readinessSymbol(_ level: ReadinessLevel) -> String {
+        switch level {
+        case .green: return "checkmark.circle.fill"
+        case .yellow: return "exclamationmark.circle.fill"
+        case .red: return "moon.zzz.fill"
+        }
+    }
+
+    /// Text tint for the card header. Yellow text is unreadable on a light
+    /// card, so the yellow day reads in orange; the dot stays yellow.
+    private func readinessTint(_ level: ReadinessLevel) -> Color {
+        switch level {
+        case .green: return .green
+        case .yellow: return .orange
+        case .red: return .red
+        }
+    }
+
+    private func readinessDot(_ level: ReadinessLevel) -> Color {
+        switch level {
+        case .green: return .green
+        case .yellow: return .yellow
+        case .red: return .red
+        }
+    }
+
+    // MARK: - Running
+
+    @ViewBuilder
+    private var runningSection: some View {
+        MetricSectionHeader(title: "Running")
+
+        VStack(spacing: 10) {
+            if let run = todayVM.todayRun {
+                NavigationLink {
+                    RunDetailView(run: run)
+                } label: {
+                    todayRunCard(run)
+                }
+                .buttonStyle(.plain)
+            }
+
+            MetricCard(
+                title: "Last 7 days",
+                systemImage: "figure.run",
+                tint: BrandPalette.track,
+                detail: streakLabel,
+                value: String(format: "%.1f", todayVM.weekTotalKm),
+                unit: "km"
+            ) {
+                DailyDistanceBars(days: todayVM.weekDistances)
+                    .frame(width: 150, height: 64)
+            }
+
+            HStack(alignment: .top, spacing: 10) {
+                NavigationLink(value: TodayDestination.vo2Max) {
+                    MetricCard(
+                        title: "VO₂ max",
+                        systemImage: "lungs.fill",
+                        tint: .accentColor,
+                        showsChevron: true,
+                        value: todayVM.currentVO2Max.map { String(format: "%.1f", $0) } ?? "—",
+                        layout: .compact
+                    ) {
+                        if todayVM.vo2Trend.count > 1 {
+                            Sparkline(points: todayVM.vo2Trend, tint: .accentColor)
+                                .frame(height: 30)
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+
+                MetricCard(
+                    title: "Last run",
+                    systemImage: "calendar",
+                    tint: .accentColor,
+                    value: lastRunValue,
+                    note: todayVM.yesterday.map { String(format: "%.1f km", $0.distanceKm) },
+                    layout: .compact
+                )
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// "5-day streak", or nil before the first day of a streak.
+    private var streakLabel: String? {
+        let streak = todayVM.currentStreak
+        guard streak > 0 else { return nil }
+        return "\(streak)-day streak"
+    }
+
+    /// How long ago the most recent run before today was: "Yesterday",
+    /// "3 days ago".
+    private var lastRunValue: String {
+        guard let run = todayVM.yesterday else { return "—" }
+        let cal = Calendar.current
+        let days = cal.dateComponents(
+            [.day],
+            from: cal.startOfDay(for: run.startDate),
+            to: cal.startOfDay(for: Date())
+        ).day ?? 0
+        switch days {
+        case ..<1: return "Today"
+        case 1: return "Yesterday"
+        default: return "\(days) days ago"
+        }
+    }
+
+    // MARK: - Today's run
 
     private func todayRunCard(_ run: RunRecord) -> some View {
         // Compare against the displayed (rounded-up) target, not the precise
-        // engine value, so the "TARGET HIT" badge matches what the user saw.
+        // engine value, so the "Target hit" badge matches what the user saw.
         let askedKm = Double(todayVM.target?.displayedDistanceKm ?? 0)
         let actualKm = run.distanceKm
         let hit = askedKm > 0 && actualKm >= askedKm * 0.95
         let label: String
         let color: Color
         if hit {
-            label = "TARGET HIT"; color = .green
+            label = "Target hit"; color = .green
         } else if askedKm == 0 {
-            label = "LOGGED"; color = .accentColor
+            label = "Logged"; color = .accentColor
         } else {
-            label = "SHORT BY \(String(format: "%.1f km", askedKm - actualKm))"
+            label = "Short by \(String(format: "%.1f km", askedKm - actualKm))"
             color = .orange
         }
 
-        return VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("YOU RAN TODAY")
-                    .font(.system(.caption, design: .rounded, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .kerning(1.2)
-                Spacer()
+        var stats = "\(run.formattedDuration) · \(run.formattedPace)"
+        if let hr = run.averageHeartRate {
+            stats += " · \(Int(hr.rounded())) bpm"
+        }
+
+        return VStack(alignment: .leading, spacing: 12) {
+            MetricCard(
+                title: "Today's run",
+                systemImage: "figure.run",
+                tint: BrandPalette.track,
+                detail: run.startDate.formatted(date: .omitted, time: .shortened),
+                showsChevron: true,
+                value: String(format: "%.2f", actualKm),
+                unit: "km",
+                note: stats
+            ) {
                 Text(label)
-                    .font(.system(.caption2, design: .rounded, weight: .bold))
-                    .kerning(0.8)
+                    .font(.system(.caption, design: .rounded, weight: .bold))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(color.opacity(0.15), in: Capsule())
                     .foregroundStyle(color)
+                    .padding(.bottom, 2)
             }
 
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(String(format: "%.2f", actualKm))
-                    .font(.system(size: 44, weight: .bold, design: .rounded))
-                Text("km")
-                    .font(.system(.title3, design: .rounded, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-
-            HStack(spacing: 24) {
-                runStat(label: "TIME", value: run.formattedDuration)
-                runStat(label: "PACE", value: run.formattedPace)
-                if let hr = run.averageHeartRate {
-                    runStat(label: "AVG HR", value: "\(Int(hr.rounded())) bpm")
-                }
-            }
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-    }
-
-    private func runStat(label: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.system(.caption2, design: .rounded, weight: .semibold))
-                .kerning(0.8)
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.system(.headline, design: .rounded, weight: .semibold))
-        }
-    }
-
-    // MARK: - Supporting stat grid
-
-    private var supportingGrid: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 12) {
-                statCard(
-                    label: "YESTERDAY",
-                    value: todayVM.yesterday.map { String(format: "%.1f km", $0.distanceKm) } ?? "—",
-                    icon: "calendar"
-                )
-                NavigationLink(value: TodayDestination.vo2Max) {
-                    statCard(
-                        label: "VO₂ MAX",
-                        value: todayVM.currentVO2Max.map { String(format: "%.1f", $0) } ?? "—",
-                        icon: "lungs.fill",
-                        showsChevron: true,
-                        interactive: true
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-            HStack(spacing: 12) {
-                statCard(
-                    label: "STREAK",
-                    value: todayVM.currentStreak == 0 ? "0" : "\(todayVM.currentStreak) day\(todayVM.currentStreak == 1 ? "" : "s")",
-                    icon: "flame.fill"
-                )
-                statCard(
-                    label: "DAYS SKIPPED",
-                    value: todayVM.target.map { "\($0.daysSinceLastRun)" } ?? "—",
-                    icon: "exclamationmark.triangle.fill"
-                )
+            if !todayVM.todayRouteCoordinates.isEmpty {
+                RouteMapPreview(coordinates: todayVM.todayRouteCoordinates)
+                    .frame(height: 150)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             }
         }
     }
+}
 
-    /// `interactive` opts the glass into touch response (scale/shimmer on
-    /// press) — only the tappable VO₂ MAX card wants that.
-    private func statCard(label: String,
-                          value: String,
-                          icon: String,
-                          showsChevron: Bool = false,
-                          interactive: Bool = false) -> some View {
-        let glass: Glass = interactive ? .regular.interactive() : .regular
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(label)
-                    .font(.system(.caption2, design: .rounded, weight: .semibold))
-                    .kerning(0.8)
-                    .foregroundStyle(.secondary)
-                Spacer(minLength: 0)
-                if showsChevron {
-                    Image(systemName: "chevron.right")
-                        .font(.system(.caption2, weight: .semibold))
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            Text(value)
-                .font(.system(.title2, design: .rounded, weight: .semibold))
-                .foregroundStyle(.primary)
+// MARK: - Route preview
+
+/// Static map of a route, fitted to the line. Not interactive: it sits
+/// inside a card that is itself a link to the run's detail.
+private struct RouteMapPreview: View {
+    let coordinates: [CLLocationCoordinate2D]
+
+    var body: some View {
+        Map(initialPosition: .region(region), interactionModes: []) {
+            MapPolyline(coordinates: coordinates)
+                .stroke(
+                    BrandPalette.track,
+                    style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+                )
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect(glass, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .mapStyle(.standard(pointsOfInterest: .excludingAll))
+        .accessibilityHidden(true)
+    }
+
+    private var region: MKCoordinateRegion {
+        var minLat = coordinates[0].latitude, maxLat = coordinates[0].latitude
+        var minLng = coordinates[0].longitude, maxLng = coordinates[0].longitude
+        for c in coordinates {
+            minLat = min(minLat, c.latitude); maxLat = max(maxLat, c.latitude)
+            minLng = min(minLng, c.longitude); maxLng = max(maxLng, c.longitude)
+        }
+        return MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: (minLat + maxLat) / 2,
+                                           longitude: (minLng + maxLng) / 2),
+            span: MKCoordinateSpan(latitudeDelta: max((maxLat - minLat) * 1.5, 0.005),
+                                   longitudeDelta: max((maxLng - minLng) * 1.5, 0.005))
+        )
+    }
+}
+
+// MARK: - Avatar
+
+/// The profile photo in a circle, or the runner's initials on the track's
+/// orange when there's no photo.
+private struct ProfileAvatar: View {
+    let photo: UIImage?
+    let name: String?
+
+    var body: some View {
+        Group {
+            if let photo {
+                Image(uiImage: photo)
+                    .resizable()
+                    .scaledToFill()
+            } else if let initials {
+                Text(initials)
+                    .font(.system(.footnote, design: .rounded, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(BrandPalette.trackFill)
+            } else {
+                Image(systemName: "person.crop.circle.fill")
+                    .resizable()
+                    .foregroundStyle(Color.accentColor)
+            }
+        }
+        .frame(width: 32, height: 32)
+        .clipShape(Circle())
+    }
+
+    private var initials: String? {
+        let letters = (name ?? "")
+            .split(separator: " ")
+            .prefix(2)
+            .compactMap(\.first)
+        return letters.isEmpty ? nil : String(letters).uppercased()
     }
 }
 
@@ -609,38 +512,32 @@ private enum TodayDestination: Hashable {
     case vo2Max
 }
 
-private struct RouteCoordinateSnapshot: Equatable {
-    let latitude: Double
-    let longitude: Double
-
-    init(_ coordinate: CLLocationCoordinate2D) {
-        latitude = coordinate.latitude
-        longitude = coordinate.longitude
-    }
-}
-
 #if DEBUG
 #Preview("Today (populated)") {
     NavigationStack { TodayView() }
         .environment(TodayViewModel.preview())
         .environment(PreviewProfileStore.populated)
+        .environment(TrainingPlanStore.shared)
 }
 
 #Preview("Today (ran today)") {
     NavigationStack { TodayView() }
         .environment(TodayViewModel.preview(todayRun: .sample, streak: 5))
         .environment(PreviewProfileStore.populated)
+        .environment(TrainingPlanStore.shared)
 }
 
 #Preview("Today (rest day)") {
     NavigationStack { TodayView() }
         .environment(TodayViewModel.preview(readiness: .sampleRed))
         .environment(PreviewProfileStore.populated)
+        .environment(TrainingPlanStore.shared)
 }
 
 #Preview("Today (empty)") {
     NavigationStack { TodayView() }
         .environment(TodayViewModel())
         .environment(PreviewProfileStore.empty)
+        .environment(TrainingPlanStore.shared)
 }
 #endif

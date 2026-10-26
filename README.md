@@ -95,7 +95,7 @@ The `PushTargetEngineTests` suite covers the worked example from PRD §7.3 plus 
 - **`PushTargetEngine`** is pure Swift, no HealthKit imports — fully testable. Inputs: 90 days of runs, 90 days of VO₂ max, 14 days of resting HR. Output: distance, tone, reasoning.
 - **`HealthKitService`** lives on `@MainActor` and exposes async methods. All reads are `HKSampleQuery` / `HKStatisticsQuery`. Background updates via `HKObserverQuery` + `enableBackgroundDelivery`. Reads the user's age from the `dateOfBirth` characteristic.
 - **`NotificationScheduler`** uses `UNUserNotificationCenter` with calendar triggers. Three pushes max per day per PRD §9.1.
-- **`TodayView`** shows today's target, an inline "you ran today" card (when applicable), and a supporting stat grid. Tap the VO₂ MAX card for a 12-month chart.
+- **`TodayView`** is laid out like the Health app's Summary: today's target on a blue hero card, then Recovery and Running sections of Health-style cards with mini charts. Tap the VO₂ max card for a 12-month chart; the avatar opens Profile. The training plan has its own tab.
 - **iOS app + Watch app + Widget** share state via the `group.com.paceoff.app` App Group's `UserDefaults`. The widget reads the cached `RunTarget` JSON written by the iPhone app on each refresh.
 - **Watch workout** uses `HKWorkoutSession` + `HKLiveWorkoutBuilder` with a running configuration. Running dynamics (power, stride, vertical oscillation, ground contact) are surfaced live.
 
@@ -117,7 +117,7 @@ Delete the app and you lose nothing — your runs and VO₂ max stay in Health.
 - **Voice copy:** `PaceOffShared/VoiceCopy.swift`
 - **Algorithm tuning:** constants at the top of `PaceOffShared/PushTargetEngine.swift`
 - **Notification times:** defaults in `PaceOffShared/AppGroup.swift`, overridable in Settings
-- **Visual design:** `PaceOff/Views/TodayView.swift` (the hero card)
+- **Visual design:** brand colours and the drawn running track in `PaceOff/Views/Design/`; the Today hero card in `PaceOff/Views/TodayView.swift`
 - **VO₂ max explainer copy:** `PaceOff/Views/VO2MaxDetailView.swift`
 - **App icon:** replace `1024.png` in the three `AppIcon.appiconset` folders (iPhone, widget, watch) with an opaque 1024×1024 PNG
 
