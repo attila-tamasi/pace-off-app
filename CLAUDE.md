@@ -30,7 +30,7 @@ Four targets defined in `project.yml`:
 
 All targets read/write shared state through the `group.com.paceoff.app` App Group. Keys and the container URL live in `PaceOffShared/AppGroup.swift`. JSON files in the container: `training-plan.json` (active plan), `health-cache.json` (Health snapshot), `profile-photo.jpg`.
 
-`scripts/` holds one-shot AppKit icon renderers (`swift scripts/render_app_icon.swift`, macOS only) — not part of any build.
+`scripts/app-icon/` holds the app icon's source: `make_icon_svgs.py` writes the light, dark and tinted SVGs (pure geometry — SF Symbols' licence rules them out of app icons), and `render.sh` renders them into the iOS, widget and watch asset catalogs. Not part of any build.
 
 ## Design rules
 - iOS 26 **Liquid Glass** design language: prefer native materials (`.glassEffect`, `.background`, system backgrounds); never fake glass with manual blur/opacity hacks
