@@ -1,85 +1,62 @@
 // BrandHero.swift
-// Reusable hero composition: animated gradient backdrop with two drifting
-// blurred orbs, an SF Symbol with a soft pulse, and headline + subtitle.
-// Used by AuthGateView and each onboarding slide so they share visual DNA.
+// Full-screen brand composition for the auth gate: the splash's backdrop
+// (hero gradient + the icon's running track), the brand mark, the
+// wordmark, a headline and subtitle, and a bottom-pinned footer slot.
+// Sharing the splash's backdrop makes launch → sign-in one continuous
+// picture.
 
 import SwiftUI
 
 struct BrandHero<Footer: View>: View {
 
-    /// SF Symbol name. The auth gate uses "figure.run".
-    /// NOTE: replace with a custom illustration asset when artwork is ready —
-    /// just swap the `Image(systemName:)` below for `Image("brand-hero")`.
-    let symbol: String
     let headline: String
     let subtitle: String
-    /// Symbol size in points. Defaults to the auth-gate hero size.
-    let symbolSize: CGFloat
-    /// Whether the gradient backdrop is drawn. Onboarding slides set this
-    /// to false so they can use the plain system background.
-    let showsBackdrop: Bool
-    /// Bottom-pinned content (CTA buttons, legal links, page dots, etc.).
+    /// Bottom-pinned content (CTA buttons, legal links, etc.).
     let footer: () -> Footer
 
     @State private var sloganOpacity: Double = 0
     @State private var sloganOffset: CGFloat = 16
     @State private var footerOpacity: Double = 0
     @State private var footerOffset: CGFloat = 24
-    @State private var orbDrift: CGFloat = 0
 
     init(
-        symbol: String,
         headline: String,
         subtitle: String,
-        symbolSize: CGFloat = 140,
-        showsBackdrop: Bool = true,
         @ViewBuilder footer: @escaping () -> Footer
     ) {
-        self.symbol = symbol
         self.headline = headline
         self.subtitle = subtitle
-        self.symbolSize = symbolSize
-        self.showsBackdrop = showsBackdrop
         self.footer = footer
     }
 
     var body: some View {
         ZStack {
-            if showsBackdrop {
-                backdrop
-                    .ignoresSafeArea()
-            }
+            BrandBackdrop()
 
-            VStack(spacing: 28) {
-                Spacer(minLength: 24)
+            VStack(spacing: 0) {
+                VStack(spacing: 20) {
+                    BrandMark(size: 104)
+                        .shadow(color: BrandPalette.navy.opacity(0.45), radius: 18, y: 10)
 
-                // Replace this Image with `Image("brand-hero-illustration")`
-                // when a custom asset is available.
-                Image(systemName: symbol)
-                    .font(.system(size: symbolSize, weight: .semibold))
-                    .foregroundStyle(showsBackdrop ? .white : .accentColor)
-                    .symbolEffect(.pulse, options: .repeating)
-                    .brandSoftGlow(color: showsBackdrop ? .white : .accentColor,
-                                   radius: showsBackdrop ? 30 : 18)
-                    .accessibilityHidden(true)
+                    Text("Pace Off")
+                        .font(.system(size: 40, weight: .heavy, design: .rounded))
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 2)
 
-                VStack(spacing: 12) {
-                    if showsBackdrop {
-                        Text(headline).brandSlogan()
-                        Text(subtitle).brandSubtitle()
-                    } else {
+                    VStack(spacing: 8) {
                         Text(headline)
-                            .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                            .font(.system(.title2, design: .rounded, weight: .bold))
+                            .foregroundStyle(.white)
                             .multilineTextAlignment(.center)
-                        Text(subtitle)
-                            .font(.system(.body, design: .rounded))
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
+                        Text(subtitle).brandSubtitle()
                     }
+                    .padding(.horizontal, 28)
+                    .opacity(sloganOpacity)
+                    .offset(y: sloganOffset)
                 }
-                .padding(.horizontal, 28)
-                .opacity(sloganOpacity)
-                .offset(y: sloganOffset)
+                // Same top offset as the splash, so the mark doesn't move
+                // when the splash hands over.
+                .padding(.top, 64)
 
                 Spacer(minLength: 16)
 
@@ -91,25 +68,6 @@ struct BrandHero<Footer: View>: View {
             }
         }
         .onAppear { runEntryAnimations() }
-    }
-
-    // MARK: - Backdrop
-
-    private var backdrop: some View {
-        ZStack {
-            BrandPalette.heroGradient
-
-            BrandPalette.driftingOrb(color: .white.opacity(0.22), size: 360)
-                .offset(x: -120 + orbDrift, y: -220 - orbDrift * 0.5)
-
-            BrandPalette.driftingOrb(color: .yellow.opacity(0.18), size: 300)
-                .offset(x: 130 - orbDrift, y: 240 + orbDrift * 0.4)
-        }
-        .onAppear {
-            withAnimation(.easeInOut(duration: 14).repeatForever(autoreverses: true)) {
-                orbDrift = 60
-            }
-        }
     }
 
     private func runEntryAnimations() {
@@ -124,42 +82,11 @@ struct BrandHero<Footer: View>: View {
     }
 }
 
-// Convenience initialiser for slides that don't need a footer.
-extension BrandHero where Footer == EmptyView {
-    init(
-        symbol: String,
-        headline: String,
-        subtitle: String,
-        symbolSize: CGFloat = 140,
-        showsBackdrop: Bool = true
-    ) {
-        self.init(
-            symbol: symbol,
-            headline: headline,
-            subtitle: subtitle,
-            symbolSize: symbolSize,
-            showsBackdrop: showsBackdrop,
-            footer: { EmptyView() }
-        )
-    }
-}
-
-#Preview("Hero — backdrop") {
+#Preview("Hero") {
     BrandHero(
-        symbol: "figure.run",
         headline: "Show up. Run anyway.",
         subtitle: "A no-excuses running coach in your pocket."
     ) {
         Text("Footer slot").foregroundStyle(.white)
     }
-}
-
-#Preview("Hero — plain") {
-    BrandHero(
-        symbol: "heart.text.square.fill",
-        headline: "Read your run data.",
-        subtitle: "VO₂ max, runs, HR, HRV — straight from Apple Health.",
-        symbolSize: 96,
-        showsBackdrop: false
-    )
 }

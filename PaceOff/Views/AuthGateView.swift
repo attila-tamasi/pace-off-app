@@ -1,7 +1,7 @@
 // AuthGateView.swift
 // Hard auth gate. Sign in with Apple is the only way forward — there is no
 // skip path. Legal links are pinned at the bottom; the rest of the screen is
-// the brand hero shared with the onboarding slides.
+// the brand hero, on the same backdrop as the splash.
 
 import SwiftUI
 import AuthenticationServices
@@ -16,7 +16,6 @@ struct AuthGateView: View {
 
     var body: some View {
         BrandHero(
-            symbol: "figure.run",
             headline: "Show up. Run anyway.",
             subtitle: "A no-excuses running coach in your pocket."
         ) {

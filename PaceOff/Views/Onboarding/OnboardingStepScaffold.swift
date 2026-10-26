@@ -198,7 +198,7 @@ struct OnboardingStepScaffold<Content: View>: View {
             )
             BrandPalette.driftingOrb(color: Color.accentColor.opacity(0.22), size: 260)
                 .offset(x: -140, y: -220)
-            BrandPalette.driftingOrb(color: Color.orange.opacity(0.14), size: 220)
+            BrandPalette.driftingOrb(color: BrandPalette.track.opacity(0.14), size: 220)
                 .offset(x: 150, y: -140)
         }
         .ignoresSafeArea()

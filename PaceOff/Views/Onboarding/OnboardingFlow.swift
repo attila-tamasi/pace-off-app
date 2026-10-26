@@ -184,11 +184,8 @@ private struct WelcomeStep: View {
             onBack: nil
         ) {
             VStack(spacing: 24) {
-                Image(systemName: "figure.run")
-                    .font(.system(size: 96, weight: .semibold))
-                    .foregroundStyle(Color.accentColor)
-                    .symbolEffect(.pulse, options: .repeating)
-                    .brandSoftGlow(color: .accentColor, radius: 20)
+                BrandMark(size: 96)
+                    .shadow(color: BrandPalette.deepBlue.opacity(0.3), radius: 16, y: 8)
                     .padding(.top, 8)
                 highlightsCard
             }

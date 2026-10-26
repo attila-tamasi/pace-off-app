@@ -38,7 +38,7 @@ The app icon is one opaque 1024×1024 PNG, the same file in the iOS, widget and 
 - Support Dark Mode from day one; respect safe areas
 - Minimal UI: one screen = one job. Don't stuff dashboards with stats.
 - Accessibility: VoiceOver labels on interactive elements, sensible Dynamic Type behavior
-- Brand colors/gradients are centralized in `PaceOff/Views/Design/` (`BrandPalette`, `BrandHero`, `AnimatedBlobsBackground`) — reuse them, don't hardcode hex values in views
+- Brand colors/gradients are centralized in `PaceOff/Views/Design/`: `BrandPalette` (the icon's blues and track oranges, `BrandMark`), `TrackBend` (the icon's running track, drawn, plus the full-screen `BrandBackdrop`) and `BrandHero`. Reuse them, don't hardcode hex values in views
 
 ## Architecture
 - `PaceOffApp` owns the launch-flow state machine (`.splash → .auth → .onboarding → .main`, gated by `@AppStorage` flags in App Group defaults) and injects all services via `.environment(...)`
