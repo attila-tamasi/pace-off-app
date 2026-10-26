@@ -119,7 +119,7 @@ Delete the app and you lose nothing — your runs and VO₂ max stay in Health.
 - **Notification times:** defaults in `PaceOffShared/AppGroup.swift`, overridable in Settings
 - **Visual design:** `PaceOff/Views/TodayView.swift` (the hero card)
 - **VO₂ max explainer copy:** `PaceOff/Views/VO2MaxDetailView.swift`
-- **App icon:** edit `scripts/app-icon/make_icon_svgs.py`, run it, then `scripts/app-icon/render.sh` (needs `rsvg-convert` from `brew install librsvg`)
+- **App icon:** replace `1024.png` in the three `AppIcon.appiconset` folders (iPhone, widget, watch) with an opaque 1024×1024 PNG
 
 ---
 
