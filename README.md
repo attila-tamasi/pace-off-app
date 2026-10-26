@@ -119,13 +119,12 @@ Delete the app and you lose nothing — your runs and VO₂ max stay in Health.
 - **Notification times:** defaults in `PaceOffShared/AppGroup.swift`, overridable in Settings
 - **Visual design:** `PaceOff/Views/TodayView.swift` (the hero card)
 - **VO₂ max explainer copy:** `PaceOff/Views/VO2MaxDetailView.swift`
-- **App icon:** drop a 1024×1024 PNG into `PaceOff/Assets.xcassets/AppIcon.appiconset/` and reference it from `Contents.json`
+- **App icon:** replace `1024.png` in the three `AppIcon.appiconset` folders (iPhone, widget, watch) with an opaque 1024×1024 PNG
 
 ---
 
 ## Known gaps (intentional for MVP)
 
-- App Icon is empty — drop a PNG in to ship.
 - WatchConnectivity bridge for "Start Run from iPhone" is not wired. The Start Run button was intentionally removed from `TodayView` in this milestone — start the run on the Watch.
 - Live Activity for in-progress run is not yet implemented.
 - The widget shows status colors (green/amber/red) based on time-of-day only; it doesn't currently know if a run is "in progress" — that requires the WatchConnectivity bridge above.
