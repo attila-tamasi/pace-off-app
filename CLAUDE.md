@@ -7,7 +7,7 @@ iOS + watchOS running app. Reads runs, VO₂ max, HR from Apple Health, computes
 
 No accounts (Sign in with Apple is optional). No servers. Privacy label: *Data Not Collected*.
 
-Companion docs: `SPEC.md` (shipped features + V2 proposals), `README.md` (build/run walkthrough), `Pace Off - PRD.docx` (full product spec — the PRD § references in code comments point here).
+Companion docs: `ROADMAP.md` (the prioritised backlog: what to build next), `LOOP.md` (how Claude works through the roadmap on its own), `SPEC.md` (shipped features + V2 proposals), `README.md` (build/run walkthrough), `Pace Off - PRD.docx` (full product spec — the PRD § references in code comments point here).
 
 ## Tech stack
 - SwiftUI, Swift 6, iOS 26 / watchOS 26 minimum
@@ -74,6 +74,8 @@ xcodebuild build -scheme PaceOff -destination 'generic/platform=iOS Simulator'
 
 Regenerate the project after editing `project.yml`: `xcodegen generate` (the generated `.xcodeproj` is committed).
 
+**Cloud sessions have no Xcode, XcodeGen or Swift toolchain.** GitHub Actions CI (`.github/workflows/ci.yml`: build + `PaceOffTests` on a macOS runner) is the compiler there, so re-read a diff for build errors before pushing; `LOOP.md` § 4 has the checklist. Add a new Swift file to the project with `python3 scripts/pbxproj.py add <path> <target>…`, which makes the same edits XcodeGen would.
+
 Do not run `xcodebuild test` in ad-hoc automation — it hangs on host device discovery in some environments. Run tests from Xcode (the `PaceOff` scheme's test action runs `PaceOffTests`). Test files compile `PaceOffShared` sources directly, so engine tests need no simulator-hosted app state.
 
 ## Scope discipline
@@ -81,7 +83,16 @@ The training-plan feature is **in scope** and shipping — a VDOT-based generato
 
 Anything that would require **CloudKit, a server, a paywall, Android, or a chat surface** is out of scope for the current milestone. `SPEC.md` lists proposals that fall in these categories under a **V2+ / needs decision** section — they are ideas, not commitments. Ask before starting one.
 
-## Current priorities (2026-07)
+## Autonomous development
+`ROADMAP.md` is the single queue of work, in priority order; `LOOP.md` is the procedure that takes its top item to a merged PR without the owner present. When running the loop:
+- One roadmap item per PR, titled `[roadmap <ID>] …`, with the item's status updated in `ROADMAP.md` in the same PR.
+- Never start an item with status `decision` or `blocked`; anything needing the owner's call becomes `blocked: <question>` rather than a guess.
+- Only `Merge: auto` items are merged by the loop, and only with green CI and a clean self-review. `Merge: review` items wait for the owner.
+- UI changes can't be seen from the cloud: list them in the roadmap's **Visual check queue**.
+- A direct request from the owner always wins over the roadmap.
+
+## Current priorities (2026-10)
+- Work the roadmap top-down: Wave 1 fixes (wrong advice, unsafe load, stale data) before Wave 2 quality, before Wave 3 features.
 - **iPhone-first**: onboarding, home, run detail, training plan, profile.
 - **watchOS app is deprioritized** for the current wave. The `PaceOff Watch App` target still builds and ships, but don't spend cycles polishing it, adding features, or reworking the workout session code unless the user explicitly asks. Bugfixes to keep it building are fine.
 - Widget stays in scope but only as a "renders the cached target" surface — the WatchConnectivity-dependent in-progress-run state is on hold with the Watch work.
