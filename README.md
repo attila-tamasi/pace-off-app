@@ -37,6 +37,9 @@ Pace Off/
 ├── PaceOffTests/
 │   └── PushTargetEngineTests.swift  ← full coverage of PRD §7.3 worked example
 ├── Pace Off - PRD.docx              ← full product spec
+├── ROADMAP.md                       ← prioritised backlog
+├── LOOP.md                          ← how Claude works the roadmap on its own
+├── scripts/pbxproj.py               ← adds Swift files to the project without XcodeGen
 ├── README.md
 └── .gitignore
 ```
@@ -120,6 +123,12 @@ Delete the app and you lose nothing — your runs and VO₂ max stay in Health.
 - **Visual design:** brand colours and the drawn running track in `PaceOff/Views/Design/`; the Today hero card in `PaceOff/Views/TodayView.swift`
 - **VO₂ max explainer copy:** `PaceOff/Views/VO2MaxDetailView.swift`
 - **App icon:** replace `1024.png` in the three `AppIcon.appiconset` folders (iPhone, widget, watch) with an opaque 1024×1024 PNG
+
+---
+
+## Roadmap and the autonomous loop
+
+`ROADMAP.md` lists what's next, in priority order, each item with its acceptance criteria. `LOOP.md` is the procedure Claude follows to take the top item to a merged PR on its own, typically from a scheduled Claude Code task with the prompt "Run one iteration of LOOP.md in this repository". Steer it by editing `ROADMAP.md`: reorder items, add new ones, or mark one `decision` to keep the loop away from it.
 
 ---
 
