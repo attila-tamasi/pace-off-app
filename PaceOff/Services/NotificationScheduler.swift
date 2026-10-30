@@ -27,12 +27,13 @@ public final class NotificationScheduler {
         }
     }
 
-    /// Schedules today's pushes and drops any earlier ones. Which pushes go
-    /// out, when and with what text is `DailyPushPlanner`'s call; this only
-    /// turns its answer into one-shot requests for today's date, so a day's
-    /// text never repeats on the next. The foreground refresh and the
-    /// background task call this several times a day, so the pushes always
-    /// reflect the latest Health sync.
+    /// Schedules today's pushes, plus tomorrow's morning fallback, and drops
+    /// any earlier ones. Which pushes go out, when and with what text is
+    /// `DailyPushPlanner`'s call; this only turns its answer into one-shot
+    /// requests for their exact date, so a day's text never repeats on the
+    /// next. The foreground refresh and the background task call this
+    /// several times a day, so the pushes always reflect the latest Health
+    /// sync.
     ///
     /// `overrideBody` lets the caller substitute an AI-rewritten line for the
     /// canned VoiceCopy text. Nothing is scheduled until onboarding is

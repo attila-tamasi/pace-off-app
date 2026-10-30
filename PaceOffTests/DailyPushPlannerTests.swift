@@ -1,7 +1,8 @@
 // DailyPushPlannerTests.swift
 // Covers the daily push rules: one-shot times on today's date, passed slots
 // left out, the evening "last call" only in a week with a skipped day,
-// planned rest days not counting as skips, and the plan-aware bodies.
+// planned rest days not counting as skips, a done day sending nothing more,
+// the plan-aware bodies, and the next-morning push.
 
 import XCTest
 @testable import PaceOff
@@ -27,6 +28,9 @@ final class DailyPushPlannerTests: XCTestCase {
         )
     }
 
+    private let easy = Workout(kind: .easy, distanceMeters: 8_000, paceMinSecPerKm: 330, paceMaxSecPerKm: 350)
+    private let rest = Workout(kind: .rest, distanceMeters: 0, paceMinSecPerKm: 0, paceMaxSecPerKm: 0)
+
     /// One week from Monday 2026-01-05: Mon rest, Tue easy, Wed easy,
     /// Thu rest, Fri easy, Sat easy, Sun long.
     private func plan() -> TrainingPlan {
@@ -35,7 +39,7 @@ final class DailyPushPlannerTests: XCTestCase {
             TrainingDay(
                 weekday: weekday,
                 workout: kind == .rest
-                    ? Workout(kind: .rest, distanceMeters: 0, paceMinSecPerKm: 0, paceMaxSecPerKm: 0)
+                    ? rest
                     : Workout(kind: kind, distanceMeters: 8_000, paceMinSecPerKm: 330, paceMaxSecPerKm: 350)
             )
         }
@@ -50,11 +54,12 @@ final class DailyPushPlannerTests: XCTestCase {
         )
     }
 
-    private func pushes(now: Date,
-                        runs: [RunRecord],
-                        plan: TrainingPlan? = nil,
-                        planStatus: PlanDayStatus? = nil,
-                        schedule: DailyPushPlanner.Schedule = .standard) -> [DailyPush] {
+    /// Everything the planner returns, the next-morning push included.
+    private func allPushes(now: Date,
+                           runs: [RunRecord],
+                           plan: TrainingPlan? = nil,
+                           planStatus: PlanDayStatus? = nil,
+                           schedule: DailyPushPlanner.Schedule = .standard) -> [DailyPush] {
         planner.pushes(for: DailyPushPlanner.Inputs(
             now: now,
             body: "Run 8 km.",
@@ -63,6 +68,16 @@ final class DailyPushPlannerTests: XCTestCase {
             planStatus: planStatus,
             schedule: schedule
         ))
+    }
+
+    /// Today's pushes only.
+    private func pushes(now: Date,
+                        runs: [RunRecord],
+                        plan: TrainingPlan? = nil,
+                        planStatus: PlanDayStatus? = nil,
+                        schedule: DailyPushPlanner.Schedule = .standard) -> [DailyPush] {
+        allPushes(now: now, runs: runs, plan: plan, planStatus: planStatus, schedule: schedule)
+            .filter { $0.slot != .nextMorning }
     }
 
     // MARK: - Times
@@ -84,17 +99,19 @@ final class DailyPushPlannerTests: XCTestCase {
         XCTAssertEqual(result.map(\.slot), [.evening])
     }
 
-    func test_afterTheEveningSlot_nothingIsScheduled() {
-        XCTAssertTrue(pushes(now: date(day: 7, hour: 22), runs: [run(day: 5)]).isEmpty)
+    func test_afterTheEveningSlot_onlyTheNextMorningRemains() {
+        let result = allPushes(now: date(day: 7, hour: 22), runs: [run(day: 5)])
+        XCTAssertEqual(result.map(\.slot), [.nextMorning])
     }
 
     func test_customHours_areUsed() {
         let schedule = DailyPushPlanner.Schedule(morningHour: 7, afternoonHour: 16, eveningHour: 20)
-        let result = pushes(now: date(day: 7, hour: 6), runs: [run(day: 5)], schedule: schedule)
+        let result = allPushes(now: date(day: 7, hour: 6), runs: [run(day: 5)], schedule: schedule)
         XCTAssertEqual(result.map(\.fireDate), [
             date(day: 7, hour: 7),
             date(day: 7, hour: 16, minute: 30),
             date(day: 7, hour: 20),
+            date(day: 8, hour: 7),
         ])
     }
 
@@ -113,7 +130,7 @@ final class DailyPushPlannerTests: XCTestCase {
 
     func test_noLastCall_onMonday_evenAfterSkippingLastWeek() {
         // Last run the previous Wednesday; the new week has no skipped day yet.
-        let lastWeek = run(day: 5).startDate.addingTimeInterval(-5 * 86_400)
+        let lastWeek = date(day: 5, hour: 7).addingTimeInterval(-5 * 86_400)
         let result = pushes(
             now: date(day: 5, hour: 6),
             runs: [RunRecord(startDate: lastWeek, endDate: lastWeek.addingTimeInterval(1_800),
@@ -132,45 +149,74 @@ final class DailyPushPlannerTests: XCTestCase {
         XCTAssertEqual(withoutPlan, 1)
     }
 
-    // MARK: - Already ran, or the plan says stop
+    // MARK: - A done day sends nothing more
 
-    func test_ranToday_dropsReminderAndLastCall() {
+    func test_ranToday_withoutAPlan_sendsNothingMoreToday() {
         // Skipped Tuesday, ran Wednesday at 07:00; it's now 07:45.
         let result = pushes(now: date(day: 7, hour: 7, minute: 45), runs: [run(day: 5), run(day: 7)])
-        XCTAssertEqual(result.map(\.slot), [.morning])
+        XCTAssertTrue(result.isEmpty)
+    }
+
+    func test_planWorkoutDone_sendsNothingMoreToday() {
+        let done = PlanDayStatus(workout: easy, isCompleted: true)
+        let result = pushes(now: date(day: 7, hour: 6), runs: [run(day: 5)], plan: plan(), planStatus: done)
+        XCTAssertTrue(result.isEmpty)
+    }
+
+    func test_shortRun_doesNotTickOffThePlanWorkout() {
+        // A 2 km shakeout at 07:00 on a day the plan asks for 8 km.
+        let pending = PlanDayStatus(workout: easy, isCompleted: false)
+        let result = pushes(now: date(day: 7, hour: 7, minute: 45),
+                            runs: [run(day: 5), run(day: 7, km: 2)],
+                            plan: plan(), planStatus: pending)
+        XCTAssertEqual(result.map(\.slot), [.morning, .afternoon, .evening])
     }
 
     func test_planRestDay_onlyMorning_withRestNote() {
-        let rest = PlanDayStatus(
-            workout: Workout(kind: .rest, distanceMeters: 0, paceMinSecPerKm: 0, paceMaxSecPerKm: 0),
-            isCompleted: false
-        )
-        let result = pushes(now: date(day: 8, hour: 6), runs: [run(day: 5)], plan: plan(), planStatus: rest)
+        let restDay = PlanDayStatus(workout: rest, isCompleted: false)
+        let result = pushes(now: date(day: 8, hour: 6), runs: [run(day: 5)], plan: plan(), planStatus: restDay)
         XCTAssertEqual(result.map(\.slot), [.morning])
-        XCTAssertEqual(result.first?.body, "Rest day on your plan. Recovery is training too.")
-    }
-
-    func test_planWorkoutDone_onlyMorning() {
-        let workout = Workout(kind: .easy, distanceMeters: 8_000, paceMinSecPerKm: 330, paceMaxSecPerKm: 350)
-        let done = PlanDayStatus(workout: workout, isCompleted: true)
-        let result = pushes(now: date(day: 7, hour: 6), runs: [run(day: 5)], plan: plan(), planStatus: done)
-        XCTAssertEqual(result.map(\.slot), [.morning])
+        XCTAssertEqual(result.first?.body, DailyPushPlanner.restDayBody)
     }
 
     // MARK: - Bodies
 
     func test_bodies_leadWithThePlanWorkout() {
-        let workout = Workout(kind: .easy, distanceMeters: 8_000, paceMinSecPerKm: 330, paceMaxSecPerKm: 350)
-        let pending = PlanDayStatus(workout: workout, isCompleted: false)
+        let pending = PlanDayStatus(workout: easy, isCompleted: false)
         let result = pushes(now: date(day: 7, hour: 6), runs: [run(day: 5)], plan: plan(), planStatus: pending)
 
         // Monday is a planned rest day, Tuesday was skipped: all three go out.
-        let line = "Today's plan: \(workout.summary). Run 8 km."
+        let line = "Today's plan: \(easy.summary). Run 8 km."
         XCTAssertEqual(result.map(\.body), [line, "Reminder: \(line)", "Last call. \(line)"])
     }
 
     func test_bodies_withoutAPlan() {
         let result = pushes(now: date(day: 7, hour: 6), runs: [run(day: 5)])
         XCTAssertEqual(result.map(\.body), ["Run 8 km.", "Reminder: Run 8 km.", "Last call. Run 8 km."])
+    }
+
+    // MARK: - Next morning
+
+    func test_nextMorning_firesTomorrow_withoutRepeatingTodaysTarget() {
+        let next = allPushes(now: date(day: 7, hour: 22), runs: [run(day: 5)]).last
+        XCTAssertEqual(next?.slot, .nextMorning)
+        XCTAssertEqual(next?.fireDate, date(day: 8, hour: 8))
+        XCTAssertEqual(next?.body, DailyPushPlanner.newDayBody)
+    }
+
+    func test_nextMorning_namesTomorrowsPlanWorkout() {
+        // Thursday evening; Friday is an easy day in the plan.
+        let next = allPushes(now: date(day: 8, hour: 22), runs: [run(day: 5)], plan: plan()).last
+        XCTAssertEqual(next?.body, "Today's plan: \(easy.summary). Open Pace Off for your target.")
+
+        // Wednesday evening; Thursday is a planned rest day.
+        let beforeRest = allPushes(now: date(day: 7, hour: 22), runs: [run(day: 5)], plan: plan()).last
+        XCTAssertEqual(beforeRest?.body, DailyPushPlanner.restDayBody)
+    }
+
+    func test_nextMorning_isSentEvenWhenTodayIsDone() {
+        let done = PlanDayStatus(workout: easy, isCompleted: true)
+        let result = allPushes(now: date(day: 7, hour: 6), runs: [run(day: 5)], plan: plan(), planStatus: done)
+        XCTAssertEqual(result.map(\.slot), [.nextMorning])
     }
 }

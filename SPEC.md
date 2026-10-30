@@ -56,8 +56,8 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 
 ### 10. Notifications
 - `NotificationScheduler` uses `UNUserNotificationCenter`; up to three pushes / day per PRD §9.1. `DailyPushPlanner` (in `PaceOffShared`, unit-tested) decides which go out, when and with what text
-- Each push is a one-shot for today's date, scheduled only while its time is still ahead; the foreground refresh and the background task schedule each day afresh, so one day's text never repeats on the next
-- Afternoon reminder and evening "last call" are dropped once the runner has run today, on a planned rest day, and once the plan workout is done
+- Each push is a one-shot for today's date, scheduled only while its time is still ahead; the foreground refresh and the background task schedule each day afresh, so one day's text never repeats on the next. A next-morning push covers a night with no refresh: it names tomorrow's plan workout, or just says a new target is waiting, and the next refresh replaces it
+- Once today is done (the plan workout completed, or any run on a day without a plan workout), nothing more goes out today; a short run doesn't tick off a planned workout. On a planned rest day only the morning rest note goes out
 - Evening "last call" only fires when the user has skipped at least one day this week (Monday-based week; planned rest days aren't skips)
 - Nothing is scheduled before onboarding completes, and sign-out removes every pending and delivered push
 

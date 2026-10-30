@@ -6,7 +6,9 @@
 // The pushes describe one day: its target, its plan workout. They are
 // always scheduled for today's date only, and only for slots still ahead,
 // so text from one day can never repeat on the next. The foreground refresh
-// and the background task schedule each day afresh.
+// and the background task schedule each day afresh. In case neither runs
+// before tomorrow's morning slot, a next-morning push goes out too; it
+// names tomorrow's plan workout at most, never today's target.
 
 import Foundation
 
@@ -19,6 +21,9 @@ public struct DailyPush: Equatable, Sendable {
         case afternoon
         /// "Last call", only in a week that already has a skipped day.
         case evening
+        /// Tomorrow's morning slot, replaced by the real morning push as
+        /// soon as tomorrow's first refresh runs.
+        case nextMorning
     }
 
     public let slot: Slot
@@ -93,46 +98,74 @@ public struct DailyPushPlanner: Sendable {
         self.calendar = calendar
     }
 
-    /// Today's pushes, in firing order, leaving out slots that have passed.
+    /// Today's pushes, in firing order, leaving out slots that have passed,
+    /// then the next-morning push.
     public func pushes(for inputs: Inputs) -> [DailyPush] {
         let isPlanRestDay = inputs.planStatus?.isRestDay ?? false
-        let planDone = inputs.planStatus?.isCompleted ?? false
-        let ranToday = inputs.runs.contains { calendar.isDate($0.startDate, inSameDayAs: inputs.now) }
+        let planWorkout = isPlanRestDay ? nil : inputs.planStatus?.workout
+        // With a plan workout today, the day is done when that workout is;
+        // without one, any run counts. A short shakeout doesn't tick off a
+        // planned long run.
+        let doneToday = planWorkout != nil
+            ? (inputs.planStatus?.isCompleted ?? false)
+            : inputs.runs.contains(where: { calendar.isDate($0.startDate, inSameDayAs: inputs.now) })
 
         var body = inputs.body
-        if let workout = inputs.planStatus?.workout, !isPlanRestDay {
-            body = "Today's plan: \(workout.summary). \(body)"
+        if let planWorkout {
+            body = "Today's plan: \(planWorkout.summary). \(body)"
         }
 
         var pushes: [DailyPush] = []
 
-        pushes.append(DailyPush(
-            slot: .morning,
-            fireDate: time(inputs.schedule.morningHour, 0, on: inputs.now),
-            body: isPlanRestDay ? "Rest day on your plan. Recovery is training too." : body
-        ))
-
-        // Nothing to remind about once today's run, or the plan's workout,
-        // is in the books, or when the plan says rest.
-        let stillToRun = !ranToday && !planDone && !isPlanRestDay
-
-        if stillToRun {
+        if isPlanRestDay {
+            pushes.append(DailyPush(
+                slot: .morning,
+                fireDate: time(inputs.schedule.morningHour, 0, on: inputs.now),
+                body: Self.restDayBody
+            ))
+        } else if !doneToday {
+            pushes.append(DailyPush(
+                slot: .morning,
+                fireDate: time(inputs.schedule.morningHour, 0, on: inputs.now),
+                body: body
+            ))
             pushes.append(DailyPush(
                 slot: .afternoon,
                 fireDate: time(inputs.schedule.afternoonHour, Schedule.afternoonMinute, on: inputs.now),
                 body: "Reminder: \(body)"
             ))
+            if skippedDaysThisWeek(runs: inputs.runs, plan: inputs.plan, now: inputs.now) > 0 {
+                pushes.append(DailyPush(
+                    slot: .evening,
+                    fireDate: time(inputs.schedule.eveningHour, 0, on: inputs.now),
+                    body: "Last call. \(body)"
+                ))
+            }
         }
 
-        if stillToRun && skippedDaysThisWeek(runs: inputs.runs, plan: inputs.plan, now: inputs.now) > 0 {
+        pushes = pushes.filter { $0.fireDate > inputs.now }
+
+        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: inputs.now) {
             pushes.append(DailyPush(
-                slot: .evening,
-                fireDate: time(inputs.schedule.eveningHour, 0, on: inputs.now),
-                body: "Last call. \(body)"
+                slot: .nextMorning,
+                fireDate: time(inputs.schedule.morningHour, 0, on: tomorrow),
+                body: nextMorningBody(plan: inputs.plan, tomorrow: tomorrow)
             ))
         }
+        return pushes
+    }
 
-        return pushes.filter { $0.fireDate > inputs.now }
+    static let restDayBody = "Rest day on your plan. Recovery is training too."
+    static let newDayBody = "New day, new target. Open Pace Off to see yours."
+
+    /// Tomorrow's plan workout when there is one, else a nudge to open the
+    /// app. Today's target never carries over.
+    private func nextMorningBody(plan: TrainingPlan?, tomorrow: Date) -> String {
+        // Midday, so the plan's own calendar lands on the same day.
+        let midday = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: tomorrow) ?? tomorrow
+        guard let workout = plan?.todayWorkout(today: midday) else { return Self.newDayBody }
+        if workout.kind == .rest { return Self.restDayBody }
+        return "Today's plan: \(workout.summary). Open Pace Off for your target."
     }
 
     /// Days earlier this week (Monday-based, as the training plan's weeks)
