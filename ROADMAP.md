@@ -36,7 +36,7 @@ The items come from the full code review of 2026-10-18, re-checked against the s
 These tell the runner the wrong thing or prescribe too much load. They go before any new feature.
 
 ### R-01 · Notifications repeat one day's content
-- **Status:** todo
+- **Status:** done (PR #19)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** The three daily pushes use repeating calendar triggers, but their text is that day's target and workout. If the app isn't opened, the same text comes for days, and the pushes keep coming after sign-out. The evening "Last call" fires on every evening without a run today, not only after a skipped day.
 - **Where:** `PaceOff/Services/NotificationScheduler.swift` (`schedule(id:hour:minute:…)` builds `UNCalendarNotificationTrigger(…, repeats: true)`; the evening condition in `scheduleDailyPushes`); `ProfileStore.signOut()`.
@@ -352,6 +352,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-10-30 · R-01: daily pushes are one-shot for today only; last call only after a skipped day; sign-out clears them (PR #19)
 - 2026-10-26 · Redesign: icon colours in the app, Health-style Today, Plan tab, Profile behind the avatar, Dark Mode card fix (PR #17)
 - 2026-10-26 · New running-track app icon (PR #16)
 - 2026-10 · CI on GitHub Actions, plan-aware widget, readiness feeding the daily target, test-suite fixes (PRs #14, #15)

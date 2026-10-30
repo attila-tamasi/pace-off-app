@@ -128,6 +128,8 @@ public final class ProfileStore {
         Task { await HealthDataCache.shared.clear() }
         // And the active training plan.
         TrainingPlanStore.shared.clear()
+        // Pending pushes carry this user's targets; delivered ones too.
+        NotificationScheduler.shared.cancelAll()
         NotificationCenter.default.post(name: .paceOffSignOut, object: nil)
     }
 

@@ -169,6 +169,8 @@ public final class BackgroundRefreshService {
             target: target,
             yesterday: yesterday,
             currentStreak: streak,
+            runs: runs,
+            plan: TrainingPlanStore.shared.activePlan,
             planStatus: planStatus,
             overrideBody: notificationLine
         )

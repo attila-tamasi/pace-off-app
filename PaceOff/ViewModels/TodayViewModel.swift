@@ -106,7 +106,8 @@ public final class TodayViewModel {
         // refresh does, so foreground and background never disagree about
         // today's pushes. The in-memory plan is authoritative here; only
         // the background task re-reads disk.
-        let planStatus = TrainingPlanStore.shared.activePlan.map {
+        let plan = TrainingPlanStore.shared.activePlan
+        let planStatus = plan.map {
             TrainingPlanReconciler().todayStatus(plan: $0, runs: snapshot.runs)
         }
 
@@ -115,6 +116,8 @@ public final class TodayViewModel {
             target: target,
             yesterday: yesterday,
             currentStreak: currentStreak,
+            runs: snapshot.runs,
+            plan: plan,
             planStatus: planStatus,
             overrideBody: notificationBody
         )
