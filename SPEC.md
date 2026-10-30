@@ -55,8 +55,11 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 - Notification hour tuning (morning / afternoon / evening)
 
 ### 10. Notifications
-- `NotificationScheduler` uses `UNUserNotificationCenter` + calendar triggers; up to three pushes / day per PRD §9.1
-- Evening "last call" only fires when the user has skipped at least one day this week
+- `NotificationScheduler` uses `UNUserNotificationCenter`; up to three pushes / day per PRD §9.1. `DailyPushPlanner` (in `PaceOffShared`, unit-tested) decides which go out, when and with what text
+- Each push is a one-shot for today's date, scheduled only while its time is still ahead; the foreground refresh and the background task schedule each day afresh, so one day's text never repeats on the next
+- Afternoon reminder and evening "last call" are dropped once the runner has run today, on a planned rest day, and once the plan workout is done
+- Evening "last call" only fires when the user has skipped at least one day this week (Monday-based week; planned rest days aren't skips)
+- Nothing is scheduled before onboarding completes, and sign-out removes every pending and delivered push
 
 ### 11. Daily readiness traffic light
 - Green / Yellow / Red readiness card on Today — HRV (SDNN) + resting HR versus rolling personal baselines (30-day HRV, 14-day RHR), with one supporting sentence ("HRV below your baseline — easy day.")
