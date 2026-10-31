@@ -340,6 +340,11 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 - **Status:** decision
 - **Problem:** CloudKit, servers, paywalls and chat are out of scope for this milestone. The proposals live in `SPEC.md` § Proposals.
 
+### D-06 · Does a run yesterday count as a skip for the target?
+- **Status:** decision
+- **Problem:** `PushTargetEngine` reads `daysSinceLastRun` as skipped days. So a run yesterday (gap 1) gets the one-skip +5% and the firm tone, and two missed days (gap 3) already reset to a restart. The PRD § 7 rules table, its § 7.3 worked example (two skipped days: +12%, aggressive) and the § 8.2 copy library ("Streak day 1 (yesterday ran)" vs "1 day skipped") count skips as missed days. The voice line follows that reading since R-02.
+- **Options:** shift the engine by one (a run yesterday is no skip; +5% after one missed day, +12% after two, restart after three or more), which changes targets for every runner. Or keep the engine and make the PRD match it.
+
 ---
 
 ## Visual check queue

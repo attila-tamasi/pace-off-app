@@ -17,6 +17,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 
 ### 3. Today — daily push target
 - `TodayView` shows the day's prescribed run distance + tone (drill-sergeant / etc.), the reasoning behind it, and an "already ran" card when applicable, in Health-style cards with mini charts for HRV, resting HR, VO₂ max and the last seven days' distance
+- The voice line (`VoiceState` → `VoiceCopy`) names a skip only when a day was actually missed: a run yesterday gets a streak line, and a run today ends the pushing for the day. The engine's restart and recovery tones pick restart and rest copy, so the line never fights the tone badge. The streak counts through yesterday until today's run is in
 - Distance and tone come from `PushTargetEngine` — a pure Swift algorithm in `PaceOffShared` (PRD §7). Inputs: 90 days of runs, 90 days of VO₂ max, 14 days of resting HR. Output: `RunTarget` (distance, tone, reasoning).
 - Voice-line copy lives in `VoiceCopy.swift`; tone selection in `Tone.swift`
 - Result is written to App Group `UserDefaults` so the Watch app and widget render instantly
