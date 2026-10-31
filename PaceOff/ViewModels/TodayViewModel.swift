@@ -149,7 +149,7 @@ public final class TodayViewModel {
         self.yesterday = mostRecentRunBefore(today: now, in: runs)
         self.todayRun = mostRecentRunOn(day: now, in: runs)
         self.currentVO2Max = vo2.last?.value
-        self.currentStreak = computeStreak(runs)
+        self.currentStreak = RunStreak.current(runs: runs, today: now)
         self.userAge = snapshot.userAge ?? HealthKitService.shared.userAge()
         self.yesterdayHRV = snapshot.yesterdayHRV
         self.yesterdayAvgHeartRate = snapshot.yesterdayAvgHeartRate
@@ -210,19 +210,6 @@ public final class TodayViewModel {
         return runs
             .filter { cal.isDate($0.startDate, inSameDayAs: day) }
             .max(by: { $0.distanceMeters < $1.distanceMeters })
-    }
-
-    private func computeStreak(_ runs: [RunRecord]) -> Int {
-        let cal = Calendar.current
-        let dates = Set(runs.map { cal.startOfDay(for: $0.startDate) })
-        var streak = 0
-        var cursor = cal.startOfDay(for: Date())
-        while dates.contains(cursor) {
-            streak += 1
-            guard let prev = cal.date(byAdding: .day, value: -1, to: cursor) else { break }
-            cursor = prev
-        }
-        return streak
     }
 
     #if DEBUG

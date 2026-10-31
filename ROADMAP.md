@@ -47,7 +47,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - The slot decision (which pushes, at which times, with which text) is a pure function in `PaceOffShared` with unit tests.
 
 ### R-02 · "You skipped yesterday" to runners who ran
-- **Status:** todo
+- **Status:** done (PR #20)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** The voice line treats "ran yesterday" as a skip, so a daily runner gets "You skipped yesterday" every morning. It also ignores recovery and red days: next to a RECOVERY badge it says the run is mandatory. On day 7 of a streak it says "Day 8".
 - **Where:** `PaceOffShared/VoiceCopy.swift` (`todayCard`, the `switch target.daysSinceLastRun`); compare with how `PushTargetEngine` counts `daysSinceLastRun`.
@@ -340,18 +340,25 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 - **Status:** decision
 - **Problem:** CloudKit, servers, paywalls and chat are out of scope for this milestone. The proposals live in `SPEC.md` § Proposals.
 
+### D-06 · Does a run yesterday count as a skip for the target?
+- **Status:** decision
+- **Problem:** `PushTargetEngine` reads `daysSinceLastRun` as skipped days. So a run yesterday (gap 1) gets the one-skip +5% and the firm tone, and two missed days (gap 3) already reset to a restart. The PRD § 7 rules table, its § 7.3 worked example (two skipped days: +12%, aggressive) and the § 8.2 copy library ("Streak day 1 (yesterday ran)" vs "1 day skipped") count skips as missed days. The voice line follows that reading since R-02.
+- **Options:** shift the engine by one (a run yesterday is no skip; +5% after one missed day, +12% after two, restart after three or more), which changes targets for every runner. Or keep the engine and make the PRD match it.
+
 ---
 
 ## Visual check queue
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #20: Today's "N-day streak" label now shows before today's run, and the hero card's voice line follows the new states (streak, recovery, ran today)
 - [ ] PR #17: splash → sign-in hand-off, Health-style Today (with and without data), Plan tab (with and without a plan), Profile sheet from the avatar, Trends
 
 ## Done
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-10-31 · R-02: a run yesterday is never a skip; rest copy on recovery days; streak day number fixed via RunStreak (PR #20)
 - 2026-10-30 · R-01: daily pushes are one-shot for today only; last call only after a skipped day; sign-out clears them (PR #19)
 - 2026-10-26 · Redesign: icon colours in the app, Health-style Today, Plan tab, Profile behind the avatar, Dark Mode card fix (PR #17)
 - 2026-10-26 · New running-track app icon (PR #16)
