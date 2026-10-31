@@ -47,7 +47,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - The slot decision (which pushes, at which times, with which text) is a pure function in `PaceOffShared` with unit tests.
 
 ### R-02 · "You skipped yesterday" to runners who ran
-- **Status:** todo
+- **Status:** done (PR #20)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** The voice line treats "ran yesterday" as a skip, so a daily runner gets "You skipped yesterday" every morning. It also ignores recovery and red days: next to a RECOVERY badge it says the run is mandatory. On day 7 of a streak it says "Day 8".
 - **Where:** `PaceOffShared/VoiceCopy.swift` (`todayCard`, the `switch target.daysSinceLastRun`); compare with how `PushTargetEngine` counts `daysSinceLastRun`.
@@ -351,12 +351,14 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #20: Today's "N-day streak" label now shows before today's run, and the hero card's voice line follows the new states (streak, recovery, ran today)
 - [ ] PR #17: splash → sign-in hand-off, Health-style Today (with and without data), Plan tab (with and without a plan), Profile sheet from the avatar, Trends
 
 ## Done
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-10-31 · R-02: a run yesterday is never a skip; rest copy on recovery days; streak day number fixed via RunStreak (PR #20)
 - 2026-10-30 · R-01: daily pushes are one-shot for today only; last call only after a skipped day; sign-out clears them (PR #19)
 - 2026-10-26 · Redesign: icon colours in the app, Health-style Today, Plan tab, Profile behind the avatar, Dark Mode card fix (PR #17)
 - 2026-10-26 · New running-track app icon (PR #16)
