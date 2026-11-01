@@ -24,7 +24,7 @@ Four targets defined in `project.yml`:
 - `PaceOff` — iPhone app (sources: `PaceOff/`)
 - `PaceOff Watch App` — watchOS companion (sources: `PaceOffWatch Watch App/` — note the folder name differs from the target name)
 - `PaceOffWidget` — Lock Screen / Home Screen widget (reads the cached `RunTarget` JSON from App Group `UserDefaults`)
-- `PaceOffTests` — XCTest suite (`PushTargetEngineTests`, `TrainingPlanGeneratorTests`, `TrainingPlanReconcilerTests`, `GoalPredictionServiceTests`, `HealthDataCacheTests`, `ReadinessEngineTests`, `DailyPushPlannerTests`); unit tests are cheap and expected
+- `PaceOffTests` — XCTest suite (`PushTargetEngineTests`, `TrainingPlanGeneratorTests`, `TrainingPlanReconcilerTests`, `GoalPredictionServiceTests`, `HealthDataCacheTests`, `ReadinessEngineTests`, `DailyPushPlannerTests`, `VoiceCopyTests`); unit tests are cheap and expected
 
 `PaceOffShared/` is **not a target** — it's a source folder compiled directly into every target above. Keep it free of UIKit, and free of HealthKit where avoidable, so it stays testable.
 
@@ -53,7 +53,7 @@ The app icon is one opaque 1024×1024 PNG, the same file in the iOS, widget and 
   - `BackgroundRefreshService` — `BGAppRefreshTask` (`com.paceoff.app.refresh`); registered in `PaceOffApp.init()` because iOS rejects registration after launch finishes. Each run re-syncs Health, recomputes the target, reconciles/retunes the training plan (`TrainingPlanReconciler`), and reschedules plan-aware notifications.
   - `AppleSignInService`, `AppleIntelligenceCopy` (voice-line rewriter, nil-fallback to canned `VoiceCopy`)
   - `TodayViewModel` — state container for the Today screen
-- Pure algorithms live in `PaceOffShared` — `Sendable`, no I/O, unit-tested: `PushTargetEngine` (daily target, PRD §7), `TrainingPlanGenerator` + `VDOTCalculator` (both in `TrainingPlanGenerator.swift`; Daniels' formula closed-form, no lookup tables), `GoalPredictionService`, `ReadinessEngine` (daily green/yellow/red traffic light; its verdict feeds `PushTargetEngine` — red caps the day at 0.6× baseline, yellow holds baseline), `TrainingPlanReconciler` (today's plan-workout status + VDOT-drift pace retune for the background sync), `DailyPushPlanner` (which of the day's pushes go out, when, with what text)
+- Pure algorithms live in `PaceOffShared` — `Sendable`, no I/O, unit-tested: `PushTargetEngine` (daily target, PRD §7), `TrainingPlanGenerator` + `VDOTCalculator` (both in `TrainingPlanGenerator.swift`; Daniels' formula closed-form, no lookup tables), `GoalPredictionService`, `ReadinessEngine` (daily green/yellow/red traffic light; its verdict feeds `PushTargetEngine` — red caps the day at 0.6× baseline, yellow holds baseline), `TrainingPlanReconciler` (today's plan-workout status + VDOT-drift pace retune for the background sync), `DailyPushPlanner` (which of the day's pushes go out, when, with what text), `VoiceState` (which voice line a day gets; `VoiceCopy` holds the lines) and `RunStreak` (consecutive running days, alive until the day is over)
 - `HealthDataCache` (also `PaceOffShared`) is an **actor** that snapshots Health reads to `health-cache.json` so views render instantly on cold launch while a fresh sync runs
 - HealthKit access is confined to `HealthKitService` (`@MainActor`) on iOS and `WorkoutSessionManager` on watchOS. Nothing else imports `HealthKit`.
 - Watch app: `WorkoutSessionManager` drives `HKWorkoutSession` + `HKLiveWorkoutBuilder` with live running dynamics

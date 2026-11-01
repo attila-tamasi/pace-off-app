@@ -43,7 +43,7 @@ public struct PushTargetEngine: Sendable {
     private static let redReadinessCapFactor = 0.6
 
     // VO2Max slope thresholds (ml/kg/min per WEEK)
-    private static let vo2MaxDecliningSlope = -0.05
+    static let vo2MaxDecliningSlope = -0.05
     private static let vo2MaxPlateauAbsSlope = 0.10
 
     public init() {}

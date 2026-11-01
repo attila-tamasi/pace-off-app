@@ -77,7 +77,17 @@ public final class TodayViewModel {
         // applySnapshot always produces a non-nil target; this guard keeps the
         // compiler happy without changing the public type.
         guard let target else { return }
-        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak)
+
+        // Plan-aware voice and scheduling — the same reconciliation the
+        // background refresh does, so foreground and background never
+        // disagree about today. The in-memory plan is authoritative here;
+        // only the background task re-reads disk.
+        let plan = TrainingPlanStore.shared.activePlan
+        let planStatus = plan.map {
+            TrainingPlanReconciler().todayStatus(plan: $0, runs: snapshot.runs)
+        }
+
+        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak, planStatus: planStatus)
         let cannedCard = voice.todayCard(for: state)
         let cannedNotif = voice.notification(for: state)
         self.voiceLine = cannedCard
@@ -101,15 +111,6 @@ public final class TodayViewModel {
             AppGroup.sharedDefaults?.set(data, forKey: AppGroup.Keys.lastTodayTarget)
         }
         AppGroup.sharedDefaults?.set(self.voiceLine, forKey: AppGroup.Keys.lastTodayVoiceLine)
-
-        // Plan-aware scheduling — the same reconciliation the background
-        // refresh does, so foreground and background never disagree about
-        // today's pushes. The in-memory plan is authoritative here; only
-        // the background task re-reads disk.
-        let plan = TrainingPlanStore.shared.activePlan
-        let planStatus = plan.map {
-            TrainingPlanReconciler().todayStatus(plan: $0, runs: snapshot.runs)
-        }
 
         // Schedule today's notifications using the (possibly AI-rewritten) body.
         NotificationScheduler.shared.scheduleDailyPushes(
@@ -149,7 +150,7 @@ public final class TodayViewModel {
         self.yesterday = mostRecentRunBefore(today: now, in: runs)
         self.todayRun = mostRecentRunOn(day: now, in: runs)
         self.currentVO2Max = vo2.last?.value
-        self.currentStreak = computeStreak(runs)
+        self.currentStreak = RunStreak.current(runs: runs, today: now)
         self.userAge = snapshot.userAge ?? HealthKitService.shared.userAge()
         self.yesterdayHRV = snapshot.yesterdayHRV
         self.yesterdayAvgHeartRate = snapshot.yesterdayAvgHeartRate
@@ -210,19 +211,6 @@ public final class TodayViewModel {
         return runs
             .filter { cal.isDate($0.startDate, inSameDayAs: day) }
             .max(by: { $0.distanceMeters < $1.distanceMeters })
-    }
-
-    private func computeStreak(_ runs: [RunRecord]) -> Int {
-        let cal = Calendar.current
-        let dates = Set(runs.map { cal.startOfDay(for: $0.startDate) })
-        var streak = 0
-        var cursor = cal.startOfDay(for: Date())
-        while dates.contains(cursor) {
-            streak += 1
-            guard let prev = cal.date(byAdding: .day, value: -1, to: cursor) else { break }
-            cursor = prev
-        }
-        return streak
     }
 
     #if DEBUG
