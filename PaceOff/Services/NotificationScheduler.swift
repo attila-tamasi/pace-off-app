@@ -52,7 +52,7 @@ public final class NotificationScheduler {
         let defaults = AppGroup.sharedDefaults
         guard defaults?.bool(forKey: AppGroup.Keys.onboardingComplete) == true else { return }
 
-        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak)
+        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak, planStatus: planStatus)
         let times = DailyPushPlanner.Schedule(
             morningHour: defaults?.integer(forKey: AppGroup.Keys.notificationMorningHour) ?? 0,
             afternoonHour: defaults?.integer(forKey: AppGroup.Keys.notificationAfternoonHour) ?? 0,

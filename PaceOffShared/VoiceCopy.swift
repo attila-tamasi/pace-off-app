@@ -14,6 +14,7 @@ public enum VoiceState: Sendable, Equatable {
     case vo2MaxDeclining(deltaPerMonth: Double, todayKm: Double)
     case recovery(todayKm: Double)
     case ranToday(streakDays: Int)
+    case planStillToDo
     case runCompletedHitTarget(tomorrowKm: Double)
     case runCompletedShortfall(actualKm: Double, targetKm: Double)
     case fatigueGuard
@@ -25,15 +26,26 @@ public enum VoiceState: Sendable, Equatable {
     ///
     /// `currentStreak` is `RunStreak.current`: it includes today once
     /// today has a run, and runs through yesterday until then.
-    public init(target: RunTarget, yesterday: RunRecord?, currentStreak: Int) {
+    ///
+    /// `planStatus` is today's plan status, if a plan is active. A run today
+    /// that falls short of the plan's workout doesn't close the day.
+    public init(target: RunTarget,
+                yesterday: RunRecord?,
+                currentStreak: Int,
+                planStatus: PlanDayStatus? = nil) {
         // Use the *displayed* (rounded-up) target so every voice line and
         // notification matches the integer the user sees on the hero card.
         let displayedKm = Double(target.displayedDistanceKm)
         let gap = target.daysSinceLastRun
 
-        // Today's run is in: nothing left to push for.
+        // Today's run is in: nothing left to push for, unless it fell short
+        // of the plan's workout.
         if gap == 0 {
-            self = .ranToday(streakDays: currentStreak)
+            if let planStatus, planStatus.workout != nil, !planStatus.isRestDay, !planStatus.isCompleted {
+                self = .planStillToDo
+            } else {
+                self = .ranToday(streakDays: currentStreak)
+            }
             return
         }
         // The engine's tone decides the restart and recovery days; the copy
@@ -52,7 +64,7 @@ public enum VoiceState: Sendable, Equatable {
         }
         switch gap {
         case 1:
-            if let slope = target.vo2MaxSlope, slope < -0.05 {
+            if let slope = target.vo2MaxSlope, slope < PushTargetEngine.vo2MaxDecliningSlope {
                 // VO2Max declining wins over a neutral streak line.
                 self = .vo2MaxDeclining(deltaPerMonth: abs(slope) * 4.0, todayKm: displayedKm)
             } else if currentStreak >= 7 {
@@ -98,6 +110,8 @@ public struct VoiceCopy: Sendable {
             return "Recovery day. Easy \(format(today)) km, nothing more."
         case .ranToday:
             return "Run logged. Recover and go again tomorrow."
+        case .planStillToDo:
+            return "Run logged. The plan's workout is still on."
         case .runCompletedHitTarget:
             return "Done."
         case .runCompletedShortfall:
@@ -130,6 +144,8 @@ public struct VoiceCopy: Sendable {
             return days >= 2
                 ? "Run logged. \(days) days straight. Recover and go again tomorrow."
                 : "Run logged. Recover and go again tomorrow."
+        case .planStillToDo:
+            return "Run logged, but today's plan workout is still to do."
         case .runCompletedHitTarget(let tomorrow):
             return "Done. Tomorrow: \(format(tomorrow)) km."
         case .runCompletedShortfall(let actual, let target):

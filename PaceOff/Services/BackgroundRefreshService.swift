@@ -118,14 +118,16 @@ public final class BackgroundRefreshService {
         let runs = snapshot.runs
         let vo2 = snapshot.vo2Max
         let rhr = snapshot.restingHR
+        // One clock reading, so a refresh across midnight can't mix two days.
+        let now = Date()
 
         // Same readiness → target pipeline the foreground refresh uses.
         let readiness = ReadinessEngine().compute(
-            ReadinessEngine.Inputs(today: Date(), hrv: snapshot.hrv, restingHeartRate: rhr)
+            ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr)
         )
 
         let inputs = PushTargetEngine.Inputs(
-            today: Date(),
+            today: now,
             runs: runs,
             vo2Max: vo2,
             restingHeartRate: rhr,
@@ -133,11 +135,16 @@ public final class BackgroundRefreshService {
         )
         let target = PushTargetEngine().compute(inputs)
 
-        let yesterday = mostRecentRunBefore(today: Date(), in: runs)
-        let todayRun = mostRecentRunOn(day: Date(), in: runs)
-        let streak = RunStreak.current(runs: runs, today: Date())
+        let yesterday = mostRecentRunBefore(today: now, in: runs)
+        let todayRun = mostRecentRunOn(day: now, in: runs)
+        let streak = RunStreak.current(runs: runs, today: now)
 
-        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: streak)
+        // Training plan: reconcile today's workout and retune stale paces
+        // against the data we just pulled. The voice line needs today's
+        // status too.
+        let planStatus = reconcileTrainingPlan(runs: runs, vo2Max: vo2)
+
+        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: streak, planStatus: planStatus)
         let voice = VoiceCopy()
         var voiceLine = voice.todayCard(for: state)
         var notificationLine = voice.notification(for: state)
@@ -158,10 +165,6 @@ public final class BackgroundRefreshService {
         }
         AppGroup.sharedDefaults?.set(voiceLine, forKey: AppGroup.Keys.lastTodayVoiceLine)
         AppGroup.sharedDefaults?.set(todayRun != nil, forKey: AppGroup.Keys.runCompletedToday)
-
-        // Training plan: reconcile today's workout and retune stale paces
-        // against the data we just pulled.
-        let planStatus = reconcileTrainingPlan(runs: runs, vo2Max: vo2)
 
         // Reschedule today's notifications with the freshly enriched body so
         // the user gets the updated copy on the next push.

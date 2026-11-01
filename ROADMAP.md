@@ -128,7 +128,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 - **Done when:**
   - The app reloads timelines after writing the target or plan status.
   - The widget timeline has an entry at the next midnight.
-  - A target computed on an earlier day renders as "Open Pace Off" with a neutral dot, not as today's.
+  - A target computed on an earlier day renders as "Open Pace Off" with a neutral dot, not as today's, and its voice line ("Run logged. Recover and go again tomorrow.") isn't shown the next day.
 
 ---
 

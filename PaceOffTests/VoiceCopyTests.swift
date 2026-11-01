@@ -128,6 +128,24 @@ final class VoiceCopyTests: XCTestCase {
         XCTAssertEqual(voice.todayCard(for: state), "Run logged. Recover and go again tomorrow.")
     }
 
+    func test_shortRunOnAPlanDay_keepsThePlanOpen() {
+        // A 3 km shakeout on a day the plan asks for 16 km.
+        let long = Workout(kind: .long, distanceMeters: 16_000, paceMinSecPerKm: 340, paceMaxSecPerKm: 370)
+        let pending = PlanDayStatus(workout: long, isCompleted: false)
+        let state = VoiceState(target: target(gap: 0), yesterday: nil, currentStreak: 1, planStatus: pending)
+        XCTAssertEqual(state, .planStillToDo)
+        XCTAssertFalse(voice.notification(for: state).lowercased().contains("recover"))
+
+        // Once the workout is done, or on a rest day, the day is closed.
+        let done = PlanDayStatus(workout: long, isCompleted: true)
+        XCTAssertEqual(VoiceState(target: target(gap: 0), yesterday: nil, currentStreak: 1, planStatus: done),
+                       .ranToday(streakDays: 1))
+        let rest = PlanDayStatus(workout: Workout(kind: .rest, distanceMeters: 0, paceMinSecPerKm: 0, paceMaxSecPerKm: 0),
+                                 isCompleted: false)
+        XCTAssertEqual(VoiceState(target: target(gap: 0), yesterday: nil, currentStreak: 1, planStatus: rest),
+                       .ranToday(streakDays: 1))
+    }
+
     // MARK: - PRD §8.1 word limits
 
     func test_everyLine_keepsToTheWordLimits() {
@@ -142,6 +160,7 @@ final class VoiceCopyTests: XCTestCase {
             .recovery(todayKm: 3),
             .ranToday(streakDays: 1),
             .ranToday(streakDays: 14),
+            .planStillToDo,
             .runCompletedHitTarget(tomorrowKm: 6),
             .runCompletedShortfall(actualKm: 4.5, targetKm: 6),
             .fatigueGuard,

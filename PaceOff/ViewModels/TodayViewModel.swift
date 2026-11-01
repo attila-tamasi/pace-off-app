@@ -77,7 +77,17 @@ public final class TodayViewModel {
         // applySnapshot always produces a non-nil target; this guard keeps the
         // compiler happy without changing the public type.
         guard let target else { return }
-        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak)
+
+        // Plan-aware voice and scheduling — the same reconciliation the
+        // background refresh does, so foreground and background never
+        // disagree about today. The in-memory plan is authoritative here;
+        // only the background task re-reads disk.
+        let plan = TrainingPlanStore.shared.activePlan
+        let planStatus = plan.map {
+            TrainingPlanReconciler().todayStatus(plan: $0, runs: snapshot.runs)
+        }
+
+        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak, planStatus: planStatus)
         let cannedCard = voice.todayCard(for: state)
         let cannedNotif = voice.notification(for: state)
         self.voiceLine = cannedCard
@@ -101,15 +111,6 @@ public final class TodayViewModel {
             AppGroup.sharedDefaults?.set(data, forKey: AppGroup.Keys.lastTodayTarget)
         }
         AppGroup.sharedDefaults?.set(self.voiceLine, forKey: AppGroup.Keys.lastTodayVoiceLine)
-
-        // Plan-aware scheduling — the same reconciliation the background
-        // refresh does, so foreground and background never disagree about
-        // today's pushes. The in-memory plan is authoritative here; only
-        // the background task re-reads disk.
-        let plan = TrainingPlanStore.shared.activePlan
-        let planStatus = plan.map {
-            TrainingPlanReconciler().todayStatus(plan: $0, runs: snapshot.runs)
-        }
 
         // Schedule today's notifications using the (possibly AI-rewritten) body.
         NotificationScheduler.shared.scheduleDailyPushes(
