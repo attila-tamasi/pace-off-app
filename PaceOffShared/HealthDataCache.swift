@@ -4,7 +4,9 @@
 // We hit HealthKit on every cold launch and every Today refresh. The data
 // changes slowly (overnight HRV, daily VO₂ max, occasional runs), so we
 // snapshot the latest successful read to disk and let views render that
-// instantly, then kick off a fresh sync in the background.
+// instantly, then kick off a fresh sync in the background. A read that was
+// locked out, failed or came back empty never replaces a good snapshot
+// (`HealthSyncDecision`).
 //
 // Storage:
 // - JSON blob in the App Group container (not UserDefaults — a 90-day run
@@ -98,6 +100,74 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
     public func isStale(maxAge: TimeInterval, now: Date = Date()) -> Bool {
         now.timeIntervalSince(lastSyncedAt) > maxAge
     }
+
+    /// True when the snapshot holds at least one Health reading. Age is left
+    /// out: it's a characteristic, not a reading, so a sync that brought
+    /// back only an age brought back nothing to train on.
+    public var hasReadings: Bool {
+        !(runs.isEmpty && vo2Max.isEmpty && restingHR.isEmpty && hrv.isEmpty
+            && yesterdayHRV == nil && yesterdayAvgHeartRate == nil
+            && latestRestingHeartRate == nil)
+    }
+}
+
+// MARK: - Accept or keep
+
+/// Whether a fresh Health read may replace the cached snapshot.
+///
+/// At night on a locked phone Health's store is encrypted: every read fails
+/// or comes back empty. Saving that over a good cache turns the next target
+/// into a restart day and lets the plan retune against nothing, so a read
+/// only replaces the cache when it can be trusted.
+public enum HealthSyncDecision: Equatable, Sendable {
+    /// The fresh read replaces the cache, and the sync may act on it.
+    case accept
+    /// The fresh read is dropped and the cache kept as it was.
+    case keepCache(KeepReason)
+
+    public enum KeepReason: String, Equatable, Sendable {
+        /// The phone was locked, so Health couldn't be read.
+        case protectedDataUnavailable
+        /// At least one read failed.
+        case readFailed
+        /// The read came back with no readings while the cache has some.
+        case emptyRead
+    }
+
+    public init(
+        fresh: HealthDataSnapshot,
+        cached: HealthDataSnapshot?,
+        protectedDataAvailable: Bool,
+        readFailed: Bool
+    ) {
+        if !protectedDataAvailable {
+            self = .keepCache(.protectedDataUnavailable)
+        } else if readFailed {
+            self = .keepCache(.readFailed)
+        } else if !fresh.hasReadings, cached?.hasReadings == true {
+            self = .keepCache(.emptyRead)
+        } else {
+            self = .accept
+        }
+    }
+}
+
+/// What one Health sync produced: the snapshot to work from, and whether
+/// it is the fresh read.
+public struct HealthSyncResult: Equatable, Sendable {
+    /// The fresh read when it was accepted. Otherwise the kept cache, or the
+    /// fresh read (unsaved) when there was nothing cached to keep.
+    public let snapshot: HealthDataSnapshot
+    public let decision: HealthSyncDecision
+
+    public init(fresh: HealthDataSnapshot, cached: HealthDataSnapshot?, decision: HealthSyncDecision) {
+        self.decision = decision
+        self.snapshot = (decision == .accept) ? fresh : (cached ?? fresh)
+    }
+
+    /// True when this run's data is the fresh read. Only then may a sync
+    /// retune the training plan or tell the runner about it.
+    public var isFresh: Bool { decision == .accept }
 }
 
 // MARK: - Cache service

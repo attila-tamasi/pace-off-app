@@ -111,10 +111,20 @@ public final class BackgroundRefreshService {
     @discardableResult
     public func refreshHealthData() async -> Bool {
         // syncAll writes the snapshot to HealthDataCache as a side effect,
-        // so the next foreground launch picks it up instantly.
-        let snapshot = await HealthKitService.shared.syncAll()
+        // so the next foreground launch picks it up instantly. On a locked
+        // phone, or when the read fails or comes back empty, it keeps the
+        // cache instead and hands that back.
+        let sync = await HealthKitService.shared.syncAll()
         if Task.isCancelled { return false }
 
+        if case .keepCache(let reason) = sync.decision {
+            log.info("Health read not used (\(reason.rawValue, privacy: .public)); working from the cache, no plan retune")
+            // Nothing cached and nothing read: leave the widget and the
+            // scheduled pushes as they are rather than compute from nothing.
+            guard sync.snapshot.hasReadings else { return true }
+        }
+
+        let snapshot = sync.snapshot
         let runs = snapshot.runs
         let vo2 = snapshot.vo2Max
         let rhr = snapshot.restingHR
@@ -141,8 +151,9 @@ public final class BackgroundRefreshService {
 
         // Training plan: reconcile today's workout and retune stale paces
         // against the data we just pulled. The voice line needs today's
-        // status too.
-        let planStatus = reconcileTrainingPlan(runs: runs, vo2Max: vo2)
+        // status too. Only a fresh read may retune: a kept cache says
+        // nothing new about the runner's fitness.
+        let planStatus = reconcileTrainingPlan(runs: runs, vo2Max: vo2, mayRetune: sync.isFresh)
 
         let state = VoiceState(target: target, yesterday: yesterday, currentStreak: streak, planStatus: planStatus)
         let voice = VoiceCopy()
@@ -192,8 +203,10 @@ public final class BackgroundRefreshService {
     /// generation time. When the runner's current VDOT (fresh VO₂ max, or
     /// their PB) has drifted past the reconciler's threshold, the remaining
     /// weeks are re-paced and the user gets a one-shot notification. The
-    /// beginner-default fallback VDOT never overwrites a real anchor.
-    private func reconcileTrainingPlan(runs: [RunRecord], vo2Max: [VO2MaxSnapshot]) -> PlanDayStatus? {
+    /// beginner-default fallback VDOT never overwrites a real anchor, and
+    /// nothing is retuned when `mayRetune` is false (the Health read was
+    /// kept out of the cache).
+    private func reconcileTrainingPlan(runs: [RunRecord], vo2Max: [VO2MaxSnapshot], mayRetune: Bool) -> PlanDayStatus? {
         let store = TrainingPlanStore.shared
         store.load() // re-read disk — the app may have written since our launch
         guard let plan = store.activePlan else {
@@ -212,6 +225,8 @@ public final class BackgroundRefreshService {
             AppGroup.sharedDefaults?.removeObject(forKey: AppGroup.Keys.lastPlanWorkoutSummary)
         }
         AppGroup.sharedDefaults?.set(status.isCompleted, forKey: AppGroup.Keys.planWorkoutCompletedToday)
+
+        guard mayRetune else { return status }
 
         // Resolve the runner's current VDOT the same way the picker does.
         // The profile's PB only applies when it's for the plan's distance.

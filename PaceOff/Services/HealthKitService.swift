@@ -6,6 +6,28 @@ import Foundation
 import HealthKit
 import CoreLocation
 import Observation
+import UIKit
+
+/// Whether any read of one sync failed. The reads run on the main actor,
+/// so a plain flag is enough.
+@MainActor
+public final class HealthReadLog {
+    public private(set) var failed = false
+
+    public init() {}
+
+    /// Notes a query's error. Only a locked store counts: Health's store is
+    /// encrypted while the phone is locked, and every read fails with
+    /// `errorDatabaseInaccessible`. The other errors (no data, authorization
+    /// not asked yet) mean there's nothing to read, like an empty result, and
+    /// a retry doesn't clear them, so counting them would freeze the cache.
+    func note(_ error: Error?) {
+        guard let healthError = error as? HKError,
+              healthError.code == .errorDatabaseInaccessible
+        else { return }
+        failed = true
+    }
+}
 
 @MainActor
 @Observable
@@ -68,9 +90,13 @@ public final class HealthKitService {
 
     // MARK: - High-level sync
 
-    /// Pull every value the UI consumes, in parallel, and write the result
-    /// to `HealthDataCache`. Returns the freshly persisted snapshot so the
-    /// caller can render it without doing a second disk read.
+    /// Pull every value the UI consumes, in parallel, and save the result to
+    /// `HealthDataCache` when it can be trusted (`HealthSyncDecision`). The
+    /// result carries the snapshot to render, fresh or kept, so the caller
+    /// doesn't need a second disk read.
+    ///
+    /// On a locked phone nothing is read: Health's store stays encrypted
+    /// until the runner unlocks, so the cache is kept as it is.
     ///
     /// Safe to call concurrently — the cache's actor serializes the final
     /// write — but in practice the caller (TodayViewModel, the BG refresh
@@ -81,44 +107,58 @@ public final class HealthKitService {
         vo2DaysBack: Int = 90,
         restingHRDaysBack: Int = 14,
         hrvDaysBack: Int = 35
-    ) async -> HealthDataSnapshot {
+    ) async -> HealthSyncResult {
         let now = Date()
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now
+        let cached = await HealthDataCache.shared.load()
+        let unlockedAtStart = UIApplication.shared.isProtectedDataAvailable
 
-        // Parallelise the independent fetches.
-        async let runs = fetchRuns(daysBack: runsDaysBack)
-        async let vo2  = fetchVO2Max(daysBack: vo2DaysBack)
-        async let rhr  = fetchRestingHeartRate(daysBack: restingHRDaysBack)
-        async let hrvS = fetchHRVSeries(daysBack: hrvDaysBack)
-        async let hrv  = fetchHRV(on: yesterday)
-        async let yAvg = fetchAverageHeartRate(on: yesterday)
-        async let lRHR = fetchLatestRestingHeartRate(asOf: now)
-
-        let snapshot = HealthDataSnapshot(
-            schemaVersion: HealthDataSnapshot.currentSchema,
+        var fresh = HealthDataSnapshot(
             lastSyncedAt: now,
             runsWindowDays: runsDaysBack,
             vo2WindowDays: vo2DaysBack,
             restingHRWindowDays: restingHRDaysBack,
-            hrvWindowDays: hrvDaysBack,
-            runs: await runs,
-            vo2Max: await vo2,
-            restingHR: await rhr,
-            hrv: await hrvS,
-            yesterdayHRV: await hrv,
-            yesterdayAvgHeartRate: await yAvg,
-            latestRestingHeartRate: await lRHR,
-            userAge: userAge()
+            hrvWindowDays: hrvDaysBack
         )
+        let log = HealthReadLog()
 
-        await HealthDataCache.shared.save(snapshot)
-        return snapshot
+        if unlockedAtStart {
+            // Parallelise the independent fetches.
+            async let runs = fetchRuns(daysBack: runsDaysBack, log: log)
+            async let vo2  = fetchVO2Max(daysBack: vo2DaysBack, log: log)
+            async let rhr  = fetchRestingHeartRate(daysBack: restingHRDaysBack, log: log)
+            async let hrvS = fetchHRVSeries(daysBack: hrvDaysBack, log: log)
+            async let hrv  = fetchHRV(on: yesterday, log: log)
+            async let yAvg = fetchAverageHeartRate(on: yesterday, log: log)
+            async let lRHR = fetchLatestRestingHeartRate(asOf: now, log: log)
+
+            fresh.runs = await runs
+            fresh.vo2Max = await vo2
+            fresh.restingHR = await rhr
+            fresh.hrv = await hrvS
+            fresh.yesterdayHRV = await hrv
+            fresh.yesterdayAvgHeartRate = await yAvg
+            fresh.latestRestingHeartRate = await lRHR
+            fresh.userAge = userAge()
+        }
+
+        // The phone can lock while the reads run, so check again.
+        let decision = HealthSyncDecision(
+            fresh: fresh,
+            cached: cached,
+            protectedDataAvailable: unlockedAtStart && UIApplication.shared.isProtectedDataAvailable,
+            readFailed: log.failed
+        )
+        if decision == .accept {
+            await HealthDataCache.shared.save(fresh)
+        }
+        return HealthSyncResult(fresh: fresh, cached: cached, decision: decision)
     }
 
     // MARK: - Reads
 
     /// All running workouts in the trailing window.
-    public func fetchRuns(daysBack: Int = 90) async -> [RunRecord] {
+    public func fetchRuns(daysBack: Int = 90, log: HealthReadLog? = nil) async -> [RunRecord] {
         guard let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date()) else { return [] }
         let predicate = HKQuery.predicateForWorkouts(with: .running)
         let datePredicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
@@ -130,9 +170,10 @@ public final class HealthKitService {
                 predicate: combined,
                 limit: HKObjectQueryNoLimit,
                 sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
-            ) { _, samples, _ in
+            ) { _, samples, error in
                 let workouts = (samples as? [HKWorkout]) ?? []
                 Task { @MainActor in
+                    log?.note(error)
                     var records: [RunRecord] = []
                     for workout in workouts {
                         let record = await self.toRunRecord(workout)
@@ -145,76 +186,82 @@ public final class HealthKitService {
         }
     }
 
-    public func fetchVO2Max(daysBack: Int = 90) async -> [VO2MaxSnapshot] {
+    public func fetchVO2Max(daysBack: Int = 90, log: HealthReadLog? = nil) async -> [VO2MaxSnapshot] {
         guard let type = HKQuantityType.quantityType(forIdentifier: .vo2Max),
               let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date())
         else { return [] }
         let predicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
         let unit = HKUnit(from: "ml/kg*min")
 
-        return await withCheckedContinuation { continuation in
+        let (snapshots, failure): ([VO2MaxSnapshot], Error?) = await withCheckedContinuation { continuation in
             let query = HKSampleQuery(
                 sampleType: type,
                 predicate: predicate,
                 limit: HKObjectQueryNoLimit,
                 sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
-            ) { _, samples, _ in
-                let snapshots: [VO2MaxSnapshot] = (samples as? [HKQuantitySample] ?? []).map {
+            ) { _, samples, error in
+                let values: [VO2MaxSnapshot] = (samples as? [HKQuantitySample] ?? []).map {
                     VO2MaxSnapshot(date: $0.endDate, value: $0.quantity.doubleValue(for: unit))
                 }
-                continuation.resume(returning: snapshots)
+                continuation.resume(returning: (values, error))
             }
             store.execute(query)
         }
+        log?.note(failure)
+        return snapshots
     }
 
-    public func fetchRestingHeartRate(daysBack: Int = 14) async -> [RestingHeartRateSnapshot] {
+    public func fetchRestingHeartRate(daysBack: Int = 14, log: HealthReadLog? = nil) async -> [RestingHeartRateSnapshot] {
         guard let type = HKQuantityType.quantityType(forIdentifier: .restingHeartRate),
               let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date())
         else { return [] }
         let predicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
         let unit = HKUnit.count().unitDivided(by: .minute())
 
-        return await withCheckedContinuation { continuation in
+        let (snapshots, failure): ([RestingHeartRateSnapshot], Error?) = await withCheckedContinuation { continuation in
             let query = HKSampleQuery(
                 sampleType: type,
                 predicate: predicate,
                 limit: HKObjectQueryNoLimit,
                 sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
-            ) { _, samples, _ in
-                let snapshots: [RestingHeartRateSnapshot] = (samples as? [HKQuantitySample] ?? []).map {
+            ) { _, samples, error in
+                let values: [RestingHeartRateSnapshot] = (samples as? [HKQuantitySample] ?? []).map {
                     RestingHeartRateSnapshot(date: $0.endDate, bpm: $0.quantity.doubleValue(for: unit))
                 }
-                continuation.resume(returning: snapshots)
+                continuation.resume(returning: (values, error))
             }
             store.execute(query)
         }
+        log?.note(failure)
+        return snapshots
     }
 
     /// All HRV (SDNN) samples in the trailing window, in milliseconds.
     /// The ReadinessEngine collapses these to per-day means and builds its
     /// rolling baseline, so we hand over raw samples rather than aggregates.
-    public func fetchHRVSeries(daysBack: Int = 35) async -> [HRVSnapshot] {
+    public func fetchHRVSeries(daysBack: Int = 35, log: HealthReadLog? = nil) async -> [HRVSnapshot] {
         guard let type = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN),
               let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date())
         else { return [] }
         let predicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
         let unit = HKUnit.secondUnit(with: .milli)
 
-        return await withCheckedContinuation { continuation in
+        let (snapshots, failure): ([HRVSnapshot], Error?) = await withCheckedContinuation { continuation in
             let query = HKSampleQuery(
                 sampleType: type,
                 predicate: predicate,
                 limit: HKObjectQueryNoLimit,
                 sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
-            ) { _, samples, _ in
-                let snapshots: [HRVSnapshot] = (samples as? [HKQuantitySample] ?? []).map {
+            ) { _, samples, error in
+                let values: [HRVSnapshot] = (samples as? [HKQuantitySample] ?? []).map {
                     HRVSnapshot(date: $0.endDate, sdnnMs: $0.quantity.doubleValue(for: unit))
                 }
-                continuation.resume(returning: snapshots)
+                continuation.resume(returning: (values, error))
             }
             store.execute(query)
         }
+        log?.note(failure)
+        return snapshots
     }
 
     // MARK: - Daily recovery snapshot
@@ -222,7 +269,7 @@ public final class HealthKitService {
     /// Average over all heart-rate samples for the calendar day containing
     /// `referenceDate`. Returns nil if HealthKit has nothing recorded for
     /// that day. Uses statistics aggregation so it's a single fast query.
-    public func fetchAverageHeartRate(on referenceDate: Date) async -> Double? {
+    public func fetchAverageHeartRate(on referenceDate: Date, log: HealthReadLog? = nil) async -> Double? {
         guard let type = HKQuantityType.quantityType(forIdentifier: .heartRate) else { return nil }
         let cal = Calendar.current
         let dayStart = cal.startOfDay(for: referenceDate)
@@ -230,23 +277,25 @@ public final class HealthKitService {
         let predicate = HKQuery.predicateForSamples(withStart: dayStart, end: dayEnd, options: .strictStartDate)
         let unit = HKUnit.count().unitDivided(by: .minute())
 
-        return await withCheckedContinuation { continuation in
+        let (average, failure): (Double?, Error?) = await withCheckedContinuation { continuation in
             let query = HKStatisticsQuery(
                 quantityType: type,
                 quantitySamplePredicate: predicate,
                 options: .discreteAverage
-            ) { _, stats, _ in
-                continuation.resume(returning: stats?.averageQuantity()?.doubleValue(for: unit))
+            ) { _, stats, error in
+                continuation.resume(returning: (stats?.averageQuantity()?.doubleValue(for: unit), error))
             }
             store.execute(query)
         }
+        log?.note(failure)
+        return average
     }
 
     /// Average HRV (SDNN, in milliseconds) over the calendar day containing
     /// `referenceDate`. Apple Watch typically records HRV during sleep, so
     /// "yesterday's HRV" is usually a single overnight reading. Returns nil
     /// when no samples exist or permission was denied.
-    public func fetchHRV(on referenceDate: Date) async -> Double? {
+    public func fetchHRV(on referenceDate: Date, log: HealthReadLog? = nil) async -> Double? {
         guard let type = HKQuantityType.quantityType(forIdentifier: .heartRateVariabilitySDNN) else { return nil }
         let cal = Calendar.current
         let dayStart = cal.startOfDay(for: referenceDate)
@@ -254,41 +303,45 @@ public final class HealthKitService {
         let predicate = HKQuery.predicateForSamples(withStart: dayStart, end: dayEnd, options: .strictStartDate)
         let unit = HKUnit.secondUnit(with: .milli)
 
-        return await withCheckedContinuation { continuation in
+        let (average, failure): (Double?, Error?) = await withCheckedContinuation { continuation in
             let query = HKStatisticsQuery(
                 quantityType: type,
                 quantitySamplePredicate: predicate,
                 options: .discreteAverage
-            ) { _, stats, _ in
-                continuation.resume(returning: stats?.averageQuantity()?.doubleValue(for: unit))
+            ) { _, stats, error in
+                continuation.resume(returning: (stats?.averageQuantity()?.doubleValue(for: unit), error))
             }
             store.execute(query)
         }
+        log?.note(failure)
+        return average
     }
 
     /// Most-recent resting heart rate before or on `referenceDate`. Apple
     /// Watch updates RHR daily but not always on the same calendar day, so
     /// we walk back up to 7 days to find the freshest reading rather than
     /// querying a single day and showing "—" when it's a day stale.
-    public func fetchLatestRestingHeartRate(asOf referenceDate: Date) async -> Double? {
+    public func fetchLatestRestingHeartRate(asOf referenceDate: Date, log: HealthReadLog? = nil) async -> Double? {
         guard let type = HKQuantityType.quantityType(forIdentifier: .restingHeartRate),
               let start = Calendar.current.date(byAdding: .day, value: -7, to: referenceDate)
         else { return nil }
         let predicate = HKQuery.predicateForSamples(withStart: start, end: referenceDate, options: .strictStartDate)
         let unit = HKUnit.count().unitDivided(by: .minute())
 
-        return await withCheckedContinuation { continuation in
+        let (latest, failure): (Double?, Error?) = await withCheckedContinuation { continuation in
             let query = HKSampleQuery(
                 sampleType: type,
                 predicate: predicate,
                 limit: 1,
                 sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]
-            ) { _, samples, _ in
+            ) { _, samples, error in
                 let value = (samples?.first as? HKQuantitySample)?.quantity.doubleValue(for: unit)
-                continuation.resume(returning: value)
+                continuation.resume(returning: (value, error))
             }
             store.execute(query)
         }
+        log?.note(failure)
+        return latest
     }
 
     // MARK: - Workout normalization
