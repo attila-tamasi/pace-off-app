@@ -95,11 +95,14 @@ final class HealthDataCacheTests: XCTestCase {
 
     private let syncedAt = Date(timeIntervalSince1970: 1_700_000_000)
 
+    // Built once per test: each RunRecord gets its own id, so a fixture
+    // rebuilt on every access would never equal itself.
+
     /// Last night's good sync: a run, VO₂ max, resting HR and HRV.
-    private var goodCache: HealthDataSnapshot {
-        let start = syncedAt.addingTimeInterval(-86_400)
+    private lazy var goodCache: HealthDataSnapshot = {
+        let start = self.syncedAt.addingTimeInterval(-86_400)
         return HealthDataSnapshot(
-            lastSyncedAt: syncedAt,
+            lastSyncedAt: self.syncedAt,
             runs: [RunRecord(startDate: start, endDate: start.addingTimeInterval(1_800),
                              distanceMeters: 5_000, durationSeconds: 1_800)],
             vo2Max: [VO2MaxSnapshot(date: start, value: 49.2)],
@@ -107,22 +110,21 @@ final class HealthDataCacheTests: XCTestCase {
             hrv: [HRVSnapshot(date: start, sdnnMs: 62)],
             userAge: 33
         )
-    }
+    }()
 
     /// What a read on a locked phone brings back: nothing.
-    private var emptyRead: HealthDataSnapshot {
-        HealthDataSnapshot(lastSyncedAt: syncedAt.addingTimeInterval(6 * 3_600))
-    }
+    private lazy var emptyRead: HealthDataSnapshot =
+        HealthDataSnapshot(lastSyncedAt: self.syncedAt.addingTimeInterval(6 * 3_600))
 
     /// A full read a few hours later, with an extra run.
-    private var freshRead: HealthDataSnapshot {
-        var read = goodCache
-        read.lastSyncedAt = syncedAt.addingTimeInterval(6 * 3_600)
-        let start = syncedAt.addingTimeInterval(3_600)
+    private lazy var freshRead: HealthDataSnapshot = {
+        var read = self.goodCache
+        read.lastSyncedAt = self.syncedAt.addingTimeInterval(6 * 3_600)
+        let start = self.syncedAt.addingTimeInterval(3_600)
         read.runs.append(RunRecord(startDate: start, endDate: start.addingTimeInterval(2_400),
                                    distanceMeters: 8_000, durationSeconds: 2_400))
         return read
-    }
+    }()
 
     private func decide(fresh: HealthDataSnapshot,
                         cached: HealthDataSnapshot?,
