@@ -64,8 +64,10 @@ public final class TodayViewModel {
         isRefreshing = true
         defer { isRefreshing = false }
 
-        // Fire one parallel sync that writes the cache. Apply the result.
-        let snapshot = await HealthKitService.shared.syncAll()
+        // Fire one parallel sync that writes the cache. Apply the result:
+        // the fresh read, or the kept cache when the read couldn't be used.
+        // Nil means neither is trustworthy; leave the screen as it is.
+        guard let snapshot = await HealthKitService.shared.syncAll().snapshot else { return }
         applySnapshot(snapshot)
 
         // Today's GPS route — kept out of the cache because it's bulky and

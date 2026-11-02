@@ -1,8 +1,10 @@
 // HealthDataCacheTests.swift
-// Roundtrip + staleness checks for HealthDataSnapshot. The HealthDataCache
-// actor itself reads from / writes to the App Group container which isn't
-// available in the unit test bundle, so we exercise the public types and
-// the JSON shape rather than the disk side-effects.
+// Roundtrip + staleness checks for HealthDataSnapshot, and the
+// accept-or-keep rule that stops a locked, failed or empty Health read from
+// replacing a good cache. The HealthDataCache actor itself reads from /
+// writes to the App Group container which isn't available in the unit test
+// bundle, so we exercise the public types and the JSON shape rather than
+// the disk side-effects.
 
 import XCTest
 @testable import PaceOff
@@ -87,5 +89,151 @@ final class HealthDataCacheTests: XCTestCase {
 
         try FileManager.default.removeItem(at: tmp)
         XCTAssertFalse(FileManager.default.fileExists(atPath: tmp.path))
+    }
+
+    // MARK: - Accept or keep
+
+    private let syncedAt = Date(timeIntervalSince1970: 1_700_000_000)
+
+    // Built once per test: each RunRecord gets its own id, so a fixture
+    // rebuilt on every access would never equal itself.
+
+    /// Last night's good sync: a run, VO₂ max, resting HR and HRV.
+    private lazy var goodCache: HealthDataSnapshot = {
+        let start = self.syncedAt.addingTimeInterval(-86_400)
+        return HealthDataSnapshot(
+            lastSyncedAt: self.syncedAt,
+            runs: [RunRecord(startDate: start, endDate: start.addingTimeInterval(1_800),
+                             distanceMeters: 5_000, durationSeconds: 1_800)],
+            vo2Max: [VO2MaxSnapshot(date: start, value: 49.2)],
+            restingHR: [RestingHeartRateSnapshot(date: start, bpm: 51)],
+            hrv: [HRVSnapshot(date: start, sdnnMs: 62)],
+            userAge: 33
+        )
+    }()
+
+    /// What a read on a locked phone brings back: nothing.
+    private lazy var emptyRead: HealthDataSnapshot =
+        HealthDataSnapshot(lastSyncedAt: self.syncedAt.addingTimeInterval(6 * 3_600))
+
+    /// A full read a few hours later, with an extra run.
+    private lazy var freshRead: HealthDataSnapshot = {
+        var read = self.goodCache
+        read.lastSyncedAt = self.syncedAt.addingTimeInterval(6 * 3_600)
+        let start = self.syncedAt.addingTimeInterval(3_600)
+        read.runs.append(RunRecord(startDate: start, endDate: start.addingTimeInterval(2_400),
+                                   distanceMeters: 8_000, durationSeconds: 2_400))
+        return read
+    }()
+
+    private func decide(fresh: HealthDataSnapshot,
+                        cached: HealthDataSnapshot?,
+                        unlocked: Bool = true,
+                        failed: Bool = false) -> HealthSyncResult {
+        let decision = HealthSyncDecision(fresh: fresh, cached: cached,
+                                          protectedDataAvailable: unlocked, readFailed: failed)
+        return HealthSyncResult(fresh: fresh, cached: cached, decision: decision)
+    }
+
+    func test_lockedPhone_emptyRead_keepsTheCache() {
+        // A night-time read on a locked phone brings back nothing.
+        let result = decide(fresh: emptyRead, cached: goodCache, unlocked: false)
+        XCTAssertEqual(result.decision, .keepCache(.protectedDataUnavailable))
+        XCTAssertEqual(result.snapshot, goodCache)
+        XCTAssertFalse(result.isFresh)
+    }
+
+    func test_lockedPhone_withNothingCached_leavesNothingToWorkFrom() {
+        let result = decide(fresh: emptyRead, cached: nil, unlocked: false)
+        XCTAssertEqual(result.decision, .keepCache(.protectedDataUnavailable))
+        XCTAssertNil(result.snapshot)
+        XCTAssertFalse(result.isFresh)
+    }
+
+    func test_failedRead_keepsTheCache_evenWithSomeReadings() {
+        // The phone locked partway: some reads came back, others failed.
+        var partial = emptyRead
+        partial.hrv = [HRVSnapshot(date: syncedAt, sdnnMs: 70)]
+        let result = decide(fresh: partial, cached: goodCache, failed: true)
+        XCTAssertEqual(result.decision, .keepCache(.readFailed))
+        XCTAssertEqual(result.snapshot, goodCache)
+        XCTAssertFalse(result.isFresh)
+    }
+
+    func test_failedRead_withNothingCached_leavesNothingToWorkFrom() {
+        // A partial read has no runs: working from it would make a restart day.
+        var partial = emptyRead
+        partial.hrv = [HRVSnapshot(date: syncedAt, sdnnMs: 70)]
+        let result = decide(fresh: partial, cached: nil, failed: true)
+        XCTAssertEqual(result.decision, .keepCache(.readFailed))
+        XCTAssertNil(result.snapshot)
+        XCTAssertFalse(result.isFresh)
+    }
+
+    func test_emptyRead_whileTheCacheHasData_keepsTheCache() {
+        let result = decide(fresh: emptyRead, cached: goodCache)
+        XCTAssertEqual(result.decision, .keepCache(.emptyRead))
+        XCTAssertEqual(result.snapshot, goodCache)
+    }
+
+    func test_emptyRead_isBelieved_onceTheCacheIsOlderThanTheDoubtWindow() {
+        // Reads that stay empty for days mean access was revoked or the data
+        // deleted; the cache mustn't stand in for them for ever.
+        let window = HealthSyncDecision.emptyReadDoubtedFor
+        var justInside = emptyRead
+        justInside.lastSyncedAt = syncedAt.addingTimeInterval(window - 60)
+        XCTAssertEqual(decide(fresh: justInside, cached: goodCache).decision, .keepCache(.emptyRead))
+
+        var pastIt = emptyRead
+        pastIt.lastSyncedAt = syncedAt.addingTimeInterval(window + 60)
+        let result = decide(fresh: pastIt, cached: goodCache)
+        XCTAssertEqual(result.decision, .accept)
+        XCTAssertEqual(result.snapshot, pastIt)
+    }
+
+    func test_lockedPhone_keepsEvenAnOldCache() {
+        // The doubt window only applies to empty reads: a locked phone is
+        // always temporary.
+        var later = emptyRead
+        later.lastSyncedAt = syncedAt.addingTimeInterval(HealthSyncDecision.emptyReadDoubtedFor * 2)
+        XCTAssertEqual(decide(fresh: later, cached: goodCache, unlocked: false).decision,
+                       .keepCache(.protectedDataUnavailable))
+    }
+
+    func test_readWithOnlyAnAge_countsAsEmpty() {
+        var ageOnly = emptyRead
+        ageOnly.userAge = 33
+        XCTAssertFalse(ageOnly.hasReadings)
+        XCTAssertEqual(decide(fresh: ageOnly, cached: goodCache).decision, .keepCache(.emptyRead))
+    }
+
+    func test_emptyRead_forANewRunner_isAccepted() {
+        // Nothing cached yet, or a cache holding no readings: an empty read
+        // is just a runner with no Health data so far.
+        XCTAssertEqual(decide(fresh: emptyRead, cached: nil).decision, .accept)
+        var ageOnlyCache = emptyRead
+        ageOnlyCache.userAge = 40
+        XCTAssertEqual(decide(fresh: emptyRead, cached: ageOnlyCache).decision, .accept)
+    }
+
+    func test_fullRead_replacesTheCache() {
+        let result = decide(fresh: freshRead, cached: goodCache)
+        XCTAssertEqual(result.decision, .accept)
+        XCTAssertEqual(result.snapshot, freshRead)
+        XCTAssertTrue(result.isFresh)
+    }
+
+    func test_readWithFewerRuns_isStillAccepted() {
+        // Runs age out of the 90-day window; a smaller read isn't a failure.
+        var smaller = freshRead
+        smaller.runs = []
+        XCTAssertEqual(decide(fresh: smaller, cached: goodCache).decision, .accept)
+    }
+
+    func test_hasReadings_ignoresAgeOnly() {
+        XCTAssertFalse(HealthDataSnapshot().hasReadings)
+        XCTAssertFalse(HealthDataSnapshot(userAge: 33).hasReadings)
+        XCTAssertTrue(HealthDataSnapshot(latestRestingHeartRate: 51).hasReadings)
+        XCTAssertTrue(goodCache.hasReadings)
     }
 }
