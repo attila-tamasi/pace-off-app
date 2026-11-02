@@ -134,16 +134,17 @@ final class HealthDataCacheTests: XCTestCase {
     }
 
     func test_lockedPhone_emptyRead_keepsTheCache() {
-        // The bug: the night-time read on a locked phone replaced the cache.
+        // A night-time read on a locked phone brings back nothing.
         let result = decide(fresh: emptyRead, cached: goodCache, unlocked: false)
         XCTAssertEqual(result.decision, .keepCache(.protectedDataUnavailable))
         XCTAssertEqual(result.snapshot, goodCache)
         XCTAssertFalse(result.isFresh)
     }
 
-    func test_lockedPhone_isNeverFresh_evenWithNothingCached() {
+    func test_lockedPhone_withNothingCached_leavesNothingToWorkFrom() {
         let result = decide(fresh: emptyRead, cached: nil, unlocked: false)
         XCTAssertEqual(result.decision, .keepCache(.protectedDataUnavailable))
+        XCTAssertNil(result.snapshot)
         XCTAssertFalse(result.isFresh)
     }
 
@@ -157,12 +158,13 @@ final class HealthDataCacheTests: XCTestCase {
         XCTAssertFalse(result.isFresh)
     }
 
-    func test_failedRead_withNothingCached_showsTheReadButIsNotFresh() {
+    func test_failedRead_withNothingCached_leavesNothingToWorkFrom() {
+        // A partial read has no runs: working from it would make a restart day.
         var partial = emptyRead
         partial.hrv = [HRVSnapshot(date: syncedAt, sdnnMs: 70)]
         let result = decide(fresh: partial, cached: nil, failed: true)
         XCTAssertEqual(result.decision, .keepCache(.readFailed))
-        XCTAssertEqual(result.snapshot, partial)
+        XCTAssertNil(result.snapshot)
         XCTAssertFalse(result.isFresh)
     }
 
@@ -170,6 +172,30 @@ final class HealthDataCacheTests: XCTestCase {
         let result = decide(fresh: emptyRead, cached: goodCache)
         XCTAssertEqual(result.decision, .keepCache(.emptyRead))
         XCTAssertEqual(result.snapshot, goodCache)
+    }
+
+    func test_emptyRead_isBelieved_onceTheCacheIsOlderThanTheDoubtWindow() {
+        // Reads that stay empty for days mean access was revoked or the data
+        // deleted; the cache mustn't stand in for them for ever.
+        let window = HealthSyncDecision.emptyReadDoubtedFor
+        var justInside = emptyRead
+        justInside.lastSyncedAt = syncedAt.addingTimeInterval(window - 60)
+        XCTAssertEqual(decide(fresh: justInside, cached: goodCache).decision, .keepCache(.emptyRead))
+
+        var pastIt = emptyRead
+        pastIt.lastSyncedAt = syncedAt.addingTimeInterval(window + 60)
+        let result = decide(fresh: pastIt, cached: goodCache)
+        XCTAssertEqual(result.decision, .accept)
+        XCTAssertEqual(result.snapshot, pastIt)
+    }
+
+    func test_lockedPhone_keepsEvenAnOldCache() {
+        // The doubt window only applies to empty reads: a locked phone is
+        // always temporary.
+        var later = emptyRead
+        later.lastSyncedAt = syncedAt.addingTimeInterval(HealthSyncDecision.emptyReadDoubtedFor * 2)
+        XCTAssertEqual(decide(fresh: later, cached: goodCache, unlocked: false).decision,
+                       .keepCache(.protectedDataUnavailable))
     }
 
     func test_readWithOnlyAnAge_countsAsEmpty() {

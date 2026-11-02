@@ -239,6 +239,15 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Repeating animations stop under Reduce Motion.
   - Previews at an accessibility size still lay out.
 
+### Q-11 · The check-in card shows another day's "yesterday"
+- **Status:** todo
+- **Size:** S   ·   **Merge:** auto
+- **Problem:** The cached snapshot stores yesterday's HRV and average heart rate as plain numbers. When Today renders a cache synced on an earlier day (cold launch, or a sync that kept the cache), the morning check-in card shows those values as yesterday's, though they belong to the day before the sync.
+- **Where:** `HealthDataSnapshot.yesterdayHRV` / `yesterdayAvgHeartRate` (`PaceOffShared/HealthDataCache.swift`); `TodayViewModel.applySnapshot`; the check-in card.
+- **Done when:**
+  - Day-relative values from a snapshot synced on an earlier calendar day aren't shown as yesterday's. Either hide them, or label them with their day.
+  - A pure check with tests decides it.
+
 ---
 
 ## Wave 3 · New features

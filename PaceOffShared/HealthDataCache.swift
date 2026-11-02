@@ -91,9 +91,7 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
     /// from defaults). Lets callers tell "have I ever synced?" apart from
     /// "I synced two seconds ago and have no runs".
     public var isEmpty: Bool {
-        runs.isEmpty && vo2Max.isEmpty && restingHR.isEmpty && hrv.isEmpty
-            && yesterdayHRV == nil && yesterdayAvgHeartRate == nil
-            && latestRestingHeartRate == nil && userAge == nil
+        !hasReadings && userAge == nil
     }
 
     /// Whether the snapshot is older than `maxAge` and should be refreshed.
@@ -130,9 +128,15 @@ public enum HealthSyncDecision: Equatable, Sendable {
         case protectedDataUnavailable
         /// At least one read failed.
         case readFailed
-        /// The read came back with no readings while the cache has some.
+        /// The read came back with no readings while the cache, synced
+        /// recently, has some.
         case emptyRead
     }
+
+    /// How long an empty read is doubted. A locked-out read is a one-off;
+    /// when reads keep coming back empty past this, they're believed: the
+    /// runner revoked Health access or deleted the data.
+    public static let emptyReadDoubtedFor: TimeInterval = 3 * 24 * 60 * 60
 
     public init(
         fresh: HealthDataSnapshot,
@@ -144,7 +148,8 @@ public enum HealthSyncDecision: Equatable, Sendable {
             self = .keepCache(.protectedDataUnavailable)
         } else if readFailed {
             self = .keepCache(.readFailed)
-        } else if !fresh.hasReadings, cached?.hasReadings == true {
+        } else if !fresh.hasReadings, let cached, cached.hasReadings,
+                  !cached.isStale(maxAge: Self.emptyReadDoubtedFor, now: fresh.lastSyncedAt) {
             self = .keepCache(.emptyRead)
         } else {
             self = .accept
@@ -155,14 +160,15 @@ public enum HealthSyncDecision: Equatable, Sendable {
 /// What one Health sync produced: the snapshot to work from, and whether
 /// it is the fresh read.
 public struct HealthSyncResult: Equatable, Sendable {
-    /// The fresh read when it was accepted. Otherwise the kept cache, or the
-    /// fresh read (unsaved) when there was nothing cached to keep.
-    public let snapshot: HealthDataSnapshot
+    /// The fresh read when it was accepted, otherwise the kept cache. Nil
+    /// when the read was kept out and nothing was cached: there's nothing
+    /// trustworthy to work from.
+    public let snapshot: HealthDataSnapshot?
     public let decision: HealthSyncDecision
 
     public init(fresh: HealthDataSnapshot, cached: HealthDataSnapshot?, decision: HealthSyncDecision) {
         self.decision = decision
-        self.snapshot = (decision == .accept) ? fresh : (cached ?? fresh)
+        self.snapshot = (decision == .accept) ? fresh : cached
     }
 
     /// True when this run's data is the fresh read. Only then may a sync

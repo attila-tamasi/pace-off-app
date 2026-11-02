@@ -110,7 +110,6 @@ public final class HealthKitService {
     ) async -> HealthSyncResult {
         let now = Date()
         let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now) ?? now
-        let cached = await HealthDataCache.shared.load()
         let unlockedAtStart = UIApplication.shared.isProtectedDataAvailable
 
         var fresh = HealthDataSnapshot(
@@ -142,7 +141,9 @@ public final class HealthKitService {
             fresh.userAge = userAge()
         }
 
-        // The phone can lock while the reads run, so check again.
+        // Loaded after the reads, so a save by a sync that ran meanwhile
+        // counts. The phone can also lock while the reads run: check again.
+        let cached = await HealthDataCache.shared.load()
         let decision = HealthSyncDecision(
             fresh: fresh,
             cached: cached,
@@ -176,7 +177,7 @@ public final class HealthKitService {
                     log?.note(error)
                     var records: [RunRecord] = []
                     for workout in workouts {
-                        let record = await self.toRunRecord(workout)
+                        let record = await self.toRunRecord(workout, log: log)
                         records.append(record)
                     }
                     continuation.resume(returning: records)
@@ -346,7 +347,7 @@ public final class HealthKitService {
 
     // MARK: - Workout normalization
 
-    private func toRunRecord(_ workout: HKWorkout) async -> RunRecord {
+    private func toRunRecord(_ workout: HKWorkout, log: HealthReadLog?) async -> RunRecord {
         let distance = workout.totalDistance?.doubleValue(for: .meter()) ?? 0
         let energyType = HKQuantityType(.activeEnergyBurned)
         let energy = workout.statistics(for: energyType)?.sumQuantity()?.doubleValue(for: .kilocalorie())
@@ -354,15 +355,15 @@ public final class HealthKitService {
             ? workout.duration / (distance / 1000)
             : nil
 
-        let avgHR = await averageQuantity(.heartRate, for: workout, unit: HKUnit.count().unitDivided(by: .minute()))
-        let avgPower = await averageQuantity(.runningPower, for: workout, unit: .watt())
-        let avgStride = await averageQuantity(.runningStrideLength, for: workout, unit: .meter())
-        let avgVert = await averageQuantity(.runningVerticalOscillation, for: workout, unit: .meterUnit(with: .centi))
-        let avgGCT = await averageQuantity(.runningGroundContactTime, for: workout, unit: .secondUnit(with: .milli))
+        let avgHR = await averageQuantity(.heartRate, for: workout, unit: HKUnit.count().unitDivided(by: .minute()), log: log)
+        let avgPower = await averageQuantity(.runningPower, for: workout, unit: .watt(), log: log)
+        let avgStride = await averageQuantity(.runningStrideLength, for: workout, unit: .meter(), log: log)
+        let avgVert = await averageQuantity(.runningVerticalOscillation, for: workout, unit: .meterUnit(with: .centi), log: log)
+        let avgGCT = await averageQuantity(.runningGroundContactTime, for: workout, unit: .secondUnit(with: .milli), log: log)
         // Cadence (steps per minute): stepCount is a CUMULATIVE quantity type,
         // so we must use .cumulativeSum (NOT .discreteAverage — that crashes
         // with HKErrorInvalidArgument) and convert to a per-minute rate.
-        let totalSteps = await cumulativeSum(.stepCount, for: workout, unit: .count())
+        let totalSteps = await cumulativeSum(.stepCount, for: workout, unit: .count(), log: log)
         let durationMinutes = workout.duration / 60.0
         let avgCadence: Double? = (totalSteps != nil && durationMinutes > 0)
             ? totalSteps! / durationMinutes
@@ -384,40 +385,44 @@ public final class HealthKitService {
         )
     }
 
-    private func averageQuantity(_ id: HKQuantityTypeIdentifier, for workout: HKWorkout, unit: HKUnit) async -> Double? {
+    private func averageQuantity(_ id: HKQuantityTypeIdentifier, for workout: HKWorkout, unit: HKUnit, log: HealthReadLog?) async -> Double? {
         guard let type = HKQuantityType.quantityType(forIdentifier: id) else { return nil }
         // Guard against passing a cumulative type (e.g. stepCount, distance, energy)
         // to .discreteAverage — HealthKit treats that as a programmer error and traps.
         guard type.aggregationStyle == .discreteArithmetic else { return nil }
         let predicate = HKQuery.predicateForObjects(from: workout)
-        return await withCheckedContinuation { continuation in
+        let (average, failure): (Double?, Error?) = await withCheckedContinuation { continuation in
             let query = HKStatisticsQuery(
                 quantityType: type,
                 quantitySamplePredicate: predicate,
                 options: .discreteAverage
-            ) { _, stats, _ in
-                continuation.resume(returning: stats?.averageQuantity()?.doubleValue(for: unit))
+            ) { _, stats, error in
+                continuation.resume(returning: (stats?.averageQuantity()?.doubleValue(for: unit), error))
             }
             store.execute(query)
         }
+        log?.note(failure)
+        return average
     }
 
     /// Sum of a CUMULATIVE quantity (stepCount, distance, energy) over a workout.
     /// Use this for any type whose `aggregationStyle == .cumulative`.
-    private func cumulativeSum(_ id: HKQuantityTypeIdentifier, for workout: HKWorkout, unit: HKUnit) async -> Double? {
+    private func cumulativeSum(_ id: HKQuantityTypeIdentifier, for workout: HKWorkout, unit: HKUnit, log: HealthReadLog?) async -> Double? {
         guard let type = HKQuantityType.quantityType(forIdentifier: id) else { return nil }
         guard type.aggregationStyle == .cumulative else { return nil }
         let predicate = HKQuery.predicateForObjects(from: workout)
-        return await withCheckedContinuation { continuation in
+        let (sum, failure): (Double?, Error?) = await withCheckedContinuation { continuation in
             let query = HKStatisticsQuery(
                 quantityType: type,
                 quantitySamplePredicate: predicate,
                 options: .cumulativeSum
-            ) { _, stats, _ in
-                continuation.resume(returning: stats?.sumQuantity()?.doubleValue(for: unit))
+            ) { _, stats, error in
+                continuation.resume(returning: (stats?.sumQuantity()?.doubleValue(for: unit), error))
             }
             store.execute(query)
         }
+        log?.note(failure)
+        return sum
     }
 
     // MARK: - Workout routes

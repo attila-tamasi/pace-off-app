@@ -108,7 +108,7 @@ The `PushTargetEngineTests` suite covers the worked example from PRD §7.3 plus 
 
 Pace Off has no database. Everything boils down to two stores:
 
-- **Apple Health** (via HealthKit) is the source of truth for runs, VO₂ max, heart rate, running dynamics, and the user's age. Re-fetched on every refresh. The last good read is snapshotted to `health-cache.json` in the App Group container so screens render instantly; a read that is locked out, fails or comes back empty never replaces it.
+- **Apple Health** (via HealthKit) is the source of truth for runs, VO₂ max, heart rate, running dynamics, and the user's age. Re-fetched on every refresh. The last good read is snapshotted to `health-cache.json` in the App Group container so screens render instantly; a read that is locked out or fails never replaces it, and an empty one only once it is more than 3 days old.
 - **App Group `UserDefaults`** (`group.com.paceoff.app`) holds a tiny set of values: the latest computed `RunTarget` (JSON), the current voice line, notification times, the chosen voice tone, and a couple of flags (onboarding complete, ran today). This is what the Watch app and widget read so they can render instantly without re-running the algorithm.
 
 Delete the app and you lose nothing — your runs and VO₂ max stay in Health.
