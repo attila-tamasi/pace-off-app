@@ -59,7 +59,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - New `VoiceCopyTests` cover each case.
 
 ### R-03 · Locked-phone background refresh overwrites good data with empty
-- **Status:** todo
+- **Status:** done (PR #21)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** At night on a locked phone, HealthKit reads fail or come back empty, and the sync saves that empty result over the good cache. The next target is then a restart day, and a false "Training plan retuned" push goes out.
 - **Where:** `HealthKitService.syncAll()` (saves the snapshot); `BackgroundRefreshService`; `HealthDataCache`.
@@ -358,6 +358,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-02 · R-03: a locked, failed or empty Health read keeps the cache; only a fresh read retunes the plan (PR #21)
 - 2026-10-31 · R-02: a run yesterday is never a skip; rest copy on recovery days; streak day number fixed via RunStreak (PR #20)
 - 2026-10-30 · R-01: daily pushes are one-shot for today only; last call only after a skipped day; sign-out clears them (PR #19)
 - 2026-10-26 · Redesign: icon colours in the app, Health-style Today, Plan tab, Profile behind the avatar, Dark Mode card fix (PR #17)
