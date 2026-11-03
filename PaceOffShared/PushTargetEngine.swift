@@ -42,7 +42,7 @@ public struct PushTargetEngine: Sendable {
     private static let recoveryFactor = 0.6
     /// Red readiness caps the day at this fraction of baseline — the same
     /// reduction a post-long-run recovery day gets.
-    private static let redReadinessCapFactor = recoveryFactor
+    private static let redReadinessCapFactor = 0.6
 
     // VO2Max slope thresholds (ml/kg/min per WEEK)
     static let vo2MaxDecliningSlope = -0.05
@@ -66,9 +66,10 @@ public struct PushTargetEngine: Sendable {
         var ceilingClamped = false
         var fatigueGuardActive = false
 
-        // The tightest upper bound today. The hard ceiling always applies;
-        // each guard below that limits the distance tightens it. Rounding,
-        // for the 100 m grid and for display, never goes over it.
+        // The tightest upper bound today: the 1.4× hard ceiling (PRD §7.2,
+        // "regardless of skip count"), raised to the restart floor on a
+        // restart day, then tightened by each guard below. Rounding, for
+        // the 100 m grid and for display, never goes over it.
         let ceiling = baseline * Self.hardCeilingMultiplier
         var cap = ceiling
 
@@ -98,9 +99,12 @@ public struct PushTargetEngine: Sendable {
             tone = .aggressive
         default: // 3+
             // Restart: reset to the last comfortable run, at least the
-            // restart floor. The hard ceiling (step 6) still bounds it.
+            // restart floor. The ceiling bounds it (step 6), except where
+            // the ceiling sits under the floor (a baseline under ~2.1 km):
+            // there the floor stands.
             let last = lastComfortableRun(inputs.runs)
             target = max(Self.restartFloorMeters, last)
+            cap = max(ceiling, Self.restartFloorMeters)
             tone = .restart
         }
 
@@ -144,10 +148,11 @@ public struct PushTargetEngine: Sendable {
             break
         }
 
-        // 6. Hard ceiling, on every day: PRD §7.2 holds it "regardless of
-        // skip count", so a restart day can't ask for more either.
-        if target > ceiling {
-            target = ceiling
+        // 6. Hard ceiling, restart days included. Each guard above already
+        // clamped the target to its own cap, so a target still over `cap`
+        // is over the ceiling.
+        if target > cap {
+            target = cap
             ceilingClamped = true
         }
 

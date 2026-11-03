@@ -59,17 +59,18 @@ public struct RunTarget: Codable, Sendable, Equatable {
     public var baselineKm: Double { baselineMeters / 1000 }
 
     /// The user-facing target in whole km: rounded **up** (7.7 km → 8 km,
-    /// 5.0 km → 5 km), except that it never goes over `capMeters`. Then it
-    /// is the whole km under the cap: a 3.1 km red day shows 3 km, and a
-    /// 5.6 km day under a 5.6 km ceiling shows 5. The smallest target shown
-    /// is 1 km. "Did I hit the target" is judged against this value, so the
-    /// check matches what the runner saw.
+    /// 5.0 km → 5 km) while that stays within `capMeters`, otherwise the
+    /// whole km under the cap: a 3.1 km red day shows 3 km, and a 5.6 km
+    /// day under a 5.6 km ceiling shows 5. The one exception: whole km
+    /// can't show a run under 1 km, so a cap below 1 km still shows 1.
+    /// "Did I hit the target" is judged against this value, so the check
+    /// matches what the runner saw.
     public var displayedDistanceKm: Int {
         // The tolerance only absorbs floating-point noise.
-        let roundedUp = max(1, Int((distanceKm - 1e-6).rounded(.up)))
+        let roundedUp = Int((distanceKm - 1e-6).rounded(.up))
         guard let capMeters else { return roundedUp }
-        let underCap = Int((capMeters / 1000 + 1e-6).rounded(.down))
-        return max(1, min(roundedUp, underCap))
+        let underCap = max(1, Int((capMeters / 1000 + 1e-6).rounded(.down)))
+        return min(roundedUp, underCap)
     }
 
     /// `displayedDistanceKm` re-expressed in meters. Use this when comparing

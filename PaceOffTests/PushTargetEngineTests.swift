@@ -288,7 +288,7 @@ final class PushTargetEngineTests: XCTestCase {
 
     func test_restart_onA5kmBaseline_isCappedByTheCeiling() {
         // Three recent long runs make the last comfortable run 21 km while
-        // the 14-day median stays 5 km. The restart used to ask for 21.
+        // the 14-day median stays 5 km: the restart can't ask for 21.
         let today = Date()
         var runs = (3...5).map { run(daysAgo: $0, km: 21, today: today) }
         runs += (6...13).map { run(daysAgo: $0, km: 5, today: today) }
@@ -315,8 +315,22 @@ final class PushTargetEngineTests: XCTestCase {
         XCTAssertEqual(target.displayedDistanceKm, 4, "4.2 km under a 4.2 km cap shows 4, not 5")
     }
 
+    func test_restart_onATinyBaseline_keepsTheFloor() {
+        // A 1.5 km baseline puts the ceiling at 2.1 km, under the 3 km
+        // restart floor: the floor stands.
+        let today = Date()
+        let runs = (3...10).map { run(daysAgo: $0, km: 1.5, today: today) }
+        let target = engine.compute(PushTargetEngine.Inputs(
+            today: today, runs: runs, vo2Max: [], restingHeartRate: []
+        ))
+        XCTAssertEqual(target.tone, .restart)
+        XCTAssertEqual(target.distanceMeters, 3000, accuracy: 0.1)
+        XCTAssertFalse(target.ceilingClamped)
+        XCTAssertEqual(target.displayedDistanceKm, 3)
+    }
+
     func test_redDay_showsTheWholeKmUnderTheCap() {
-        // Baseline 5.2 km: red caps the day at 3.12 km. Rounding up showed 4.
+        // Baseline 5.2 km: red caps the day at 3.12 km, so it shows 3, not 4.
         let today = Date()
         let runs = (1...12).map { run(daysAgo: $0, km: 5.2, today: today) }
         let target = engine.compute(PushTargetEngine.Inputs(
@@ -331,7 +345,7 @@ final class PushTargetEngineTests: XCTestCase {
     }
 
     func test_ceilingClampedDay_neverShowsMoreThanTheCeiling() {
-        // Baseline 4 km: the ceiling is 5.6 km. Rounding up showed 6 km, 1.5×.
+        // Baseline 4 km: the ceiling is 5.6 km, so it shows 5, not 6 (1.5×).
         let today = Date()
         var runs = (3...5).map { run(daysAgo: $0, km: 12, today: today) }
         runs += (6...13).map { run(daysAgo: $0, km: 4, today: today) }
@@ -377,6 +391,17 @@ final class PushTargetEngineTests: XCTestCase {
             ceilingClamped: false, fatigueGuardActive: false, capMeters: 480
         )
         XCTAssertEqual(target.displayedDistanceKm, 1)
+    }
+
+    func test_zeroTarget_stillShowsZero() {
+        // Nothing to run (a zero-distance baseline) stays 0, so the Today
+        // run card falls back to "Logged" rather than judging a hit.
+        let target = RunTarget(
+            distanceMeters: 0, tone: .recovery, daysSinceLastRun: 1,
+            vo2MaxSlope: nil, baselineMeters: 0,
+            ceilingClamped: false, fatigueGuardActive: false, capMeters: 0
+        )
+        XCTAssertEqual(target.displayedDistanceKm, 0)
     }
 
     // MARK: - RunTarget backward compatibility
