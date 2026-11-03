@@ -22,6 +22,12 @@ public struct RunTarget: Codable, Sendable, Equatable {
     /// hard, yellow holds the baseline). Optional so RunTarget JSON cached
     /// before this field existed still decodes — nil means "unknown".
     public let readinessCapApplied: Bool?
+    /// The tightest upper bound on today's distance: the 1.4× hard ceiling,
+    /// or a lower cap when a guard applied (resting HR, a recovery day,
+    /// readiness). The target never exceeds it, and neither does the
+    /// displayed whole km. Optional so RunTarget JSON cached before this
+    /// field existed still decodes — nil means "unknown".
+    public let capMeters: Double?
     /// When this target was computed.
     public let computedAt: Date
 
@@ -34,6 +40,7 @@ public struct RunTarget: Codable, Sendable, Equatable {
         ceilingClamped: Bool,
         fatigueGuardActive: Bool,
         readinessCapApplied: Bool? = nil,
+        capMeters: Double? = nil,
         computedAt: Date = Date()
     ) {
         self.distanceMeters = distanceMeters
@@ -44,18 +51,25 @@ public struct RunTarget: Codable, Sendable, Equatable {
         self.ceilingClamped = ceilingClamped
         self.fatigueGuardActive = fatigueGuardActive
         self.readinessCapApplied = readinessCapApplied
+        self.capMeters = capMeters
         self.computedAt = computedAt
     }
 
     public var distanceKm: Double { distanceMeters / 1000 }
     public var baselineKm: Double { baselineMeters / 1000 }
 
-    /// The user-facing target — always rounded **up** to the next whole km.
-    /// 7.7 km → 8 km. 5.0 km → 5 km. The engine emits a precise number, but
-    /// the UX tells the user a clean integer, and "did I hit the target" is
-    /// judged against this rounded value to avoid mismatch.
+    /// The user-facing target in whole km: rounded **up** (7.7 km → 8 km,
+    /// 5.0 km → 5 km), except that it never goes over `capMeters`. Then it
+    /// is the whole km under the cap: a 3.1 km red day shows 3 km, and a
+    /// 5.6 km day under a 5.6 km ceiling shows 5. The smallest target shown
+    /// is 1 km. "Did I hit the target" is judged against this value, so the
+    /// check matches what the runner saw.
     public var displayedDistanceKm: Int {
-        Int(ceil(distanceKm))
+        // The tolerance only absorbs floating-point noise.
+        let roundedUp = max(1, Int((distanceKm - 1e-6).rounded(.up)))
+        guard let capMeters else { return roundedUp }
+        let underCap = Int((capMeters / 1000 + 1e-6).rounded(.down))
+        return max(1, min(roundedUp, underCap))
     }
 
     /// `displayedDistanceKm` re-expressed in meters. Use this when comparing

@@ -38,9 +38,11 @@ public struct PushTargetEngine: Sendable {
     private static let restingHRElevationThreshold = 0.07
     private static let longRunMultiplier = 1.5
     private static let restartFloorMeters = 3000.0  // 3.0 km restart floor
+    /// The day after a long run is this fraction of baseline.
+    private static let recoveryFactor = 0.6
     /// Red readiness caps the day at this fraction of baseline — the same
     /// reduction a post-long-run recovery day gets.
-    private static let redReadinessCapFactor = 0.6
+    private static let redReadinessCapFactor = recoveryFactor
 
     // VO2Max slope thresholds (ml/kg/min per WEEK)
     static let vo2MaxDecliningSlope = -0.05
@@ -63,6 +65,12 @@ public struct PushTargetEngine: Sendable {
         var tone: Tone = .neutral
         var ceilingClamped = false
         var fatigueGuardActive = false
+
+        // The tightest upper bound today. The hard ceiling always applies;
+        // each guard below that limits the distance tightens it. Rounding,
+        // for the 100 m grid and for display, never goes over it.
+        let ceiling = baseline * Self.hardCeilingMultiplier
+        var cap = ceiling
 
         // 2. VO2Max trend
         let vo2Slope = vo2MaxSlopePerWeek(inputs.vo2Max, asOf: inputs.today)
@@ -89,7 +97,8 @@ public struct PushTargetEngine: Sendable {
             target *= 1.12
             tone = .aggressive
         default: // 3+
-            // Restart: reset to last comfortable run, capped by restart floor
+            // Restart: reset to the last comfortable run, at least the
+            // restart floor. The hard ceiling (step 6) still bounds it.
             let last = lastComfortableRun(inputs.runs)
             target = max(Self.restartFloorMeters, last)
             tone = .restart
@@ -98,12 +107,14 @@ public struct PushTargetEngine: Sendable {
         // 4. Resting HR fatigue guard
         if isRestingHRElevated(inputs.restingHeartRate, asOf: inputs.today) {
             target = min(target, baseline)
+            cap = min(cap, baseline)
             fatigueGuardActive = true
         }
 
         // 5. Yesterday was a long run → today is recovery
         if yesterdayWasLongRun(inputs.runs, today: inputs.today, baseline: baseline) {
-            target = baseline * 0.6
+            target = baseline * Self.recoveryFactor
+            cap = min(cap, target)
             tone = .recovery
         }
 
@@ -115,31 +126,35 @@ public struct PushTargetEngine: Sendable {
         var readinessCapApplied = false
         switch inputs.readiness {
         case .red:
-            let cap = baseline * Self.redReadinessCapFactor
-            if target > cap {
-                target = cap
+            let redCap = baseline * Self.redReadinessCapFactor
+            if target > redCap {
+                target = redCap
                 readinessCapApplied = true
             }
+            cap = min(cap, redCap)
             if tone != .restart { tone = .recovery }
         case .yellow:
             if target > baseline {
                 target = baseline
                 readinessCapApplied = true
             }
+            cap = min(cap, baseline)
             if tone == .aggressive { tone = .firm }
         case .green, nil:
             break
         }
 
-        // 6. Hard ceiling
-        let ceiling = baseline * Self.hardCeilingMultiplier
-        if target > ceiling && tone != .restart {
+        // 6. Hard ceiling, on every day: PRD §7.2 holds it "regardless of
+        // skip count", so a restart day can't ask for more either.
+        if target > ceiling {
             target = ceiling
             ceilingClamped = true
         }
 
-        // 7. Round to nearest 100m for display sanity
-        target = (target / 100).rounded() * 100
+        // 7. Round to the nearest 100 m for display sanity, but never above
+        // today's cap (×1.4 of a 5.2 km baseline is 7.28 km, not 7.3).
+        let capOnGrid = ((cap + 1e-6) / 100).rounded(.down) * 100
+        target = min((target / 100).rounded() * 100, capOnGrid)
 
         return RunTarget(
             distanceMeters: target,
@@ -150,6 +165,7 @@ public struct PushTargetEngine: Sendable {
             ceilingClamped: ceilingClamped,
             fatigueGuardActive: fatigueGuardActive,
             readinessCapApplied: readinessCapApplied,
+            capMeters: cap,
             computedAt: inputs.today
         )
     }
