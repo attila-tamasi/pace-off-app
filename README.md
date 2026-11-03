@@ -89,7 +89,7 @@ Re-run `xcodegen` any time you edit `project.yml`.
 xcodebuild test -scheme PaceOff -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
 ```
 
-The `PushTargetEngineTests` suite covers the worked example from PRD §7.3 plus edge cases (3+ day skip restart, hard ceiling clamp, recovery after a long run, fatigue guard).
+The `PushTargetEngineTests` suite covers the worked example from PRD §7.3 plus edge cases (3+ day skip restart, hard ceiling clamp on restart days too, recovery after a long run, fatigue guard, and the shown whole km staying within the day's cap).
 
 ---
 

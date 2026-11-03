@@ -284,20 +284,153 @@ final class PushTargetEngineTests: XCTestCase {
         XCTAssertEqual(target.readinessCapApplied, false)
     }
 
+    // MARK: - Caps hold through rounding
+
+    func test_restart_onA5kmBaseline_isCappedByTheCeiling() {
+        // Three recent long runs make the last comfortable run 21 km while
+        // the 14-day median stays 5 km: the restart can't ask for 21.
+        let today = Date()
+        var runs = (3...5).map { run(daysAgo: $0, km: 21, today: today) }
+        runs += (6...13).map { run(daysAgo: $0, km: 5, today: today) }
+        let target = engine.compute(PushTargetEngine.Inputs(
+            today: today, runs: runs, vo2Max: [], restingHeartRate: []
+        ))
+        XCTAssertEqual(target.tone, .restart)
+        XCTAssertEqual(target.baselineMeters, 5000, accuracy: 0.1)
+        XCTAssertEqual(target.distanceMeters, 7000, accuracy: 0.1) // 1.4 × 5 km
+        XCTAssertTrue(target.ceilingClamped)
+        XCTAssertEqual(target.displayedDistanceKm, 7)
+    }
+
+    func test_restart_afterALongBreak_staysUnderTheFloorCeiling() {
+        // Nothing in the last 14 days: the baseline falls back to the 3 km
+        // floor, so the restart is at most 4.2 km, whatever came before.
+        let today = Date()
+        let runs = (20...30).map { run(daysAgo: $0, km: 10, today: today) }
+        let target = engine.compute(PushTargetEngine.Inputs(
+            today: today, runs: runs, vo2Max: [], restingHeartRate: []
+        ))
+        XCTAssertEqual(target.tone, .restart)
+        XCTAssertEqual(target.distanceMeters, 4200, accuracy: 0.1)
+        XCTAssertEqual(target.displayedDistanceKm, 4, "4.2 km under a 4.2 km cap shows 4, not 5")
+    }
+
+    func test_restart_onATinyBaseline_keepsTheFloor() {
+        // A 1.5 km baseline puts the ceiling at 2.1 km, under the 3 km
+        // restart floor: the floor stands.
+        let today = Date()
+        let runs = (3...10).map { run(daysAgo: $0, km: 1.5, today: today) }
+        let target = engine.compute(PushTargetEngine.Inputs(
+            today: today, runs: runs, vo2Max: [], restingHeartRate: []
+        ))
+        XCTAssertEqual(target.tone, .restart)
+        XCTAssertEqual(target.distanceMeters, 3000, accuracy: 0.1)
+        XCTAssertFalse(target.ceilingClamped)
+        XCTAssertEqual(target.displayedDistanceKm, 3)
+    }
+
+    func test_redDay_showsTheWholeKmUnderTheCap() {
+        // Baseline 5.2 km: red caps the day at 3.12 km, so it shows 3, not 4.
+        let today = Date()
+        let runs = (1...12).map { run(daysAgo: $0, km: 5.2, today: today) }
+        let target = engine.compute(PushTargetEngine.Inputs(
+            today: today, runs: runs, vo2Max: [], restingHeartRate: [],
+            readiness: .red
+        ))
+        XCTAssertEqual(target.distanceMeters, 3100, accuracy: 0.1)
+        XCTAssertLessThanOrEqual(target.distanceMeters, 5200 * 0.6)
+        XCTAssertEqual(target.displayedDistanceKm, 3)
+        // "Target hit" is judged against what the runner saw.
+        XCTAssertEqual(target.displayedDistanceMeters, 3000)
+    }
+
+    func test_ceilingClampedDay_neverShowsMoreThanTheCeiling() {
+        // Baseline 4 km: the ceiling is 5.6 km, so it shows 5, not 6 (1.5×).
+        let today = Date()
+        var runs = (3...5).map { run(daysAgo: $0, km: 12, today: today) }
+        runs += (6...13).map { run(daysAgo: $0, km: 4, today: today) }
+        let target = engine.compute(PushTargetEngine.Inputs(
+            today: today, runs: runs, vo2Max: [], restingHeartRate: []
+        ))
+        XCTAssertTrue(target.ceilingClamped)
+        XCTAssertEqual(target.distanceMeters, 5600, accuracy: 0.1)
+        XCTAssertEqual(target.displayedDistanceKm, 5)
+    }
+
+    func test_roundingUp_neverCrossesTheCeiling_onAnUnclampedDay() {
+        // Baseline 4.93 km, declining VO₂ max, two days skipped: 6.35 km is
+        // under the 6.90 km ceiling, but rounding it up would show 7.
+        let today = Date()
+        let runs = (2...11).map { run(daysAgo: $0, km: 4.93, today: today) }
+        let vo2Series: [VO2MaxSnapshot] = (0..<14).map { i in
+            let daysAgo = i * 2
+            return vo2(daysAgo: daysAgo, value: 50.0 - (Double(28 - daysAgo) * 0.4 / 28), today: today)
+        }
+        let target = engine.compute(PushTargetEngine.Inputs(
+            today: today, runs: runs, vo2Max: vo2Series, restingHeartRate: []
+        ))
+        XCTAssertFalse(target.ceilingClamped)
+        XCTAssertEqual(target.distanceMeters, 6300, accuracy: 0.1)
+        XCTAssertEqual(target.displayedDistanceKm, 6)
+    }
+
+    func test_dayUnderItsCap_stillRoundsUp() {
+        // The worked example: 6.4 km under a 7 km ceiling shows 7.
+        let target = RunTarget(
+            distanceMeters: 6400, tone: .aggressive, daysSinceLastRun: 2,
+            vo2MaxSlope: -0.1, baselineMeters: 5000,
+            ceilingClamped: false, fatigueGuardActive: false, capMeters: 7000
+        )
+        XCTAssertEqual(target.displayedDistanceKm, 7)
+    }
+
+    func test_capUnderOneKm_stillShowsOneKm() {
+        let target = RunTarget(
+            distanceMeters: 500, tone: .recovery, daysSinceLastRun: 1,
+            vo2MaxSlope: nil, baselineMeters: 800,
+            ceilingClamped: false, fatigueGuardActive: false, capMeters: 480
+        )
+        XCTAssertEqual(target.displayedDistanceKm, 1)
+    }
+
+    func test_zeroTarget_stillShowsZero() {
+        // Nothing to run (a zero-distance baseline) stays 0, so the Today
+        // run card falls back to "Logged" rather than judging a hit.
+        let target = RunTarget(
+            distanceMeters: 0, tone: .recovery, daysSinceLastRun: 1,
+            vo2MaxSlope: nil, baselineMeters: 0,
+            ceilingClamped: false, fatigueGuardActive: false, capMeters: 0
+        )
+        XCTAssertEqual(target.displayedDistanceKm, 0)
+    }
+
     // MARK: - RunTarget backward compatibility
 
     func test_runTarget_codableTolerantOfMissingReadinessField() throws {
-        // Cached widget JSON written before readinessCapApplied existed has
-        // no such key — encoding a nil optional omits it, so a round-trip
-        // with nil proves both directions of the compatibility story.
+        // Cached widget JSON written before readinessCapApplied and
+        // capMeters existed has no such keys — encoding a nil optional omits
+        // it, so a round-trip with nil proves both directions of the
+        // compatibility story.
         let legacy = RunTarget(
             distanceMeters: 5000, tone: .firm, daysSinceLastRun: 1,
             vo2MaxSlope: nil, baselineMeters: 5000,
             ceilingClamped: false, fatigueGuardActive: false
         )
         let data = try JSONEncoder().encode(legacy)
-        XCTAssertFalse(String(data: data, encoding: .utf8)!.contains("readinessCapApplied"))
+        let json = String(data: data, encoding: .utf8)!
+        XCTAssertFalse(json.contains("readinessCapApplied"))
+        XCTAssertFalse(json.contains("capMeters"))
         let decoded = try JSONDecoder().decode(RunTarget.self, from: data)
         XCTAssertNil(decoded.readinessCapApplied)
+        XCTAssertNil(decoded.capMeters)
+    }
+
+    func test_legacyTarget_withoutACap_roundsUpAsBefore() {
+        let legacy = RunTarget(
+            distanceMeters: 7700, tone: .firm, daysSinceLastRun: 1,
+            vo2MaxSlope: nil, baselineMeters: 7200,
+            ceilingClamped: false, fatigueGuardActive: false
+        )
+        XCTAssertEqual(legacy.displayedDistanceKm, 8)
     }
 }

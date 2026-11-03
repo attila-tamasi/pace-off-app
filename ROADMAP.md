@@ -68,7 +68,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - The accept-or-keep rule is a pure function with tests in `HealthDataCacheTests`.
 
 ### R-04 · The daily target escapes its bounds
-- **Status:** todo
+- **Status:** done (PR #22)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:**
   - A restart day has no upper limit: with a 5 km baseline it can still come out at 21 km.
@@ -367,6 +367,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-03 · R-04: restart days capped by the 1.4× ceiling; the shown whole km never exceeds the day's cap (PR #22)
 - 2026-11-02 · R-03: a locked, failed or empty Health read keeps the cache; only a fresh read retunes the plan (PR #21)
 - 2026-10-31 · R-02: a run yesterday is never a skip; rest copy on recovery days; streak day number fixed via RunStreak (PR #20)
 - 2026-10-30 · R-01: daily pushes are one-shot for today only; last call only after a skipped day; sign-out clears them (PR #19)
