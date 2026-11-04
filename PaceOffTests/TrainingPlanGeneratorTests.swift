@@ -277,6 +277,60 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         XCTAssertTrue(p.usedBeginnerDefault)
     }
 
+    // MARK: - Volume ramp
+
+    private let rampToday = Date(timeIntervalSince1970: 1_800_000_000)
+
+    private func racePlan(_ goal: RunningGoal, _ tier: PlanTier, weeksOut: Int) -> TrainingPlan {
+        generator.generate(TrainingPlanInputs(
+            goal: goal, tier: tier, vo2Max: 49.2,
+            goalDate: rampToday.addingTimeInterval(Double(weeksOut) * 7 * 86_400),
+            today: rampToday
+        ))
+    }
+
+    func test_volume_risesAtMostTenPercentAWeek_forRaceDates4To20WeeksOut() {
+        for goal in RunningGoal.allCases {
+            for tier in PlanTier.allCases {
+                for weeksOut in 4...20 {
+                    let km = racePlan(goal, tier, weeksOut: weeksOut).weeks.map(\.totalDistanceKm)
+                    for i in 1..<km.count {
+                        XCTAssertLessThanOrEqual(
+                            km[i], km[i - 1] * 1.10 + 1e-6,
+                            "\(goal) \(tier), race \(weeksOut) weeks out: week \(i + 1) is "
+                                + "\(Int(((km[i] / km[i - 1]) - 1) * 100))% up on week \(i)"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    func test_volume_fiveWeekPlan_buildsTenPercent_notToFullPeak() {
+        // Five weeks to race day leave two build weeks. Week 2 is 10% up on
+        // week 1, so the build stops short of the full-length plan's peak.
+        let short = racePlan(.marathon, .aggressive, weeksOut: 5)
+        XCTAssertEqual(short.weekCount, 5)
+        let km = short.weeks.map(\.totalDistanceKm)
+        XCTAssertEqual(km[1] / km[0], 1.10, accuracy: 0.001)
+
+        let full = plan(.marathon, .aggressive)
+        let fullPeak = full.weeks.map(\.totalDistanceKm).max() ?? 0
+        XCTAssertLessThan(km.max() ?? 0, fullPeak)
+    }
+
+    func test_volume_stridesWeek_weighsTheSameAsItsEasyRun() {
+        // The Easy tier's Tuesday strides run is that week's easy distance.
+        let p = plan(.marathon, .easy)
+        for week in p.weeks {
+            let strides = week.days.map(\.workout).filter { $0.kind == .strides }
+            let easy = week.days.map(\.workout).filter { $0.kind == .easy }
+            guard let s = strides.first, let e = easy.first else { continue }
+            XCTAssertEqual(s.distanceMeters, e.distanceMeters, accuracy: 0.001,
+                           "Week \(week.index): strides and easy runs should be the same length")
+        }
+    }
+
     // MARK: - Workout.summary formatting
 
     func test_workout_summary_restIsRest() {
