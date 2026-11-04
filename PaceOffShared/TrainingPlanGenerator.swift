@@ -419,13 +419,10 @@ public struct TrainingPlanGenerator: Sendable {
         case .strides:
             // 4–6 × 20s strides woven into that week's easy run, so a
             // strides week weighs the same as any other.
-            let pace = vdotCalc.paceSecPerKm(vdot: vdot,
-                                             fractionOfVDOT: TrainingIntensity.easy.fractionOfVDOT)
-            return Workout(
+            return easyWorkout(
+                distance: easyDistance(week: week, total: total, goal: goal, tier: tier),
+                vdot: vdot,
                 kind: .strides,
-                distanceMeters: easyDistance(week: week, total: total, goal: goal, tier: tier),
-                paceMinSecPerKm: pace - 15,
-                paceMaxSecPerKm: pace + 15,
                 notes: "Easy run + 4–6 × 20 s strides on the flats."
             )
 
@@ -545,29 +542,35 @@ public struct TrainingPlanGenerator: Sendable {
     private static let maxWeeklyRise = 1.10
 
     /// Build from 70% of peak in week 1 toward 100% at `total - 3`, at most
-    /// 10% up on the week before, then a three-week taper (70 / 50 / 30%)
-    /// into race day. A full-length plan's build stays under the 10% limit
-    /// and reaches the peak. A plan shortened by a race date builds only as
-    /// far as the limit allows: its peak is lower, not its jumps bigger.
-    /// The peak week is included in the build branch on purpose — a plan
-    /// that says "37 km long run at peak" should actually prescribe a 37 km
-    /// run somewhere.
+    /// 10% up on the week before, then a three-week taper (70 / 50 / 30% of
+    /// the peak the build reached) into race day. A full-length plan still
+    /// reaches the full peak; only the 8-week 5K's linear steps touch the
+    /// limit, moving its weeks 2–3 by under 1%. A plan shortened by a race
+    /// date builds only as far as the limit allows: its peak is lower, not
+    /// its jumps bigger. The peak week is included in the build branch on
+    /// purpose — a full-length plan that says "37 km long run at peak"
+    /// should actually prescribe a 37 km run somewhere.
     ///
     /// Every distance in a week scales by this one fraction, so the week's
     /// total rises by the same factor.
     private func volumeFraction(week: Int, of total: Int) -> Double {
-        let peakWeek = max(1, total - 3)  // build to 1.0 here
+        let peakWeek = max(1, total - 3)  // the build peaks here
         if week > peakWeek {
-            // Taper.
+            // Taper, as a share of the peak this plan reached.
+            let peak = buildFraction(week: peakWeek, peakWeek: peakWeek)
             let weeksOut = total - week   // 2 = mid-taper, 1 = race-week
             switch weeksOut {
-            case 1:  return 0.50          // race week
-            case 0:  return 0.30          // race day itself — minimal
-            default: return 0.70          // mid-taper
+            case 1:  return 0.50 * peak   // race week
+            case 0:  return 0.30 * peak   // race day itself — minimal
+            default: return 0.70 * peak   // mid-taper
             }
         }
-        // Linear build from 0.70 at week 1 toward 1.00 at peakWeek, each
-        // week at most 10% over the one before.
+        return buildFraction(week: week, peakWeek: peakWeek)
+    }
+
+    /// Linear build from 0.70 at week 1 toward 1.00 at `peakWeek`, each week
+    /// at most 10% over the one before.
+    private func buildFraction(week: Int, peakWeek: Int) -> Double {
         var fraction = 0.70
         if week > 1 {
             for w in 2...week {

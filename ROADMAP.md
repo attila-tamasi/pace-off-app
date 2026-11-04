@@ -354,6 +354,14 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 - **Problem:** `PushTargetEngine` reads `daysSinceLastRun` as skipped days. So a run yesterday (gap 1) gets the one-skip +5% and the firm tone, and two missed days (gap 3) already reset to a restart. The PRD § 7 rules table, its § 7.3 worked example (two skipped days: +12%, aggressive) and the § 8.2 copy library ("Streak day 1 (yesterday ran)" vs "1 day skipped") count skips as missed days. The voice line follows that reading since R-02.
 - **Options:** shift the engine by one (a run yesterday is no skip; +5% after one missed day, +12% after two, restart after three or more), which changes targets for every runner. Or keep the engine and make the PRD match it.
 
+### D-07 · Rebuild saved plans when the generator changes?
+- **Status:** decision
+- **Problem:** An active plan is saved in full in `training-plan.json`. The background retune only re-paces it and never rebuilds distances. Generator fixes (R-06's 10% ramp, and later R-05, R-07, R-08) therefore reach a runner only when they choose a plan again. A race-date plan picked before R-06 keeps its +43% week.
+- **Options:**
+  - Rebuild the remaining weeks of an active plan built by an older generator, keeping completed weeks as they were. This needs a generator version stored on the plan.
+  - Offer the rebuild with a prompt on the Plan tab.
+  - Leave saved plans alone.
+
 ---
 
 ## Visual check queue

@@ -306,6 +306,22 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         }
     }
 
+    func test_taper_isAShareOfThePlansOwnPeak_forRaceDates4To20WeeksOut() {
+        // A shortened plan peaks lower, and its taper follows that peak.
+        for goal in RunningGoal.allCases {
+            for tier in PlanTier.allCases {
+                for weeksOut in 4...20 {
+                    let km = racePlan(goal, tier, weeksOut: weeksOut).weeks.map(\.totalDistanceKm)
+                    let peak = km[km.count - 4]  // the last build week
+                    let label = "\(goal) \(tier), race \(weeksOut) weeks out"
+                    XCTAssertEqual(km[km.count - 3], peak * 0.70, accuracy: 0.01, "\(label): mid-taper")
+                    XCTAssertEqual(km[km.count - 2], peak * 0.50, accuracy: 0.01, "\(label): race week")
+                    XCTAssertEqual(km[km.count - 1], peak * 0.30, accuracy: 0.01, "\(label): last week")
+                }
+            }
+        }
+    }
+
     func test_volume_fiveWeekPlan_buildsTenPercent_notToFullPeak() {
         // Five weeks to race day leave two build weeks. Week 2 is 10% up on
         // week 1, so the build stops short of the full-length plan's peak.

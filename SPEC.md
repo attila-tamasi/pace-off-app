@@ -26,7 +26,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 ### 4. Training plan (Daniels VDOT)
 - **Picker** (`TrainingPlanPickerView`) — race distance (5K / 10K / Half / Marathon), optional race day, long-run day, and three intensity tiers (Easy / Medium / Aggressive)
 - **Generator** (`TrainingPlanGenerator`) — pure Swift, VDOT-anchored paces via `VDOTCalculator` (Daniels' formula, closed-form; no lookup tables). Handles quality-day spacing, taper, race-date shrink. Weekly distance rises at most 10% a week, so a plan shortened by a race date builds as far as that allows and peaks lower, instead of jumping
-- **Marathon peak long run** — 37 km across all tiers
+- **Marathon peak long run** — 37 km across all tiers in a full-length plan; a plan shortened by a race date peaks lower (see the 10% rule above)
 - **Detail** (`TrainingPlanDetailView`) — week-by-week preview + "Select this plan" activates it
 - **Store** (`TrainingPlanStore`) — persists the active plan as JSON in the App Group container; observable via `@Observable`
 - **Settings sheet** (`TrainingPlanSettingsView`) — inspect / end the active plan
