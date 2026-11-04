@@ -91,7 +91,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Tests assert both for every goal × tier.
 
 ### R-06 · Race-date plans jump in volume
-- **Status:** todo
+- **Status:** done (PR #24)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** When a race date shortens the plan, week 2 is +43% on week 1.
 - **Where:** `TrainingPlanGenerator.planWeeks(for:goalDate:)` and the volume ramp.
@@ -367,6 +367,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-04 · R-06: weekly distance rises at most 10% a week; plans shortened by a race date peak lower instead of jumping (PR #24)
 - 2026-11-03 · R-04: restart days capped by the 1.4× ceiling; the shown whole km never exceeds the day's cap (PR #22)
 - 2026-11-02 · R-03: a locked, failed or empty Health read keeps the cache; only a fresh read retunes the plan (PR #21)
 - 2026-10-31 · R-02: a run yesterday is never a skip; rest copy on recovery days; streak day number fixed via RunStreak (PR #20)
