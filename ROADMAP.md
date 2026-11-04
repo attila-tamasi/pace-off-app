@@ -91,7 +91,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Tests assert both for every goal × tier.
 
 ### R-06 · Race-date plans jump in volume
-- **Status:** todo
+- **Status:** done (PR #24)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** When a race date shortens the plan, week 2 is +43% on week 1.
 - **Where:** `TrainingPlanGenerator.planWeeks(for:goalDate:)` and the volume ramp.
@@ -354,6 +354,14 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 - **Problem:** `PushTargetEngine` reads `daysSinceLastRun` as skipped days. So a run yesterday (gap 1) gets the one-skip +5% and the firm tone, and two missed days (gap 3) already reset to a restart. The PRD § 7 rules table, its § 7.3 worked example (two skipped days: +12%, aggressive) and the § 8.2 copy library ("Streak day 1 (yesterday ran)" vs "1 day skipped") count skips as missed days. The voice line follows that reading since R-02.
 - **Options:** shift the engine by one (a run yesterday is no skip; +5% after one missed day, +12% after two, restart after three or more), which changes targets for every runner. Or keep the engine and make the PRD match it.
 
+### D-07 · Rebuild saved plans when the generator changes?
+- **Status:** decision
+- **Problem:** An active plan is saved in full in `training-plan.json`. The background retune only re-paces it and never rebuilds distances. Generator fixes (R-06's 10% ramp, and later R-05, R-07, R-08) therefore reach a runner only when they choose a plan again. A race-date plan picked before R-06 keeps its +43% week.
+- **Options:**
+  - Rebuild the remaining weeks of an active plan built by an older generator, keeping completed weeks as they were. This needs a generator version stored on the plan.
+  - Offer the rebuild with a prompt on the Plan tab.
+  - Leave saved plans alone.
+
 ---
 
 ## Visual check queue
@@ -367,6 +375,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-04 · R-06: weekly distance rises at most 10% a week; plans shortened by a race date peak lower instead of jumping (PR #24)
 - 2026-11-03 · R-04: restart days capped by the 1.4× ceiling; the shown whole km never exceeds the day's cap (PR #22)
 - 2026-11-02 · R-03: a locked, failed or empty Health read keeps the cache; only a fresh read retunes the plan (PR #21)
 - 2026-10-31 · R-02: a run yesterday is never a skip; rest copy on recovery days; streak day number fixed via RunStreak (PR #20)
