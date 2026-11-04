@@ -81,7 +81,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - `PushTargetEngineTests` cover a 5 km-baseline restart, a red day and a ceiling-clamped day.
 
 ### R-05 · Easy marathon plan: long run is most of the week
-- **Status:** todo
+- **Status:** blocked: needs the owner's call on plan volume. The 30% cap can't hold as the plans are built. An Easy week has 3 runs, so its long run is at least 33% of the week. The 37 km marathon long run (SPEC § 4) needs a week of at least 123 km, against Easy / Medium / Aggressive peaks of 45 / 65 / 95 km; the 20 km half long run needs 67 km, against 35 / 55. Which gives way? (a) A cap that fits the run count (about 45% for 3 runs, 35% for 4, 30% for 5), with long runs shortened to today's weekly peaks: marathon peaks of about 20 / 23 / 28 km. (b) Keep the long-run peaks and raise weekly volume or runs per week. (c) Another rule. Scaling week 1 from current fitness works with any of them.
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** In the Easy marathon plan, the long run is 82% of weekly distance, already 25.9 km in week 1, even for a beginner.
 - **Where:** `PaceOffShared/TrainingPlanGenerator.swift` (week templates, long-run share).
