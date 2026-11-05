@@ -100,7 +100,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Tests cover goal dates from 4 to 20 weeks out.
 
 ### R-07a · Race day in the plan
-- **Status:** todo
+- **Status:** done (PR #25)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** On race day the plan prescribes a 6 km long run, with intervals two days later.
 - **Where:** `TrainingPlanGenerator`; `WorkoutKind`; how the Plan tab, Today and notifications show the day.
@@ -377,6 +377,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #25: the Plan tab on race day (hero "Race day", the race row marked in the week), the plan detail week with the race, and Today's plan line "… plan · Race day"
 - [ ] PR #20: Today's "N-day streak" label now shows before today's run, and the hero card's voice line follows the new states (streak, recovery, ran today)
 - [ ] PR #17: splash → sign-in hand-off, Health-style Today (with and without data), Plan tab (with and without a plan), Profile sheet from the avatar, Trends
 
@@ -384,6 +385,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-05 · R-07a: the race is in the plan on its date, with a rest day before and recovery after; R-07b blocked (PR #25)
 - 2026-11-04 · R-06: weekly distance rises at most 10% a week; plans shortened by a race date peak lower instead of jumping (PR #24)
 - 2026-11-03 · R-04: restart days capped by the 1.4× ceiling; the shown whole km never exceeds the day's cap (PR #22)
 - 2026-11-02 · R-03: a locked, failed or empty Health read keeps the cache; only a fresh read retunes the plan (PR #21)
