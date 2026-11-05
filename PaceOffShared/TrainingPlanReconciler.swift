@@ -108,7 +108,8 @@ public struct TrainingPlanReconciler: Sendable {
             weeks: weeks,
             vdot: newVDOT,
             usedBeginnerDefault: false,
-            createdAt: plan.createdAt
+            createdAt: plan.createdAt,
+            startDate: plan.startDate
         )
     }
 
@@ -122,7 +123,8 @@ public struct TrainingPlanReconciler: Sendable {
         let fraction: Double
         let tolerance: Double
         switch workout.kind {
-        case .rest:
+        case .rest, .race:
+            // Neither carries a pace band.
             return workout
         case .easy, .long, .strides:
             fraction = TrainingIntensity.easy.fractionOfVDOT

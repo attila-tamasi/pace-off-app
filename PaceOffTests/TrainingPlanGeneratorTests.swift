@@ -60,10 +60,12 @@ final class TrainingPlanGeneratorTests: XCTestCase {
 
     func test_planLength_raceDateInsideDefaultShrinksPlan() {
         let today = Date()
-        // Use absolute seconds to dodge DST drift around calendar arithmetic.
-        let sixWeeksOut = today.addingTimeInterval(6 * 7 * 24 * 3600)
+        // Calendar days, as planWeeks counts them, so a DST change can't
+        // move the race by a day.
+        let sixWeeksOut = Calendar.current.date(byAdding: .day, value: 42, to: today)!
         let weeks = generator.planWeeks(for: .marathon, goalDate: sixWeeksOut, today: today)
-        XCTAssertEqual(weeks, 6, "Plan should condense to the available window")
+        // Today through race day: six weeks and one day, so seven weeks.
+        XCTAssertEqual(weeks, 7, "Plan should condense to the available window")
     }
 
     func test_planLength_raceDateBeyondDefaultUsesDefault() {
@@ -289,11 +291,19 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         ))
     }
 
+    /// A week's training distance in km: everything but the race itself,
+    /// which is the goal, not load the build has to ramp to.
+    private func trainingKm(_ week: TrainingWeek) -> Double {
+        week.days.map(\.workout)
+            .filter { $0.kind != .race && $0.kind != .rest }
+            .reduce(0) { $0 + $1.distanceKm }
+    }
+
     func test_volume_risesAtMostTenPercentAWeek_forRaceDates4To20WeeksOut() {
         for goal in RunningGoal.allCases {
             for tier in PlanTier.allCases {
                 for weeksOut in 4...20 {
-                    let km = racePlan(goal, tier, weeksOut: weeksOut).weeks.map(\.totalDistanceKm)
+                    let km = racePlan(goal, tier, weeksOut: weeksOut).weeks.map(trainingKm)
                     for i in 1..<km.count {
                         XCTAssertLessThanOrEqual(
                             km[i], km[i - 1] * 1.10 + 1e-6,
@@ -307,32 +317,150 @@ final class TrainingPlanGeneratorTests: XCTestCase {
     }
 
     func test_taper_isAShareOfThePlansOwnPeak_forRaceDates4To20WeeksOut() {
-        // A shortened plan peaks lower, and its taper follows that peak.
+        // A shortened plan peaks lower, and its taper follows that peak. The
+        // race week ends on the race; its last days only lose distance, so
+        // it comes in at or under its share.
         for goal in RunningGoal.allCases {
             for tier in PlanTier.allCases {
                 for weeksOut in 4...20 {
-                    let km = racePlan(goal, tier, weeksOut: weeksOut).weeks.map(\.totalDistanceKm)
+                    let km = racePlan(goal, tier, weeksOut: weeksOut).weeks.map(trainingKm)
                     let peak = km[km.count - 4]  // the last build week
                     let label = "\(goal) \(tier), race \(weeksOut) weeks out"
                     XCTAssertEqual(km[km.count - 3], peak * 0.70, accuracy: 0.01, "\(label): mid-taper")
-                    XCTAssertEqual(km[km.count - 2], peak * 0.50, accuracy: 0.01, "\(label): race week")
-                    XCTAssertEqual(km[km.count - 1], peak * 0.30, accuracy: 0.01, "\(label): last week")
+                    XCTAssertEqual(km[km.count - 2], peak * 0.50, accuracy: 0.01, "\(label): week before the race")
+                    XCTAssertLessThanOrEqual(km[km.count - 1], peak * 0.30 + 0.01, "\(label): race week")
                 }
             }
         }
     }
 
     func test_volume_fiveWeekPlan_buildsTenPercent_notToFullPeak() {
-        // Five weeks to race day leave two build weeks. Week 2 is 10% up on
-        // week 1, so the build stops short of the full-length plan's peak.
-        let short = racePlan(.marathon, .aggressive, weeksOut: 5)
+        // A race four weeks out gives five weeks (the fifth holds race day)
+        // and two build weeks. Week 2 is 10% up on week 1, so the build
+        // stops short of the full-length plan's peak.
+        let short = racePlan(.marathon, .aggressive, weeksOut: 4)
         XCTAssertEqual(short.weekCount, 5)
-        let km = short.weeks.map(\.totalDistanceKm)
+        let km = short.weeks.map(trainingKm)
         XCTAssertEqual(km[1] / km[0], 1.10, accuracy: 0.001)
 
         let full = plan(.marathon, .aggressive)
-        let fullPeak = full.weeks.map(\.totalDistanceKm).max() ?? 0
+        let fullPeak = full.weeks.map(trainingKm).max() ?? 0
         XCTAssertLessThan(km.max() ?? 0, fullPeak)
+    }
+
+    // MARK: - Race day
+
+    private func day(_ offset: Int, from date: Date) -> Date {
+        Calendar.current.date(byAdding: .day, value: offset, to: date)!
+    }
+
+    /// A plan for a race `daysOut` days after `rampToday`.
+    private func racePlan(_ goal: RunningGoal, _ tier: PlanTier, daysOut: Int) -> (TrainingPlan, Date) {
+        let raceDay = day(daysOut, from: rampToday)
+        let p = generator.generate(TrainingPlanInputs(
+            goal: goal, tier: tier, vo2Max: 49.2, goalDate: raceDay, today: rampToday
+        ))
+        return (p, raceDay)
+    }
+
+    func test_race_isOnTheGoalDate_forEveryGoalTierAndWeekday() {
+        for goal in RunningGoal.allCases {
+            for tier in PlanTier.allCases {
+                for daysOut in 28...34 {
+                    let (p, raceDay) = racePlan(goal, tier, daysOut: daysOut)
+                    let label = "\(goal) \(tier), race \(daysOut) days out"
+                    let race = p.todayWorkout(today: raceDay)
+                    XCTAssertEqual(race?.kind, .race, label)
+                    XCTAssertEqual(race?.distanceMeters ?? 0, goal.distanceMeters, accuracy: 0.001, label)
+                    let raceCount = p.weeks.flatMap(\.days).filter { $0.workout.kind == .race }.count
+                    XCTAssertEqual(raceCount, 1, label)
+                }
+            }
+        }
+    }
+
+    func test_race_endsThePlan_withATaperBeforeIt() {
+        for goal in RunningGoal.allCases {
+            for tier in PlanTier.allCases {
+                for daysOut in 28...34 {
+                    let (p, raceDay) = racePlan(goal, tier, daysOut: daysOut)
+                    let label = "\(goal) \(tier), race \(daysOut) days out"
+                    XCTAssertEqual(p.todayWorkout(today: day(-1, from: raceDay))?.kind, .rest, "\(label): day before")
+                    for before in [-2, -3] {
+                        let kind = p.todayWorkout(today: day(before, from: raceDay))?.kind
+                        XCTAssertNotNil(kind, "\(label): day \(before) is in the plan")
+                        XCTAssertFalse(kind?.isQuality ?? true, "\(label): no quality session on day \(before)")
+                        XCTAssertNotEqual(kind, .long, "\(label): no long run on day \(before)")
+                    }
+                    XCTAssertNil(p.todayWorkout(today: day(1, from: raceDay)), "\(label): the plan ends with the race")
+                    // Today is in week 1, which starts at most six days back.
+                    XCTAssertEqual(p.currentWeekIndex(today: rampToday), 0, label)
+                }
+            }
+        }
+    }
+
+    func test_race_exactlySixWeeksOut_onTodaysWeekday_isInThePlan() {
+        let (p, raceDay) = racePlan(.halfMarathon, .medium, daysOut: 42)
+        XCTAssertEqual(p.weekCount, 7, "Today through race day spans seven weeks")
+        XCTAssertEqual(p.todayWorkout(today: raceDay)?.kind, .race)
+        // Week 1 began six days ago, so week 7 ends on race day.
+        XCTAssertEqual(p.startDate, Calendar.current.startOfDay(for: day(-6, from: rampToday)))
+        XCTAssertEqual(p.createdAt, rampToday)
+    }
+
+    func test_race_tenDaysOut_isInTheTaperAlready() {
+        // The 4-week minimum still ends on race day, so today falls in week 3
+        // of 4, the week before the race week.
+        let (p, raceDay) = racePlan(.tenK, .medium, daysOut: 10)
+        XCTAssertEqual(p.weekCount, 4)
+        XCTAssertEqual(p.todayWorkout(today: raceDay)?.kind, .race)
+        XCTAssertEqual(p.currentWeekIndex(today: rampToday), 2)
+    }
+
+    func test_race_laterToday_isTodayInThePlan() {
+        // A race date set to earlier today, at any hour, is still today.
+        let raceDay = Calendar.current.startOfDay(for: rampToday)
+        let p = generator.generate(TrainingPlanInputs(
+            goal: .fiveK, tier: .easy, vo2Max: 49.2, goalDate: raceDay, today: rampToday
+        ))
+        XCTAssertEqual(p.weekCount, 4)
+        XCTAssertEqual(p.todayWorkout(today: rampToday)?.kind, .race)
+    }
+
+    func test_race_furtherOutThanThePlan_isLeftOut() {
+        // A marathon 26 weeks out gets the 16-week plan, which ends first.
+        let (p, raceDay) = racePlan(.marathon, .medium, daysOut: 26 * 7)
+        XCTAssertEqual(p.weekCount, 16)
+        XCTAssertNil(p.startDate)
+        XCTAssertNil(p.todayWorkout(today: raceDay))
+        XCTAssertFalse(p.weeks.flatMap(\.days).contains { $0.workout.kind == .race })
+    }
+
+    func test_planSavedWithoutAStartDate_stillDecodes() throws {
+        // Plans saved before startDate existed have no such key.
+        let p = plan(.tenK, .medium)
+        XCTAssertNil(p.startDate)
+        let data = try JSONEncoder().encode(p)
+        XCTAssertFalse(String(data: data, encoding: .utf8)!.contains("startDate"))
+        let decoded = try JSONDecoder().decode(TrainingPlan.self, from: data)
+        XCTAssertEqual(decoded, p)
+    }
+
+    func test_race_withoutARaceDate_isNeverPlanned() {
+        let p = plan(.halfMarathon, .medium)
+        XCTAssertFalse(p.weeks.flatMap(\.days).contains { $0.workout.kind == .race })
+    }
+
+    func test_race_namesItselfAsRaceDay() {
+        let (p, raceDay) = racePlan(.halfMarathon, .medium, daysOut: 30)
+        let race = p.todayWorkout(today: raceDay)
+        XCTAssertEqual(race?.kind.displayName, "Race day")
+        XCTAssertEqual(race?.summary, "21.1 km")
+        XCTAssertEqual(race?.headline, "Race day · 21.1 km")
+        // Other workouts keep their summary as the headline.
+        let easy = Workout(kind: .easy, distanceMeters: 8_000, paceMinSecPerKm: 300, paceMaxSecPerKm: 330)
+        XCTAssertEqual(easy.headline, easy.summary)
     }
 
     func test_volume_stridesWeek_weighsTheSameAsItsEasyRun() {

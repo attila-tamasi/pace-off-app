@@ -220,7 +220,7 @@ public final class BackgroundRefreshService {
         let status = reconciler.todayStatus(plan: plan, runs: runs, today: Date())
 
         // Cache for the widget / next cold launch.
-        if let summary = status.workout?.summary {
+        if let summary = status.workout?.headline {
             AppGroup.sharedDefaults?.set(summary, forKey: AppGroup.Keys.lastPlanWorkoutSummary)
         } else {
             AppGroup.sharedDefaults?.removeObject(forKey: AppGroup.Keys.lastPlanWorkoutSummary)

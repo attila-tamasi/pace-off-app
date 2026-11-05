@@ -157,6 +157,16 @@ final class DailyPushPlannerTests: XCTestCase {
         XCTAssertTrue(result.isEmpty)
     }
 
+    func test_raceDay_onlyAMorningPush_aboutTheRace() {
+        // No daily target and no reminders on race day, even with a skipped
+        // day earlier this week.
+        let race = Workout(kind: .race, distanceMeters: 21_097.5, paceMinSecPerKm: 0, paceMaxSecPerKm: 0)
+        let pending = PlanDayStatus(workout: race, isCompleted: false)
+        let result = pushes(now: date(day: 7, hour: 6), runs: [run(day: 5)], plan: plan(), planStatus: pending)
+        XCTAssertEqual(result.map(\.slot), [.morning])
+        XCTAssertEqual(result.first?.body, "Race day · 21.1 km. Start controlled and let the taper work.")
+    }
+
     func test_planWorkoutDone_sendsNothingMoreToday() {
         let done = PlanDayStatus(workout: easy, isCompleted: true)
         let result = pushes(now: date(day: 7, hour: 6), runs: [run(day: 5)], plan: plan(), planStatus: done)

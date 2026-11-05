@@ -190,4 +190,11 @@ final class TrainingPlanReconcilerTests: XCTestCase {
         let rest = Workout(kind: .rest, distanceMeters: 0, paceMinSecPerKm: 0, paceMaxSecPerKm: 0)
         XCTAssertEqual(reconciler.retuned(rest, vdot: 60), rest)
     }
+
+    func test_retunedWorkout_raceIsUntouched() {
+        // The race has no pace band, so a retune leaves it as it is.
+        let race = Workout(kind: .race, distanceMeters: 21_097.5, paceMinSecPerKm: 0, paceMaxSecPerKm: 0,
+                           notes: "Half Marathon race.")
+        XCTAssertEqual(reconciler.retuned(race, vdot: 60), race)
+    }
 }

@@ -99,16 +99,25 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Week-over-week distance rises by at most about 10%, cutback weeks excepted, including in compressed plans.
   - Tests cover goal dates from 4 to 20 weeks out.
 
-### R-07 · The race isn't in the plan
-- **Status:** todo
+### R-07a · Race day in the plan
+- **Status:** done (PR #25)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** On race day the plan prescribes a 6 km long run, with intervals two days later.
 - **Where:** `TrainingPlanGenerator`; `WorkoutKind`; how the Plan tab, Today and notifications show the day.
 - **Done when:**
-  - The goal date appears in the plan as the race.
+  - A goal date inside the plan appears in it as the race.
   - The days before it taper, and the days after it are rest or easy.
   - The Plan tab, Today's plan line and the notifications name it as race day.
   - Tests cover it.
+
+### R-07b · A race further out than the plan
+- **Status:** blocked: needs the owner's call. A race further out than the goal's default plan length (16 weeks for a marathon, 12 half, 10 10K, 8 5K) falls after the plan ends: the plan starts today and finishes before the race, so the race isn't in it. Which should it be? (a) Start the plan later so it ends on race day, with the Plan tab saying when it starts. (b) Start today and add base-building weeks before the build. (c) Keep it as it is.
+- **Size:** S   ·   **Merge:** auto
+- **Problem:** The goal date is the race only when the plan's weeks can reach it (R-07a). A closer race ends the plan; a farther one doesn't.
+- **Where:** `TrainingPlanGenerator.generate` (`raceDay`, `start`), `planWeeks(for:goalDate:today:)`; `PlanTabView` before a plan starts.
+- **Done when:**
+  - For any future race date, the plan has the race on its date.
+  - If the plan starts later, the Plan tab says when.
 
 ### R-08 · Slow runners get paces that are too fast
 - **Status:** todo
@@ -368,6 +377,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #25: the Plan tab on race day (hero "Race day", the race row marked in the week), the plan detail week with the race, and Today's plan line "… plan · Race day"; a new race plan's week 1 can show a few days already past
 - [ ] PR #20: Today's "N-day streak" label now shows before today's run, and the hero card's voice line follows the new states (streak, recovery, ran today)
 - [ ] PR #17: splash → sign-in hand-off, Health-style Today (with and without data), Plan tab (with and without a plan), Profile sheet from the avatar, Trends
 
@@ -375,6 +385,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-05 · R-07a: a reachable race is the plan's last day, counted back from it, with a rest day and no hard sessions before it; R-07b blocked (PR #25)
 - 2026-11-04 · R-06: weekly distance rises at most 10% a week; plans shortened by a race date peak lower instead of jumping (PR #24)
 - 2026-11-03 · R-04: restart days capped by the 1.4× ceiling; the shown whole km never exceeds the day's cap (PR #22)
 - 2026-11-02 · R-03: a locked, failed or empty Health read keeps the cache; only a fresh read retunes the plan (PR #21)
