@@ -112,7 +112,7 @@ public struct DailyPushPlanner: Sendable {
 
         var body = inputs.body
         if let planWorkout {
-            body = "Today's plan: \(planWorkout.headline). \(body)"
+            body = "Today's plan: \(planWorkout.summary). \(body)"
         }
 
         var pushes: [DailyPush] = []
@@ -123,6 +123,16 @@ public struct DailyPushPlanner: Sendable {
                 fireDate: time(inputs.schedule.morningHour, 0, on: inputs.now),
                 body: Self.restDayBody
             ))
+        } else if let planWorkout, planWorkout.kind == .race {
+            // Race day: one morning push about the race, no daily target
+            // and no reminders.
+            if !doneToday {
+                pushes.append(DailyPush(
+                    slot: .morning,
+                    fireDate: time(inputs.schedule.morningHour, 0, on: inputs.now),
+                    body: Self.raceDayBody(planWorkout)
+                ))
+            }
         } else if !doneToday {
             pushes.append(DailyPush(
                 slot: .morning,
@@ -158,6 +168,11 @@ public struct DailyPushPlanner: Sendable {
     static let restDayBody = "Rest day on your plan. Recovery is training too."
     static let newDayBody = "New day, new target. Open Pace Off to see yours."
 
+    /// "Race day · 21.1 km. Start controlled and let the taper work."
+    static func raceDayBody(_ race: Workout) -> String {
+        "\(race.headline). Start controlled and let the taper work."
+    }
+
     /// Tomorrow's plan workout when there is one, else a nudge to open the
     /// app. Today's target never carries over.
     private func nextMorningBody(plan: TrainingPlan?, tomorrow: Date) -> String {
@@ -165,7 +180,8 @@ public struct DailyPushPlanner: Sendable {
         let midday = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: tomorrow) ?? tomorrow
         guard let workout = plan?.todayWorkout(today: midday) else { return Self.newDayBody }
         if workout.kind == .rest { return Self.restDayBody }
-        return "Today's plan: \(workout.headline). Open Pace Off for your target."
+        if workout.kind == .race { return Self.raceDayBody(workout) }
+        return "Today's plan: \(workout.summary). Open Pace Off for your target."
     }
 
     /// Days earlier this week (Monday-based, as the training plan's weeks)

@@ -120,9 +120,7 @@ struct TrainingPlanDetailView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(day.workout.kind.displayName)
                         .font(.system(.subheadline, design: .rounded,
-                                      weight: day.workout.kind.isQuality || day.workout.kind == .long
-                                            || day.workout.kind == .race
-                                            ? .semibold : .regular))
+                                      weight: day.workout.kind.isKeySession ? .semibold : .regular))
                         .foregroundStyle(day.workout.kind == .rest ? .secondary : .primary)
                     if day.workout.kind != .rest {
                         Text("· \(day.workout.summary)")

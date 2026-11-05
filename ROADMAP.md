@@ -110,14 +110,14 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - The Plan tab, Today's plan line and the notifications name it as race day.
   - Tests cover it.
 
-### R-07b · A race outside the plan's weeks
-- **Status:** blocked: needs the owner's call. A race further out than the goal's default plan length (16 weeks for a marathon, 12 half, 10 10K, 8 5K) falls after the plan ends: the plan starts today and finishes before the race, so the race isn't in it. Which should it be? (a) Start the plan later so it ends on race day, with the Plan tab saying when it starts. (b) Start today and add base-building weeks before the build. (c) Keep it as it is. Also: a race closer than four weeks still gets the four-week minimum, so two or three weeks of easy running follow it. Should the plan shrink to the weeks left (taper only), or keep four weeks?
+### R-07b · A race further out than the plan
+- **Status:** blocked: needs the owner's call. A race further out than the goal's default plan length (16 weeks for a marathon, 12 half, 10 10K, 8 5K) falls after the plan ends: the plan starts today and finishes before the race, so the race isn't in it. Which should it be? (a) Start the plan later so it ends on race day, with the Plan tab saying when it starts. (b) Start today and add base-building weeks before the build. (c) Keep it as it is.
 - **Size:** S   ·   **Merge:** auto
-- **Problem:** The goal date is the race only when it falls inside the plan's weeks (R-07a).
-- **Where:** `TrainingPlanGenerator.planWeeks(for:goalDate:today:)`; `TrainingPlan.currentWeekIndex`; `PlanTabView` before a plan starts.
+- **Problem:** The goal date is the race only when the plan's weeks can reach it (R-07a). A closer race ends the plan; a farther one doesn't.
+- **Where:** `TrainingPlanGenerator.generate` (`raceDay`, `start`), `planWeeks(for:goalDate:today:)`; `PlanTabView` before a plan starts.
 - **Done when:**
   - For any future race date, the plan has the race on its date.
-  - The Plan tab says what happens before the plan starts, if it starts later.
+  - If the plan starts later, the Plan tab says when.
 
 ### R-08 · Slow runners get paces that are too fast
 - **Status:** todo
@@ -385,7 +385,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
-- 2026-11-05 · R-07a: the race is in the plan on its date, with a rest day before and recovery after; R-07b blocked (PR #25)
+- 2026-11-05 · R-07a: a reachable race is the plan's last day, counted back from it, with a rest day and no hard sessions before it; R-07b blocked (PR #25)
 - 2026-11-04 · R-06: weekly distance rises at most 10% a week; plans shortened by a race date peak lower instead of jumping (PR #24)
 - 2026-11-03 · R-04: restart days capped by the 1.4× ceiling; the shown whole km never exceeds the day's cap (PR #22)
 - 2026-11-02 · R-03: a locked, failed or empty Health read keeps the cache; only a fresh read retunes the plan (PR #21)

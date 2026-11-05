@@ -108,7 +108,8 @@ public struct TrainingPlanReconciler: Sendable {
             weeks: weeks,
             vdot: newVDOT,
             usedBeginnerDefault: false,
-            createdAt: plan.createdAt
+            createdAt: plan.createdAt,
+            startDate: plan.startDate
         )
     }
 

@@ -175,7 +175,7 @@ private struct ActivePlanView: View {
 
             Spacer(minLength: 0)
 
-            if day.workout.kind.isQuality || day.workout.kind == .long || day.workout.kind == .race {
+            if day.workout.kind.isKeySession {
                 Circle()
                     .fill(BrandPalette.track)
                     .frame(width: 8, height: 8)

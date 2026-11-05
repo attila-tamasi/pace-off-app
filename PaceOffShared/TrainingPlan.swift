@@ -121,6 +121,12 @@ public enum WorkoutKind: String, Codable, Sendable, CaseIterable {
         default: return false
         }
     }
+
+    /// The sessions the plan views mark: quality work, the long run and
+    /// the race.
+    public var isKeySession: Bool {
+        isQuality || self == .long || self == .race
+    }
 }
 
 // MARK: - Workout
@@ -153,6 +159,10 @@ public struct Workout: Codable, Sendable, Equatable {
     }
 
     public var distanceKm: Double { distanceMeters / 1000 }
+
+    /// A rest day.
+    public static let rest = Workout(kind: .rest, distanceMeters: 0,
+                                     paceMinSecPerKm: 0, paceMaxSecPerKm: 0)
 
     /// The summary on one line that also names the day: "Race day · 21.1 km"
     /// on the race, the plain summary otherwise. For notifications and the
@@ -240,6 +250,12 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
     public let usedBeginnerDefault: Bool
     /// When the plan was generated.
     public let createdAt: Date
+    /// The day week 1 begins, when it isn't `createdAt`. A plan built for a
+    /// race counts its weeks back from race day, so the race is the last
+    /// day of the last week, and week 1 can begin a few days before the
+    /// plan was generated. Optional so plans saved before this field
+    /// existed still decode.
+    public let startDate: Date?
 
     public init(id: UUID = UUID(),
                 goal: RunningGoal,
@@ -248,7 +264,8 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
                 weeks: [TrainingWeek],
                 vdot: Double,
                 usedBeginnerDefault: Bool,
-                createdAt: Date = Date()) {
+                createdAt: Date = Date(),
+                startDate: Date? = nil) {
         self.id = id
         self.goal = goal
         self.tier = tier
@@ -257,6 +274,7 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
         self.vdot = vdot
         self.usedBeginnerDefault = usedBeginnerDefault
         self.createdAt = createdAt
+        self.startDate = startDate
     }
 
     public var weekCount: Int { weeks.count }
@@ -269,7 +287,7 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
     /// Returns nil when `today` is before the plan starts or after it ends.
     public func currentWeekIndex(today: Date = Date()) -> Int? {
         let cal = Calendar.current
-        let startOfPlan = cal.startOfDay(for: createdAt)
+        let startOfPlan = cal.startOfDay(for: startDate ?? createdAt)
         let startOfToday = cal.startOfDay(for: today)
         guard let days = cal.dateComponents([.day], from: startOfPlan, to: startOfToday).day,
               days >= 0

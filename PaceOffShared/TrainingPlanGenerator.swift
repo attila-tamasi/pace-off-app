@@ -133,9 +133,8 @@ public enum TrainingIntensity: Sendable {
         case .marathonPace: return .marathon
         case .tempo, .threshold: return .threshold
         case .interval, .strides: return .interval
-        case .rest: return .easy
-        // Race effort. The race workout itself carries no pace band.
-        case .race: return .marathon
+        // Neither has a pace band of its own.
+        case .rest, .race: return .easy
         }
     }
 }
@@ -196,6 +195,20 @@ public struct TrainingPlanGenerator: Sendable {
         let weekCount = planWeeks(for: inputs.goal,
                                   goalDate: inputs.goalDate,
                                   today: inputs.today)
+        // A race the plan's weeks can reach is its last day: count the
+        // weeks back from it. Week 1 then begins up to six days before
+        // today (more when the 4-week minimum applies), so the taper weeks
+        // line up with the race whatever its weekday.
+        let cal = Calendar.current
+        let raceDay = inputs.goalDate.flatMap { goalDate -> Date? in
+            guard let days = daysUntilRace(goalDate, today: inputs.today),
+                  days < weekCount * 7 else { return nil }
+            return cal.startOfDay(for: goalDate)
+        }
+        let start = raceDay.flatMap {
+            cal.date(byAdding: .day, value: -(weekCount * 7 - 1), to: $0)
+        }
+
         var weeks = (1...weekCount).map { i in
             buildWeek(
                 index: i,
@@ -206,8 +219,8 @@ public struct TrainingPlanGenerator: Sendable {
                 vdot: vdot
             )
         }
-        if let goalDate = inputs.goalDate {
-            weeks = placingRace(on: goalDate, in: weeks, planStart: inputs.today,
+        if let raceDay, let start {
+            weeks = placingRace(on: raceDay, in: weeks, planStart: start,
                                 goal: inputs.goal, tier: inputs.tier, vdot: vdot)
         }
         return TrainingPlan(
@@ -217,7 +230,8 @@ public struct TrainingPlanGenerator: Sendable {
             weeks: weeks,
             vdot: vdot,
             usedBeginnerDefault: fromFallback,
-            createdAt: inputs.today
+            createdAt: inputs.today,
+            startDate: start
         )
     }
 
@@ -248,20 +262,28 @@ public struct TrainingPlanGenerator: Sendable {
     /// race 6 months out doesn't need a 26-week 5K plan). 4-week minimum so
     /// the structure (build + taper) survives.
     ///
-    /// A plan's weeks are 7-day blocks counted from today, and the count
-    /// includes the block that holds race day itself: a race exactly six
-    /// weeks out, on today's weekday, is day 1 of the seventh block.
+    /// The count covers today through race day: a race exactly six weeks
+    /// out, on today's weekday, needs seven weeks, the plan ending on it.
     public func planWeeks(for goal: RunningGoal,
                           goalDate: Date? = nil,
                           today: Date = Date()) -> Int {
         let defaultWeeks = defaultPlanWeeks(for: goal)
-        guard let goalDate, goalDate > today else { return defaultWeeks }
-        let cal = Calendar.current
-        let daysUntil = cal.dateComponents([.day],
-                                           from: cal.startOfDay(for: today),
-                                           to: cal.startOfDay(for: goalDate)).day ?? 0
+        guard let goalDate, let daysUntil = daysUntilRace(goalDate, today: today)
+        else { return defaultWeeks }
         let weeksUntil = daysUntil / 7 + 1
         return max(4, min(defaultWeeks, weeksUntil))
+    }
+
+    /// Calendar days from today to race day: 0 when the race is today, at
+    /// any hour. Nil once race day has passed.
+    private func daysUntilRace(_ goalDate: Date, today: Date) -> Int? {
+        let cal = Calendar.current
+        guard let days = cal.dateComponents([.day],
+                                            from: cal.startOfDay(for: today),
+                                            to: cal.startOfDay(for: goalDate)).day,
+              days >= 0
+        else { return nil }
+        return days
     }
 
     private func defaultPlanWeeks(for goal: RunningGoal) -> Int {
@@ -426,8 +448,7 @@ public struct TrainingPlanGenerator: Sendable {
 
         switch kind {
         case .rest:
-            return Workout(kind: .rest, distanceMeters: 0,
-                           paceMinSecPerKm: 0, paceMaxSecPerKm: 0)
+            return .rest
 
         case .strides:
             // 4–6 × 20s strides woven into that week's easy run, so a
@@ -513,11 +534,9 @@ public struct TrainingPlanGenerator: Sendable {
         )
     }
 
-    /// Put the race on its date. The day before it is rest, and the two
-    /// days before that carry no quality session or long run. After it come
-    /// two rest days, then easy runs only. Each change only takes distance
-    /// away. A race outside the plan's weeks (further out than the goal's
-    /// default plan length) leaves the plan as it is.
+    /// Put the race on its date, the plan's last day. The day before it is
+    /// rest, and the two days before that carry no quality session or long
+    /// run: an easy run, never longer than the session it replaces.
     ///
     /// Weeks are 7-day blocks from `planStart`, and a block's days are
     /// found by weekday, the same way `TrainingPlan.todayWorkout` reads
@@ -538,7 +557,6 @@ public struct TrainingPlanGenerator: Sendable {
 
         let total = weeks.count
         var days = weeks.map(\.days)
-        let rest = Workout(kind: .rest, distanceMeters: 0, paceMinSecPerKm: 0, paceMaxSecPerKm: 0)
 
         // Rewrite the workout `offset` days after the plan's start; the
         // closure also gets that day's 1-based week number.
@@ -552,25 +570,19 @@ public struct TrainingPlanGenerator: Sendable {
             days[week][slot] = TrainingDay(weekday: day.weekday,
                                            workout: change(day.workout, week + 1))
         }
-        // A run turned into an easy one, never longer than it was.
+        // A session turned into an easy run, never longer than it was.
         func easy(_ workout: Workout, week: Int) -> Workout {
-            guard workout.kind != .rest else { return workout }
             let distance = min(workout.distanceMeters,
                                easyDistance(week: week, total: total, goal: goal, tier: tier))
             return easyWorkout(distance: distance, vdot: vdot, kind: .easy)
         }
 
         rewrite(raceOffset) { _, _ in self.raceWorkout(goal: goal) }
-        rewrite(raceOffset - 1) { _, _ in rest }
+        rewrite(raceOffset - 1) { _, _ in .rest }
         for offset in [raceOffset - 2, raceOffset - 3] {
             rewrite(offset) { workout, week in
                 workout.kind.isQuality || workout.kind == .long ? easy(workout, week: week) : workout
             }
-        }
-        rewrite(raceOffset + 1) { _, _ in rest }
-        rewrite(raceOffset + 2) { _, _ in rest }
-        for offset in stride(from: raceOffset + 3, to: dayCount, by: 1) {
-            rewrite(offset) { workout, week in easy(workout, week: week) }
         }
 
         return zip(weeks, days).map { week, rewritten in TrainingWeek(index: week.index, days: rewritten) }
