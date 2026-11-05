@@ -157,6 +157,14 @@ final class DailyPushPlannerTests: XCTestCase {
         XCTAssertTrue(result.isEmpty)
     }
 
+    func test_raceDay_pushNamesTheRace() {
+        let race = Workout(kind: .race, distanceMeters: 21_097.5, paceMinSecPerKm: 0, paceMaxSecPerKm: 0)
+        let pending = PlanDayStatus(workout: race, isCompleted: false)
+        let result = pushes(now: date(day: 7, hour: 6), runs: [run(day: 5)], plan: plan(), planStatus: pending)
+        XCTAssertEqual(result.first?.slot, .morning)
+        XCTAssertEqual(result.first?.body, "Today's plan: Race day · 21.1 km. Run 8 km.")
+    }
+
     func test_planWorkoutDone_sendsNothingMoreToday() {
         let done = PlanDayStatus(workout: easy, isCompleted: true)
         let result = pushes(now: date(day: 7, hour: 6), runs: [run(day: 5)], plan: plan(), planStatus: done)

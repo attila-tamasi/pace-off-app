@@ -99,16 +99,25 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Week-over-week distance rises by at most about 10%, cutback weeks excepted, including in compressed plans.
   - Tests cover goal dates from 4 to 20 weeks out.
 
-### R-07 · The race isn't in the plan
+### R-07a · Race day in the plan
 - **Status:** todo
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** On race day the plan prescribes a 6 km long run, with intervals two days later.
 - **Where:** `TrainingPlanGenerator`; `WorkoutKind`; how the Plan tab, Today and notifications show the day.
 - **Done when:**
-  - The goal date appears in the plan as the race.
+  - A goal date inside the plan appears in it as the race.
   - The days before it taper, and the days after it are rest or easy.
   - The Plan tab, Today's plan line and the notifications name it as race day.
   - Tests cover it.
+
+### R-07b · A race outside the plan's weeks
+- **Status:** blocked: needs the owner's call. A race further out than the goal's default plan length (16 weeks for a marathon, 12 half, 10 10K, 8 5K) falls after the plan ends: the plan starts today and finishes before the race, so the race isn't in it. Which should it be? (a) Start the plan later so it ends on race day, with the Plan tab saying when it starts. (b) Start today and add base-building weeks before the build. (c) Keep it as it is. Also: a race closer than four weeks still gets the four-week minimum, so two or three weeks of easy running follow it. Should the plan shrink to the weeks left (taper only), or keep four weeks?
+- **Size:** S   ·   **Merge:** auto
+- **Problem:** The goal date is the race only when it falls inside the plan's weeks (R-07a).
+- **Where:** `TrainingPlanGenerator.planWeeks(for:goalDate:today:)`; `TrainingPlan.currentWeekIndex`; `PlanTabView` before a plan starts.
+- **Done when:**
+  - For any future race date, the plan has the race on its date.
+  - The Plan tab says what happens before the plan starts, if it starts later.
 
 ### R-08 · Slow runners get paces that are too fast
 - **Status:** todo

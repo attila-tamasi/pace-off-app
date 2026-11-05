@@ -98,6 +98,7 @@ public enum WorkoutKind: String, Codable, Sendable, CaseIterable {
     case interval     // I pace (95–100% VO2max) reps with jog recovery
     case strides      // short fast accelerations (~20 s × 4–6), no full quality session
     case rest         // explicit rest day, kept for display
+    case race         // the goal race itself, on the race date
 
     public var displayName: String {
         switch self {
@@ -109,6 +110,7 @@ public enum WorkoutKind: String, Codable, Sendable, CaseIterable {
         case .interval:     return "Interval"
         case .strides:      return "Strides"
         case .rest:         return "Rest"
+        case .race:         return "Race day"
         }
     }
 
@@ -151,6 +153,13 @@ public struct Workout: Codable, Sendable, Equatable {
     }
 
     public var distanceKm: Double { distanceMeters / 1000 }
+
+    /// The summary on one line that also names the day: "Race day · 21.1 km"
+    /// on the race, the plain summary otherwise. For notifications and the
+    /// widget, which show no workout-kind label next to it.
+    public var headline: String {
+        kind == .race ? "Race day · \(summary)" : summary
+    }
 
     /// "12 km · 5:25–5:45/km" / "Rest" / "Strides".
     public var summary: String {

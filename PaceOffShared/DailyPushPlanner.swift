@@ -112,7 +112,7 @@ public struct DailyPushPlanner: Sendable {
 
         var body = inputs.body
         if let planWorkout {
-            body = "Today's plan: \(planWorkout.summary). \(body)"
+            body = "Today's plan: \(planWorkout.headline). \(body)"
         }
 
         var pushes: [DailyPush] = []
@@ -165,7 +165,7 @@ public struct DailyPushPlanner: Sendable {
         let midday = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: tomorrow) ?? tomorrow
         guard let workout = plan?.todayWorkout(today: midday) else { return Self.newDayBody }
         if workout.kind == .rest { return Self.restDayBody }
-        return "Today's plan: \(workout.summary). Open Pace Off for your target."
+        return "Today's plan: \(workout.headline). Open Pace Off for your target."
     }
 
     /// Days earlier this week (Monday-based, as the training plan's weeks)
