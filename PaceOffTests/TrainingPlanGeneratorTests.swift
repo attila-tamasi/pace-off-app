@@ -283,14 +283,55 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         }
     }
 
-    func test_resolveVDOT_clampsAMeasurementToTheFormulasRange() {
-        let range = VDOTCalculator.validRange
+    func test_resolveVDOT_clampsASlowReading_upToTheFormulasRange() {
         let (low, lowFallback) = generator.resolveVDOT(TrainingPlanInputs(goal: .fiveK, tier: .easy, vo2Max: 15))
-        XCTAssertEqual(low, range.lowerBound, accuracy: 0.001)
+        XCTAssertEqual(low, VDOTCalculator.validRange.lowerBound, accuracy: 0.001)
         XCTAssertFalse(lowFallback, "A low reading is clamped, not replaced by the default")
-        let (high, highFallback) = generator.resolveVDOT(TrainingPlanInputs(goal: .fiveK, tier: .easy, vo2Max: 95))
-        XCTAssertEqual(high, range.upperBound, accuracy: 0.001)
-        XCTAssertFalse(highFallback)
+    }
+
+    func test_resolveVDOT_ignoresImplausibleReadings() {
+        let readings: [Double] = [5, 95, 120, .nan, .infinity]
+        for vo2 in readings {
+            let (v, fallback) = generator.resolveVDOT(TrainingPlanInputs(goal: .fiveK, tier: .easy, vo2Max: vo2))
+            XCTAssertEqual(v, TrainingPlanGenerator.beginnerVDOTFallback, accuracy: 0.001, "VO₂ \(vo2)")
+            XCTAssertTrue(fallback, "VO₂ \(vo2)")
+        }
+    }
+
+    func test_resolveVDOT_aPBInRange_beatsASlowOrJunkReading() {
+        // A 25:00 5K is about VDOT 38.3; a 29:00 one about 32.1.
+        let pb25 = PersonalBest(durationSeconds: 25 * 60, year: 2026)
+        let pb29 = PersonalBest(durationSeconds: 29 * 60, year: 2026)
+        for (vo2, pb, expected) in [(15.0, pb25, 38.3), (18.0, pb29, 32.1), (120.0, pb25, 38.3)] {
+            let (v, fallback) = generator.resolveVDOT(TrainingPlanInputs(
+                goal: .fiveK, tier: .easy, vo2Max: vo2, personalBest: pb
+            ))
+            XCTAssertEqual(v, expected, accuracy: 0.2, "VO₂ \(vo2)")
+            XCTAssertFalse(fallback, "VO₂ \(vo2)")
+        }
+    }
+
+    func test_resolveVDOT_aReadingInRange_stillBeatsThePB() {
+        let pb25 = PersonalBest(durationSeconds: 25 * 60, year: 2026)
+        let (v, fallback) = generator.resolveVDOT(TrainingPlanInputs(
+            goal: .fiveK, tier: .easy, vo2Max: 22, personalBest: pb25
+        ))
+        XCTAssertEqual(v, 22, accuracy: 0.001)
+        XCTAssertFalse(fallback)
+    }
+
+    func test_resolveVDOT_ignoresAMistypedPB() {
+        // A 4-minute marathon and a 9-hour 5K are typos, not runners.
+        let marathon = generator.resolveVDOT(TrainingPlanInputs(
+            goal: .marathon, tier: .easy, personalBest: PersonalBest(durationSeconds: 4 * 60, year: 2026)
+        ))
+        let fiveK = generator.resolveVDOT(TrainingPlanInputs(
+            goal: .fiveK, tier: .easy, personalBest: PersonalBest(durationSeconds: 9 * 3_600, year: 2026)
+        ))
+        for (v, fallback) in [marathon, fiveK] {
+            XCTAssertEqual(v, TrainingPlanGenerator.beginnerVDOTFallback, accuracy: 0.001)
+            XCTAssertTrue(fallback)
+        }
     }
 
     func test_resolveVDOT_usesASlowPB() {
