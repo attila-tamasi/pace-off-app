@@ -38,6 +38,22 @@ public struct VDOTCalculator: Sendable {
 
     public init() {}
 
+    /// The VDOTs the pace formula is used for. At 20 the easy pace is about
+    /// 10:20/km; below it the "easy run" turns into a walk, which the
+    /// running-economy curve doesn't describe. 90 is beyond any measured
+    /// runner.
+    public static let validRange: ClosedRange<Double> = 20...90
+
+    /// The VDOTs a measurement can have. Below 10 is less oxygen than an
+    /// ordinary walk takes and above 90 is beyond any measured runner, so a
+    /// reading outside this is a bad sample or a mistyped PB, not a runner.
+    public static let plausibleRange: ClosedRange<Double> = 10...90
+
+    /// `vdot` brought inside `validRange`.
+    public static func clamped(_ vdot: Double) -> Double {
+        min(max(vdot, validRange.lowerBound), validRange.upperBound)
+    }
+
     // Daniels coefficients.
     private static let a0: Double = -4.6
     private static let a1: Double = 0.182258
@@ -77,9 +93,8 @@ public struct VDOTCalculator: Sendable {
         let A = Self.a2
         let B = Self.a1
         let C = Self.a0 - target
-        // Discriminant is well above zero for any plausible target VO₂ value
-        // we'll feed in (VDOT range ~25..80 → target 17..80), so the closed-
-        // form solution is safe.
+        // The discriminant is positive for any non-negative target VO₂, so
+        // the closed-form solution is safe.
         let disc = B * B - 4 * A * C
         let root = (-B + sqrt(disc)) / (2 * A)
         return root
@@ -179,8 +194,8 @@ public struct TrainingPlanInputs: Sendable {
 
 public struct TrainingPlanGenerator: Sendable {
 
-    /// VDOT used when both VO₂ max and PB are missing. Corresponds to ~30
-    /// min 5K / ~5:50/km easy pace — a believable starting baseline for a
+    /// VDOT used when both VO₂ max and PB are missing. Corresponds to a ~25
+    /// min 5K / ~6:20/km easy pace — a believable starting baseline for a
     /// returning-recreational runner.
     public static let beginnerVDOTFallback: Double = 38.0
 
@@ -237,20 +252,29 @@ public struct TrainingPlanGenerator: Sendable {
 
     // MARK: VDOT resolution
 
-    /// Pick the best VDOT we can. Preferred order:
-    /// 1. VO₂ max from HealthKit, when present and plausible.
+    /// Pick the best VDOT we can from the runner's measurements:
+    /// 1. VO₂ max from HealthKit.
     /// 2. Daniels-formula derivation from the user's PB for the goal distance.
-    /// 3. The beginner-default fallback.
+    /// A measurement outside `VDOTCalculator.plausibleRange` is a bad
+    /// sample or a mistyped PB and is ignored. The first measurement inside
+    /// `VDOTCalculator.validRange` wins; when there's none, a slow one is
+    /// clamped up to the range rather than swapped for the default: a slow
+    /// runner's 18 is far nearer the truth than 38, whose paces suit a
+    /// 25-minute 5K. The beginner default applies only with no measurement.
     /// Returns `(vdot, usedFallback)`.
     public func resolveVDOT(_ inputs: TrainingPlanInputs) -> (Double, Bool) {
-        if let vo2 = inputs.vo2Max, vo2 >= 25 && vo2 <= 90 {
-            return (vo2, false)
+        let fromPB = inputs.personalBest.flatMap { pb in
+            vdotCalc.vdot(fromRaceDistanceMeters: inputs.goal.distanceMeters,
+                          timeSeconds: pb.durationSeconds)
         }
-        if let pb = inputs.personalBest,
-           let v = vdotCalc.vdot(fromRaceDistanceMeters: inputs.goal.distanceMeters,
-                                 timeSeconds: pb.durationSeconds),
-           v >= 25 && v <= 90 {
-            return (v, false)
+        let measured = [inputs.vo2Max, fromPB]
+            .compactMap { $0 }
+            .filter { VDOTCalculator.plausibleRange.contains($0) }
+        if let inRange = measured.first(where: { VDOTCalculator.validRange.contains($0) }) {
+            return (inRange, false)
+        }
+        if let slow = measured.first {
+            return (VDOTCalculator.clamped(slow), false)
         }
         return (Self.beginnerVDOTFallback, true)
     }

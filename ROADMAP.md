@@ -120,7 +120,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - If the plan starts later, the Plan tab says when.
 
 ### R-08 · Slow runners get paces that are too fast
-- **Status:** todo
+- **Status:** done (PR #26)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** Below VDOT 25 the generator falls back to the beginner default of 38, so it prescribes paces far faster than the runner can hold.
 - **Where:** `TrainingPlanGenerator` (`beginnerVDOTFallback` and the VDOT source order); `VDOTCalculator` validity range.
@@ -385,6 +385,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-06 · R-08: a slow runner's measured VO₂ max or PB is used (below VDOT 20 it's raised to 20); junk readings (outside 10–90) are ignored; the beginner default only when there's no usable measurement (PR #26)
 - 2026-11-05 · R-07a: a reachable race is the plan's last day, counted back from it, with a rest day and no hard sessions before it; R-07b blocked (PR #25)
 - 2026-11-04 · R-06: weekly distance rises at most 10% a week; plans shortened by a race date peak lower instead of jumping (PR #24)
 - 2026-11-03 · R-04: restart days capped by the 1.4× ceiling; the shown whole km never exceeds the day's cap (PR #22)
