@@ -38,6 +38,18 @@ public struct VDOTCalculator: Sendable {
 
     public init() {}
 
+    /// The VDOTs the pace formula is used for. At 20 the easy pace is about
+    /// 10:20/km; below it the "easy run" turns into a walk, which the
+    /// running-economy curve doesn't describe. 90 is beyond any measured
+    /// runner. A measurement outside the range is clamped to it, never
+    /// swapped for a default.
+    public static let validRange: ClosedRange<Double> = 20...90
+
+    /// `vdot` brought inside `validRange`.
+    public static func clamped(_ vdot: Double) -> Double {
+        min(max(vdot, validRange.lowerBound), validRange.upperBound)
+    }
+
     // Daniels coefficients.
     private static let a0: Double = -4.6
     private static let a1: Double = 0.182258
@@ -77,9 +89,9 @@ public struct VDOTCalculator: Sendable {
         let A = Self.a2
         let B = Self.a1
         let C = Self.a0 - target
-        // Discriminant is well above zero for any plausible target VO₂ value
-        // we'll feed in (VDOT range ~25..80 → target 17..80), so the closed-
-        // form solution is safe.
+        // Discriminant is well above zero for any target VO₂ value we feed
+        // in (`validRange` 20...90 → target 14...88), so the closed-form
+        // solution is safe.
         let disc = B * B - 4 * A * C
         let root = (-B + sqrt(disc)) / (2 * A)
         return root
@@ -179,8 +191,8 @@ public struct TrainingPlanInputs: Sendable {
 
 public struct TrainingPlanGenerator: Sendable {
 
-    /// VDOT used when both VO₂ max and PB are missing. Corresponds to ~30
-    /// min 5K / ~5:50/km easy pace — a believable starting baseline for a
+    /// VDOT used when both VO₂ max and PB are missing. Corresponds to a ~25
+    /// min 5K / ~6:20/km easy pace — a believable starting baseline for a
     /// returning-recreational runner.
     public static let beginnerVDOTFallback: Double = 38.0
 
@@ -238,19 +250,22 @@ public struct TrainingPlanGenerator: Sendable {
     // MARK: VDOT resolution
 
     /// Pick the best VDOT we can. Preferred order:
-    /// 1. VO₂ max from HealthKit, when present and plausible.
+    /// 1. VO₂ max from HealthKit, when there is a reading.
     /// 2. Daniels-formula derivation from the user's PB for the goal distance.
-    /// 3. The beginner-default fallback.
+    /// 3. The beginner-default fallback, only when there's neither.
+    /// A measurement is clamped to `VDOTCalculator.validRange`, never
+    /// replaced by the default: a slow runner's 18 is far nearer the truth
+    /// than 38, whose paces suit a 25-minute 5K.
     /// Returns `(vdot, usedFallback)`.
     public func resolveVDOT(_ inputs: TrainingPlanInputs) -> (Double, Bool) {
-        if let vo2 = inputs.vo2Max, vo2 >= 25 && vo2 <= 90 {
-            return (vo2, false)
+        if let vo2 = inputs.vo2Max, vo2.isFinite, vo2 > 0 {
+            return (VDOTCalculator.clamped(vo2), false)
         }
         if let pb = inputs.personalBest,
            let v = vdotCalc.vdot(fromRaceDistanceMeters: inputs.goal.distanceMeters,
                                  timeSeconds: pb.durationSeconds),
-           v >= 25 && v <= 90 {
-            return (v, false)
+           v.isFinite {
+            return (VDOTCalculator.clamped(v), false)
         }
         return (Self.beginnerVDOTFallback, true)
     }

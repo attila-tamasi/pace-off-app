@@ -272,6 +272,57 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         XCTAssertTrue(fallback)
     }
 
+    func test_resolveVDOT_usesSlowAndAverageVO2AsIs() {
+        // A slow reading is the runner's own, not a cue for the default.
+        for vo2 in [20.0, 25.0, 38.0] {
+            let (v, fallback) = generator.resolveVDOT(TrainingPlanInputs(
+                goal: .fiveK, tier: .easy, vo2Max: vo2
+            ))
+            XCTAssertEqual(v, vo2, accuracy: 0.001, "VO₂ \(vo2)")
+            XCTAssertFalse(fallback, "VO₂ \(vo2)")
+        }
+    }
+
+    func test_resolveVDOT_clampsAMeasurementToTheFormulasRange() {
+        let range = VDOTCalculator.validRange
+        let (low, lowFallback) = generator.resolveVDOT(TrainingPlanInputs(goal: .fiveK, tier: .easy, vo2Max: 15))
+        XCTAssertEqual(low, range.lowerBound, accuracy: 0.001)
+        XCTAssertFalse(lowFallback, "A low reading is clamped, not replaced by the default")
+        let (high, highFallback) = generator.resolveVDOT(TrainingPlanInputs(goal: .fiveK, tier: .easy, vo2Max: 95))
+        XCTAssertEqual(high, range.upperBound, accuracy: 0.001)
+        XCTAssertFalse(highFallback)
+    }
+
+    func test_resolveVDOT_usesASlowPB() {
+        // A 42-minute 5K is about VDOT 20.4; a 45-minute one is 18.7,
+        // below the range, so it clamps to 20.
+        let (v42, fallback42) = generator.resolveVDOT(TrainingPlanInputs(
+            goal: .fiveK, tier: .easy, personalBest: PersonalBest(durationSeconds: 42 * 60, year: 2026)
+        ))
+        XCTAssertEqual(v42, 20.4, accuracy: 0.2)
+        XCTAssertFalse(fallback42)
+        let (v45, fallback45) = generator.resolveVDOT(TrainingPlanInputs(
+            goal: .fiveK, tier: .easy, personalBest: PersonalBest(durationSeconds: 45 * 60, year: 2026)
+        ))
+        XCTAssertEqual(v45, VDOTCalculator.validRange.lowerBound, accuracy: 0.001)
+        XCTAssertFalse(fallback45)
+    }
+
+    func test_slowRunnersPlan_easyPaceIsTheirs_notTheBeginnerDefaults() {
+        let slow = plan(.fiveK, .easy, vo2: 20)
+        let beginner = plan(.fiveK, .easy, vo2: nil)
+        XCTAssertEqual(slow.vdot, 20, accuracy: 0.001)
+        XCTAssertFalse(slow.usedBeginnerDefault)
+        XCTAssertTrue(beginner.usedBeginnerDefault)
+        let easyMid: (TrainingPlan) -> Double = { p in
+            let easy = p.weeks.flatMap(\.days).map(\.workout).first(where: { $0.kind == .easy })!
+            return (easy.paceMinSecPerKm + easy.paceMaxSecPerKm) / 2
+        }
+        // VDOT 20 easy runs sit near 10:20/km; the default's near 6:21/km.
+        XCTAssertEqual(easyMid(slow), 620, accuracy: 15)
+        XCTAssertEqual(easyMid(beginner), 381, accuracy: 15)
+    }
+
     func test_generate_flagsBeginnerDefaultWhenUsed() {
         let p = generator.generate(
             TrainingPlanInputs(goal: .fiveK, tier: .easy, vo2Max: nil, personalBest: nil)
