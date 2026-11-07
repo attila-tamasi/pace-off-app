@@ -24,6 +24,7 @@
 
 import Foundation
 import BackgroundTasks
+import WidgetKit
 import os
 
 @MainActor
@@ -172,12 +173,15 @@ public final class BackgroundRefreshService {
             notificationLine = aiNotif
         }
 
-        // Cache for the widget + next app launch.
-        if let data = try? JSONEncoder().encode(target) {
-            AppGroup.sharedDefaults?.set(data, forKey: AppGroup.Keys.lastTodayTarget)
-        }
-        AppGroup.sharedDefaults?.set(voiceLine, forKey: AppGroup.Keys.lastTodayVoiceLine)
-        AppGroup.sharedDefaults?.set(todayRun != nil, forKey: AppGroup.Keys.runCompletedToday)
+        // Hand the day to the widget in one write, and have it redraw.
+        WidgetCache(
+            target: target,
+            voiceLine: voiceLine,
+            runCompletedToday: todayRun != nil,
+            planSummary: planStatus?.workout?.headline,
+            planCompletedToday: planStatus?.isCompleted ?? false
+        ).save(to: AppGroup.sharedDefaults)
+        WidgetCenter.shared.reloadAllTimelines()
 
         // Reschedule today's notifications with the freshly enriched body so
         // the user gets the updated copy on the next push.
@@ -210,22 +214,10 @@ public final class BackgroundRefreshService {
     private func reconcileTrainingPlan(runs: [RunRecord], vo2Max: [VO2MaxSnapshot]) -> PlanDayStatus? {
         let store = TrainingPlanStore.shared
         store.load() // re-read disk — the app may have written since our launch
-        guard let plan = store.activePlan else {
-            AppGroup.sharedDefaults?.removeObject(forKey: AppGroup.Keys.lastPlanWorkoutSummary)
-            AppGroup.sharedDefaults?.set(false, forKey: AppGroup.Keys.planWorkoutCompletedToday)
-            return nil
-        }
+        guard let plan = store.activePlan else { return nil }
 
         let reconciler = TrainingPlanReconciler()
         let status = reconciler.todayStatus(plan: plan, runs: runs, today: Date())
-
-        // Cache for the widget / next cold launch.
-        if let summary = status.workout?.headline {
-            AppGroup.sharedDefaults?.set(summary, forKey: AppGroup.Keys.lastPlanWorkoutSummary)
-        } else {
-            AppGroup.sharedDefaults?.removeObject(forKey: AppGroup.Keys.lastPlanWorkoutSummary)
-        }
-        AppGroup.sharedDefaults?.set(status.isCompleted, forKey: AppGroup.Keys.planWorkoutCompletedToday)
 
         // Resolve the runner's current VDOT the same way the picker does.
         // The profile's PB only applies when it's for the plan's distance.

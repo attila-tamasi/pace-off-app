@@ -23,8 +23,8 @@ Companion docs: `ROADMAP.md` (the prioritised backlog: what to build next), `LOO
 Four targets defined in `project.yml`:
 - `PaceOff` — iPhone app (sources: `PaceOff/`)
 - `PaceOff Watch App` — watchOS companion (sources: `PaceOffWatch Watch App/` — note the folder name differs from the target name)
-- `PaceOffWidget` — Lock Screen / Home Screen widget (reads the cached `RunTarget` JSON from App Group `UserDefaults`)
-- `PaceOffTests` — XCTest suite (`PushTargetEngineTests`, `TrainingPlanGeneratorTests`, `TrainingPlanReconcilerTests`, `GoalPredictionServiceTests`, `HealthDataCacheTests`, `ReadinessEngineTests`, `DailyPushPlannerTests`, `VoiceCopyTests`); unit tests are cheap and expected
+- `PaceOffWidget` — Lock Screen / Home Screen widget (draws the day the app caches through `WidgetCache` in App Group `UserDefaults`; a day cached on an earlier date shows as "Open Pace Off")
+- `PaceOffTests` — XCTest suite (`PushTargetEngineTests`, `TrainingPlanGeneratorTests`, `TrainingPlanReconcilerTests`, `GoalPredictionServiceTests`, `HealthDataCacheTests`, `ReadinessEngineTests`, `DailyPushPlannerTests`, `VoiceCopyTests`, `WidgetCacheTests`); unit tests are cheap and expected
 
 `PaceOffShared/` is **not a target** — it's a source folder compiled directly into every target above. Keep it free of UIKit, and free of HealthKit where avoidable, so it stays testable.
 

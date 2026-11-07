@@ -5,6 +5,7 @@ import Foundation
 import SwiftUI
 import CoreLocation
 import Observation
+import WidgetKit
 
 @MainActor
 @Observable
@@ -108,11 +109,16 @@ public final class TodayViewModel {
             notificationBody = cannedNotif
         }
 
-        // Cache for the widget
-        if let data = try? JSONEncoder().encode(target) {
-            AppGroup.sharedDefaults?.set(data, forKey: AppGroup.Keys.lastTodayTarget)
-        }
-        AppGroup.sharedDefaults?.set(self.voiceLine, forKey: AppGroup.Keys.lastTodayVoiceLine)
+        // Hand the day to the widget in one write, and have it redraw now
+        // rather than at its next scheduled entry.
+        WidgetCache(
+            target: target,
+            voiceLine: self.voiceLine,
+            runCompletedToday: todayRun != nil,
+            planSummary: planStatus?.workout?.headline,
+            planCompletedToday: planStatus?.isCompleted ?? false
+        ).save(to: AppGroup.sharedDefaults)
+        WidgetCenter.shared.reloadAllTimelines()
 
         // Schedule today's notifications using the (possibly AI-rewritten) body.
         NotificationScheduler.shared.scheduleDailyPushes(
@@ -165,8 +171,6 @@ public final class TodayViewModel {
             .suffix(12)
             .map { TrendPoint(date: $0.date, value: $0.value) }
         self.weekDistances = Self.dailyDistances(runs, days: 7, now: now)
-
-        AppGroup.sharedDefaults?.set(self.todayRun != nil, forKey: AppGroup.Keys.runCompletedToday)
     }
 
     /// Mean value per calendar day over the last `days` days (today

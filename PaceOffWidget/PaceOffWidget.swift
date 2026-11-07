@@ -7,49 +7,32 @@ import SwiftUI
 
 struct PaceOffEntry: TimelineEntry {
     let date: Date
-    let target: RunTarget?
-    let voiceLine: String
-    let runCompletedToday: Bool
-    /// Today's plan workout summary ("8.0 km · 5:25–5:45/km", "Rest"),
-    /// written by the background sync. Nil when no plan is active.
-    let planSummary: String?
-    /// Whether a recorded run already covered today's plan workout.
-    let planCompletedToday: Bool
+    /// What the app last cached, whichever day that was.
+    let cache: WidgetCache
 
-    var isPlanRestDay: Bool { planSummary == "Rest" }
+    /// The cache as of this entry's moment: empty once it's from an
+    /// earlier day.
+    var today: WidgetCache { cache.asOf(date) }
+    var dot: WidgetCache.Dot { cache.dot(at: date) }
 }
 
 struct PaceOffProvider: TimelineProvider {
 
     func placeholder(in context: Context) -> PaceOffEntry {
-        PaceOffEntry(date: Date(), target: nil, voiceLine: "Lace up.",
-                     runCompletedToday: false, planSummary: nil, planCompletedToday: false)
+        PaceOffEntry(date: Date(), cache: .empty)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (PaceOffEntry) -> Void) {
-        completion(currentEntry())
+        completion(PaceOffEntry(date: Date(), cache: WidgetCache.load(from: AppGroup.sharedDefaults)))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<PaceOffEntry>) -> Void) {
-        let entry = currentEntry()
-        // Refresh hourly so the status dot can flip from amber → red after 12:00
-        let next = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date().addingTimeInterval(3600)
-        completion(Timeline(entries: [entry], policy: .after(next)))
-    }
-
-    private func currentEntry() -> PaceOffEntry {
-        let defaults = AppGroup.sharedDefaults
-        var target: RunTarget?
-        if let data = defaults?.data(forKey: AppGroup.Keys.lastTodayTarget) {
-            target = try? JSONDecoder().decode(RunTarget.self, from: data)
-        }
-        let voice = defaults?.string(forKey: AppGroup.Keys.lastTodayVoiceLine) ?? "Open Pace Off."
-        let done = defaults?.bool(forKey: AppGroup.Keys.runCompletedToday) ?? false
-        let planSummary = defaults?.string(forKey: AppGroup.Keys.lastPlanWorkoutSummary)
-        let planDone = defaults?.bool(forKey: AppGroup.Keys.planWorkoutCompletedToday) ?? false
-        return PaceOffEntry(date: Date(), target: target, voiceLine: voice,
-                            runCompletedToday: done, planSummary: planSummary,
-                            planCompletedToday: planDone)
+        // One entry now, one at noon for the red dot and one at midnight,
+        // when the cached day goes stale. The app reloads the timeline
+        // whenever it writes a new day.
+        let cache = WidgetCache.load(from: AppGroup.sharedDefaults)
+        let entries = WidgetCache.timelineDates(from: Date()).map { PaceOffEntry(date: $0, cache: cache) }
+        completion(Timeline(entries: entries, policy: .atEnd))
     }
 }
 
@@ -101,7 +84,7 @@ struct PaceOffWidgetView: View {
                         .font(.system(.headline, design: .rounded, weight: .bold))
                     // The plan line beats the voice line when a plan is
                     // active — it's the more actionable of the two.
-                    Text(planLine ?? entry.voiceLine)
+                    Text(planLine ?? voiceLine)
                         .font(.system(.caption2, design: .rounded))
                         .lineLimit(2)
                 }
@@ -120,18 +103,18 @@ struct PaceOffWidgetView: View {
                     .font(.system(.largeTitle, design: .rounded, weight: .bold))
                 if let planLine {
                     HStack(spacing: 4) {
-                        Image(systemName: entry.planCompletedToday
+                        Image(systemName: today.planCompletedToday
                               ? "checkmark.circle.fill"
                               : "calendar")
                             .font(.system(.caption2, weight: .semibold))
-                            .foregroundStyle(entry.planCompletedToday ? .green : .secondary)
+                            .foregroundStyle(today.planCompletedToday ? Color.green : Color.secondary)
                         Text(planLine)
                             .font(.system(.caption2, design: .rounded, weight: .semibold))
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     }
                 }
-                Text(entry.voiceLine)
+                Text(voiceLine)
                     .font(.system(.caption, design: .rounded))
                     .lineLimit(planLine == nil ? 3 : 2)
                     .foregroundStyle(.secondary)
@@ -139,77 +122,92 @@ struct PaceOffWidgetView: View {
         }
     }
 
+    /// Everything the views read goes through here, so nothing cached on an
+    /// earlier day reaches the screen.
+    private var today: WidgetCache { entry.today }
+
+    private var voiceLine: String {
+        today.voiceLine ?? "Open Pace Off."
+    }
+
     /// "Plan: 8.0 km · 5:25–5:45/km", "Plan: 8.0 km ✓" once completed,
     /// "Rest day" on planned rest. Nil when no plan is active.
     private var planLine: String? {
-        guard let summary = entry.planSummary else { return nil }
-        if entry.isPlanRestDay { return "Rest day" }
-        if entry.planCompletedToday { return "Plan: \(summary) ✓" }
+        guard let summary = today.planSummary else { return nil }
+        if today.isPlanRestDay { return "Rest day" }
+        if today.planCompletedToday { return "Plan: \(summary) ✓" }
         return "Plan: \(summary)"
     }
 
     private var distanceShort: String {
-        guard let t = entry.target else { return "—" }
+        guard let t = today.target else { return "—" }
         return "\(t.displayedDistanceKm)"
     }
 
     private var inlineText: String {
-        guard let t = entry.target else { return "Pace Off: open me" }
+        guard let t = today.target else { return "Open Pace Off" }
         return "Pace Off: \(t.displayedDistanceKm) km"
     }
 
+    /// Green once today is done or on a planned rest day (never the
+    /// after-noon nag on one), orange then red while today's run is still
+    /// ahead, grey with no target for today.
     private var statusColor: Color {
-        if entry.runCompletedToday || entry.planCompletedToday { return .green }
-        // A planned rest day is a job well done by doing nothing — never
-        // show the after-noon red nag on one.
-        if entry.isPlanRestDay { return .green }
-        let hour = Calendar.current.component(.hour, from: entry.date)
-        if hour >= 12 { return .red }
-        return .orange
+        switch entry.dot {
+        case .neutral: return Color.secondary
+        case .green: return Color.green
+        case .orange: return Color.orange
+        case .red: return Color.red
+        }
     }
 }
 
 #if DEBUG
 private extension PaceOffEntry {
-    static var samplePending: PaceOffEntry {
-        PaceOffEntry(
-            date: Date(),
-            target: RunTarget(
-                distanceMeters: 7_700,
-                tone: .firm,
-                daysSinceLastRun: 1,
-                vo2MaxSlope: -0.05,
-                baselineMeters: 7_200,
-                ceilingClamped: false,
-                fatigueGuardActive: false,
-                computedAt: Date()
-            ),
-            voiceLine: "Easy 8K. Keep the pace conversational.",
-            runCompletedToday: false,
-            planSummary: "8.0 km · 5:25–5:45/km",
-            planCompletedToday: false
+    static var sampleTarget: RunTarget {
+        RunTarget(
+            distanceMeters: 7_700,
+            tone: .firm,
+            daysSinceLastRun: 1,
+            vo2MaxSlope: -0.05,
+            baselineMeters: 7_200,
+            ceilingClamped: false,
+            fatigueGuardActive: false,
+            computedAt: Date()
         )
     }
 
+    static var samplePending: PaceOffEntry {
+        PaceOffEntry(date: Date(), cache: WidgetCache(
+            target: sampleTarget,
+            voiceLine: "Easy 8K. Keep the pace conversational.",
+            planSummary: "8.0 km · 5:25–5:45/km"
+        ))
+    }
+
     static var sampleDone: PaceOffEntry {
-        PaceOffEntry(
-            date: Date(),
-            target: samplePending.target,
+        PaceOffEntry(date: Date(), cache: WidgetCache(
+            target: sampleTarget,
             voiceLine: "Done. Recovery walk later if you can.",
             runCompletedToday: true,
             planSummary: "8.0 km · 5:25–5:45/km",
             planCompletedToday: true
-        )
+        ))
     }
 
     static var sampleRestDay: PaceOffEntry {
-        PaceOffEntry(
-            date: Date(),
-            target: samplePending.target,
+        PaceOffEntry(date: Date(), cache: WidgetCache(
+            target: sampleTarget,
             voiceLine: "Recovery is training too.",
-            runCompletedToday: false,
-            planSummary: "Rest",
-            planCompletedToday: false
+            planSummary: "Rest"
+        ))
+    }
+
+    /// Yesterday's done day, drawn the next morning.
+    static var sampleStale: PaceOffEntry {
+        PaceOffEntry(
+            date: Date().addingTimeInterval(86_400),
+            cache: sampleDone.cache
         )
     }
 }
@@ -220,6 +218,7 @@ private extension PaceOffEntry {
     PaceOffEntry.samplePending
     PaceOffEntry.sampleDone
     PaceOffEntry.sampleRestDay
+    PaceOffEntry.sampleStale
 }
 
 #Preview("Widget — accessory rectangular", as: .accessoryRectangular) {
