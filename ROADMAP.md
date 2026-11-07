@@ -130,7 +130,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Tests cover VDOT 20, 25 and 38.
 
 ### R-09 · The widget shows stale data
-- **Status:** todo
+- **Status:** done (PR #27)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** The app never asks WidgetKit to reload, so after a run the widget can stay red for up to an hour. After midnight it shows yesterday's target with a green dot.
 - **Where:** nothing calls `WidgetCenter.shared.reloadAllTimelines()`; `TodayViewModel.refresh()`, `BackgroundRefreshService`, `PaceOffWidget.swift` (`PaceOffProvider`).
@@ -377,6 +377,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #27: the widget (all four families) right after a run logged in the app, and after midnight before opening the app: "—", "Open Pace Off" and a grey dot; the stale entry in the systemSmall preview
 - [ ] PR #25: the Plan tab on race day (hero "Race day", the race row marked in the week), the plan detail week with the race, and Today's plan line "… plan · Race day"; a new race plan's week 1 can show a few days already past
 - [ ] PR #20: Today's "N-day streak" label now shows before today's run, and the hero card's voice line follows the new states (streak, recovery, ran today)
 - [ ] PR #17: splash → sign-in hand-off, Health-style Today (with and without data), Plan tab (with and without a plan), Profile sheet from the avatar, Trends
@@ -385,6 +386,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-07 · R-09: the app reloads the widget after each refresh; its timeline turns at noon and midnight, and a day cached earlier shows "Open Pace Off", never as today's (PR #27)
 - 2026-11-06 · R-08: a slow runner's measured VO₂ max or PB is used (below VDOT 20 it's raised to 20); junk readings (outside 10–90) are ignored; the beginner default only when there's no usable measurement (PR #26)
 - 2026-11-05 · R-07a: a reachable race is the plan's last day, counted back from it, with a rest day and no hard sessions before it; R-07b blocked (PR #25)
 - 2026-11-04 · R-06: weekly distance rises at most 10% a week; plans shortened by a race date peak lower instead of jumping (PR #24)
