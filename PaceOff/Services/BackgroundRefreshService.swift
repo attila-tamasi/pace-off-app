@@ -24,6 +24,7 @@
 
 import Foundation
 import BackgroundTasks
+import WidgetKit
 import os
 
 @MainActor
@@ -155,7 +156,7 @@ public final class BackgroundRefreshService {
         // Training plan: reconcile today's workout and retune stale paces
         // against the data we just pulled. The voice line needs today's
         // status too.
-        let planStatus = reconcileTrainingPlan(runs: runs, vo2Max: vo2)
+        let planStatus = reconcileTrainingPlan(runs: runs, vo2Max: vo2, now: now)
 
         let state = VoiceState(target: target, yesterday: yesterday, currentStreak: streak, planStatus: planStatus)
         let voice = VoiceCopy()
@@ -172,12 +173,12 @@ public final class BackgroundRefreshService {
             notificationLine = aiNotif
         }
 
-        // Cache for the widget + next app launch.
-        if let data = try? JSONEncoder().encode(target) {
-            AppGroup.sharedDefaults?.set(data, forKey: AppGroup.Keys.lastTodayTarget)
+        // Hand the day to the widget in one write, and have it redraw.
+        let day = WidgetCache(target: target, voiceLine: voiceLine,
+                              runCompletedToday: todayRun != nil, planStatus: planStatus)
+        if day.save(to: AppGroup.sharedDefaults) {
+            WidgetCenter.shared.reloadAllTimelines()
         }
-        AppGroup.sharedDefaults?.set(voiceLine, forKey: AppGroup.Keys.lastTodayVoiceLine)
-        AppGroup.sharedDefaults?.set(todayRun != nil, forKey: AppGroup.Keys.runCompletedToday)
 
         // Reschedule today's notifications with the freshly enriched body so
         // the user gets the updated copy on the next push.
@@ -207,25 +208,13 @@ public final class BackgroundRefreshService {
     /// weeks are re-paced and the user gets a one-shot notification. The
     /// beginner-default fallback VDOT never overwrites a real anchor. Only
     /// called with a fresh Health read, so a locked-phone read never retunes.
-    private func reconcileTrainingPlan(runs: [RunRecord], vo2Max: [VO2MaxSnapshot]) -> PlanDayStatus? {
+    private func reconcileTrainingPlan(runs: [RunRecord], vo2Max: [VO2MaxSnapshot], now: Date) -> PlanDayStatus? {
         let store = TrainingPlanStore.shared
         store.load() // re-read disk — the app may have written since our launch
-        guard let plan = store.activePlan else {
-            AppGroup.sharedDefaults?.removeObject(forKey: AppGroup.Keys.lastPlanWorkoutSummary)
-            AppGroup.sharedDefaults?.set(false, forKey: AppGroup.Keys.planWorkoutCompletedToday)
-            return nil
-        }
+        guard let plan = store.activePlan else { return nil }
 
         let reconciler = TrainingPlanReconciler()
-        let status = reconciler.todayStatus(plan: plan, runs: runs, today: Date())
-
-        // Cache for the widget / next cold launch.
-        if let summary = status.workout?.headline {
-            AppGroup.sharedDefaults?.set(summary, forKey: AppGroup.Keys.lastPlanWorkoutSummary)
-        } else {
-            AppGroup.sharedDefaults?.removeObject(forKey: AppGroup.Keys.lastPlanWorkoutSummary)
-        }
-        AppGroup.sharedDefaults?.set(status.isCompleted, forKey: AppGroup.Keys.planWorkoutCompletedToday)
+        let status = reconciler.todayStatus(plan: plan, runs: runs, today: now)
 
         // Resolve the runner's current VDOT the same way the picker does.
         // The profile's PB only applies when it's for the plan's distance.
@@ -241,7 +230,7 @@ public final class BackgroundRefreshService {
         let (currentVDOT, usedFallback) = TrainingPlanGenerator().resolveVDOT(inputs)
         guard !usedFallback else { return status }
 
-        if let retuned = reconciler.retunedPlan(plan, toVDOT: currentVDOT, today: Date()) {
+        if let retuned = reconciler.retunedPlan(plan, toVDOT: currentVDOT, today: now) {
             store.setActive(retuned)
             if abs(currentVDOT - plan.vdot) >= TrainingPlanReconciler.vdotDriftThreshold {
                 NotificationScheduler.shared.notifyPlanRetuned(fromVDOT: plan.vdot, toVDOT: currentVDOT)

@@ -129,6 +129,11 @@
 		F337A4186720C224DECD3560 /* RunStreak.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC831434D44606757BE1FC6B /* RunStreak.swift */; };
 		A92528AD716046FE7909DAA6 /* RunStreak.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC831434D44606757BE1FC6B /* RunStreak.swift */; };
 		07455490BE465040C85348FF /* VoiceCopyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC02D91475E85C98373026 /* VoiceCopyTests.swift */; };
+		F532321BF6582CAAD35EC801 /* WidgetCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31F4C4C1D283B639C221294 /* WidgetCache.swift */; };
+		EF7E1603426957668C17D08B /* WidgetCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31F4C4C1D283B639C221294 /* WidgetCache.swift */; };
+		0D2910C2885566C680A654A0 /* WidgetCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31F4C4C1D283B639C221294 /* WidgetCache.swift */; };
+		87EA318E72F6AB0F1B2E394A /* WidgetCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31F4C4C1D283B639C221294 /* WidgetCache.swift */; };
+		C30D6F77AC6A83393CF969F4 /* WidgetCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AA3FF3F869DFA3EF8E332F9 /* WidgetCacheTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -260,6 +265,8 @@
 		FE657A7094CB8DF7521D46EC /* DailyPushPlannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyPushPlannerTests.swift; sourceTree = "<group>"; };
 		BC831434D44606757BE1FC6B /* RunStreak.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunStreak.swift; sourceTree = "<group>"; };
 		6FDC02D91475E85C98373026 /* VoiceCopyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCopyTests.swift; sourceTree = "<group>"; };
+		E31F4C4C1D283B639C221294 /* WidgetCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetCache.swift; sourceTree = "<group>"; };
+		8AA3FF3F869DFA3EF8E332F9 /* WidgetCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetCacheTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -291,6 +298,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				E31F4C4C1D283B639C221294 /* WidgetCache.swift */,
 				BC831434D44606757BE1FC6B /* RunStreak.swift */,
 				72853AFD80FB3B4ACB466064 /* DailyPushPlanner.swift */,
 				D1C4C9290B00C1660BE65BDB /* AppGroup.swift */,
@@ -315,6 +323,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				8AA3FF3F869DFA3EF8E332F9 /* WidgetCacheTests.swift */,
 				6FDC02D91475E85C98373026 /* VoiceCopyTests.swift */,
 				FE657A7094CB8DF7521D46EC /* DailyPushPlannerTests.swift */,
 				528624AB5848F014A52C9377 /* GoalPredictionServiceTests.swift */,
@@ -673,6 +682,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C30D6F77AC6A83393CF969F4 /* WidgetCacheTests.swift in Sources */,
+				0D2910C2885566C680A654A0 /* WidgetCache.swift in Sources */,
 				07455490BE465040C85348FF /* VoiceCopyTests.swift in Sources */,
 				F337A4186720C224DECD3560 /* RunStreak.swift in Sources */,
 				5869A90F75B09CF399178796 /* DailyPushPlannerTests.swift in Sources */,
@@ -706,6 +717,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EF7E1603426957668C17D08B /* WidgetCache.swift in Sources */,
 				4DA78FDD28D107BF625BE9CE /* RunStreak.swift in Sources */,
 				2A89267F7FBF07FFC264D17C /* DailyPushPlanner.swift in Sources */,
 				6B96BE52BDE6ADA37714CF72 /* AppGroup.swift in Sources */,
@@ -732,6 +744,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				87EA318E72F6AB0F1B2E394A /* WidgetCache.swift in Sources */,
 				A92528AD716046FE7909DAA6 /* RunStreak.swift in Sources */,
 				7D197907E968F6CC6690EC6D /* DailyPushPlanner.swift in Sources */,
 				1D22E916159F440DDF80BD52 /* AppGroup.swift in Sources */,
@@ -761,6 +774,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F532321BF6582CAAD35EC801 /* WidgetCache.swift in Sources */,
 				5F7E38FDE9F0CE9D51A7EE05 /* RunStreak.swift in Sources */,
 				727F4F30D537C3257FD5926A /* DailyPushPlanner.swift in Sources */,
 				E2812330831F735318B10CEF /* PlanTabView.swift in Sources */,

@@ -99,7 +99,7 @@ The `PushTargetEngineTests` suite covers the worked example from PRD §7.3 plus 
 - **`HealthKitService`** lives on `@MainActor` and exposes async methods. All reads are `HKSampleQuery` / `HKStatisticsQuery`. Background updates via `HKObserverQuery` + `enableBackgroundDelivery`. Reads the user's age from the `dateOfBirth` characteristic.
 - **`NotificationScheduler`** uses `UNUserNotificationCenter` with calendar triggers. Three pushes max per day per PRD §9.1.
 - **`TodayView`** is laid out like the Health app's Summary: today's target on a blue hero card, then Recovery and Running sections of Health-style cards with mini charts. Tap the VO₂ max card for a 12-month chart; the avatar opens Profile. The training plan has its own tab.
-- **iOS app + Watch app + Widget** share state via the `group.com.paceoff.app` App Group's `UserDefaults`. The widget reads the cached `RunTarget` JSON written by the iPhone app on each refresh.
+- **iOS app + Watch app + Widget** share state via the `group.com.paceoff.app` App Group's `UserDefaults`. The iPhone app writes the day for the widget through `WidgetCache` (target, voice line, today's plan workout) on each refresh and asks WidgetKit to redraw; the widget treats anything cached on an earlier day as stale.
 - **Watch workout** uses `HKWorkoutSession` + `HKLiveWorkoutBuilder` with a running configuration. Running dynamics (power, stride, vertical oscillation, ground contact) are surfaced live.
 
 ---
@@ -136,7 +136,7 @@ Delete the app and you lose nothing — your runs and VO₂ max stay in Health.
 
 - WatchConnectivity bridge for "Start Run from iPhone" is not wired. The Start Run button was intentionally removed from `TodayView` in this milestone — start the run on the Watch.
 - Live Activity for in-progress run is not yet implemented.
-- The widget shows status colors (green/amber/red) based on time-of-day only; it doesn't currently know if a run is "in progress" — that requires the WatchConnectivity bridge above.
+- The widget's status dot is green once today is done, amber then red (from noon) while it's ahead, and grey when there's no target for today; it doesn't currently know if a run is "in progress" — that requires the WatchConnectivity bridge above.
 - No localization yet (English only).
 
 ---

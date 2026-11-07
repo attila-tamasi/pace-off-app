@@ -5,6 +5,7 @@ import Foundation
 import SwiftUI
 import CoreLocation
 import Observation
+import WidgetKit
 
 @MainActor
 @Observable
@@ -67,7 +68,8 @@ public final class TodayViewModel {
         // Fire one parallel sync that writes the cache. Apply the result:
         // the fresh read, or the kept cache when the read couldn't be used.
         // Nil means neither is trustworthy; leave the screen as it is.
-        guard let snapshot = await HealthKitService.shared.syncAll().snapshot else { return }
+        let sync = await HealthKitService.shared.syncAll()
+        guard let snapshot = sync.snapshot else { return }
         applySnapshot(snapshot)
 
         // Today's GPS route — kept out of the cache because it's bulky and
@@ -108,11 +110,17 @@ public final class TodayViewModel {
             notificationBody = cannedNotif
         }
 
-        // Cache for the widget
-        if let data = try? JSONEncoder().encode(target) {
-            AppGroup.sharedDefaults?.set(data, forKey: AppGroup.Keys.lastTodayTarget)
+        // Hand the day to the widget in one write, and have it redraw now
+        // rather than at its next scheduled entry. Only a fresh read does:
+        // the kept cache may predate today's run, and stamping it with
+        // today's date would pass it off as current.
+        if sync.isFresh {
+            let day = WidgetCache(target: target, voiceLine: self.voiceLine,
+                                  runCompletedToday: todayRun != nil, planStatus: planStatus)
+            if day.save(to: AppGroup.sharedDefaults) {
+                WidgetCenter.shared.reloadAllTimelines()
+            }
         }
-        AppGroup.sharedDefaults?.set(self.voiceLine, forKey: AppGroup.Keys.lastTodayVoiceLine)
 
         // Schedule today's notifications using the (possibly AI-rewritten) body.
         NotificationScheduler.shared.scheduleDailyPushes(
@@ -165,8 +173,6 @@ public final class TodayViewModel {
             .suffix(12)
             .map { TrendPoint(date: $0.date, value: $0.value) }
         self.weekDistances = Self.dailyDistances(runs, days: 7, now: now)
-
-        AppGroup.sharedDefaults?.set(self.todayRun != nil, forKey: AppGroup.Keys.runCompletedToday)
     }
 
     /// Mean value per calendar day over the last `days` days (today
