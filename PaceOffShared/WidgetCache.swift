@@ -26,6 +26,19 @@ public struct WidgetCache: Equatable, Sendable {
         self.planCompletedToday = planCompletedToday
     }
 
+    /// The day as a refresh computed it, with today's plan status (nil
+    /// when no plan is active).
+    public init(target: RunTarget,
+                voiceLine: String,
+                runCompletedToday: Bool,
+                planStatus: PlanDayStatus?) {
+        self.init(target: target,
+                  voiceLine: voiceLine,
+                  runCompletedToday: runCompletedToday,
+                  planSummary: planStatus?.workout?.headline,
+                  planCompletedToday: planStatus?.isCompleted ?? false)
+    }
+
     public static let empty = WidgetCache()
 
     public var isPlanRestDay: Bool { planSummary == Workout.rest.summary }
@@ -75,9 +88,20 @@ public struct WidgetCache: Equatable, Sendable {
 
     // MARK: - App Group defaults
 
-    /// Writes every field, so the widget never mixes two refreshes.
-    public func save(to defaults: UserDefaults?) {
-        guard let defaults else { return }
+    /// Writes every field, so the widget never mixes two refreshes. A day
+    /// computed later than this one, already stored by a refresh that
+    /// finished first, is kept: nothing is written and the result is false.
+    /// A stored day stamped after `now` (the clock was set back) doesn't
+    /// count as later.
+    @discardableResult
+    public func save(to defaults: UserDefaults?, now: Date = Date()) -> Bool {
+        guard let defaults else { return false }
+        if let target,
+           let stored = Self.load(from: defaults).target,
+           stored.computedAt > target.computedAt,
+           stored.computedAt <= now {
+            return false
+        }
         if let target, let data = try? JSONEncoder().encode(target) {
             defaults.set(data, forKey: AppGroup.Keys.lastTodayTarget)
         } else {
@@ -95,6 +119,7 @@ public struct WidgetCache: Equatable, Sendable {
             defaults.removeObject(forKey: AppGroup.Keys.lastPlanWorkoutSummary)
         }
         defaults.set(planCompletedToday, forKey: AppGroup.Keys.planWorkoutCompletedToday)
+        return true
     }
 
     public static func load(from defaults: UserDefaults?) -> WidgetCache {

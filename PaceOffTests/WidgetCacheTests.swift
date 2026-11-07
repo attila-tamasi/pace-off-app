@@ -148,6 +148,44 @@ final class WidgetCacheTests: XCTestCase {
         XCTAssertFalse(loaded.planCompletedToday)
     }
 
+    func test_save_keepsADayComputedLater() {
+        // A slower refresh that computed its day first must not overwrite
+        // the one that computed later and finished first.
+        let later = WidgetCache(target: target(computedAt: date(day: 7, hour: 9)), voiceLine: "Run 8 km.",
+                                runCompletedToday: true)
+        let earlier = WidgetCache(target: target(computedAt: date(day: 7, hour: 8)), voiceLine: "Run 8 km.")
+        XCTAssertTrue(later.save(to: defaults, now: date(day: 7, hour: 9, minute: 1)))
+        XCTAssertFalse(earlier.save(to: defaults, now: date(day: 7, hour: 9, minute: 1)))
+        XCTAssertEqual(WidgetCache.load(from: defaults), later)
+    }
+
+    func test_save_aStoredDayFromTheFuture_doesntBlockWrites() {
+        // The clock was set back: a day stamped after now isn't "later".
+        let future = WidgetCache(target: target(computedAt: date(day: 9, hour: 9)), voiceLine: "Run 8 km.")
+        let current = WidgetCache(target: target(computedAt: date(day: 7, hour: 9)), voiceLine: "Run 6 km.")
+        future.save(to: defaults, now: date(day: 9, hour: 9))
+        XCTAssertTrue(current.save(to: defaults, now: date(day: 7, hour: 9)))
+        XCTAssertEqual(WidgetCache.load(from: defaults), current)
+    }
+
+    func test_planStatusInit_takesTheHeadlineAndCompletion() {
+        let t = target(computedAt: date(day: 7, hour: 7))
+        let race = Workout(kind: .race, distanceMeters: 21_097.5, paceMinSecPerKm: 0, paceMaxSecPerKm: 0)
+        let raceDay = WidgetCache(target: t, voiceLine: "Go.", runCompletedToday: false,
+                                  planStatus: PlanDayStatus(workout: race, isCompleted: false))
+        XCTAssertEqual(raceDay.planSummary, race.headline)
+        XCTAssertFalse(raceDay.planCompletedToday)
+
+        let rest = WidgetCache(target: t, voiceLine: "Rest.", runCompletedToday: false,
+                               planStatus: PlanDayStatus(workout: .rest, isCompleted: false))
+        XCTAssertTrue(rest.isPlanRestDay)
+
+        let noPlan = WidgetCache(target: t, voiceLine: "Run 8 km.", runCompletedToday: true, planStatus: nil)
+        XCTAssertNil(noPlan.planSummary)
+        XCTAssertFalse(noPlan.planCompletedToday)
+        XCTAssertTrue(noPlan.runCompletedToday)
+    }
+
     func test_load_fromEmptyDefaults_isEmpty() {
         XCTAssertEqual(WidgetCache.load(from: defaults), .empty)
         XCTAssertEqual(WidgetCache.load(from: nil), .empty)

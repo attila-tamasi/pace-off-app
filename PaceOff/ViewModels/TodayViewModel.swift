@@ -68,7 +68,8 @@ public final class TodayViewModel {
         // Fire one parallel sync that writes the cache. Apply the result:
         // the fresh read, or the kept cache when the read couldn't be used.
         // Nil means neither is trustworthy; leave the screen as it is.
-        guard let snapshot = await HealthKitService.shared.syncAll().snapshot else { return }
+        let sync = await HealthKitService.shared.syncAll()
+        guard let snapshot = sync.snapshot else { return }
         applySnapshot(snapshot)
 
         // Today's GPS route — kept out of the cache because it's bulky and
@@ -110,15 +111,16 @@ public final class TodayViewModel {
         }
 
         // Hand the day to the widget in one write, and have it redraw now
-        // rather than at its next scheduled entry.
-        WidgetCache(
-            target: target,
-            voiceLine: self.voiceLine,
-            runCompletedToday: todayRun != nil,
-            planSummary: planStatus?.workout?.headline,
-            planCompletedToday: planStatus?.isCompleted ?? false
-        ).save(to: AppGroup.sharedDefaults)
-        WidgetCenter.shared.reloadAllTimelines()
+        // rather than at its next scheduled entry. Only a fresh read does:
+        // the kept cache may predate today's run, and stamping it with
+        // today's date would pass it off as current.
+        if sync.isFresh {
+            let day = WidgetCache(target: target, voiceLine: self.voiceLine,
+                                  runCompletedToday: todayRun != nil, planStatus: planStatus)
+            if day.save(to: AppGroup.sharedDefaults) {
+                WidgetCenter.shared.reloadAllTimelines()
+            }
+        }
 
         // Schedule today's notifications using the (possibly AI-rewritten) body.
         NotificationScheduler.shared.scheduleDailyPushes(
