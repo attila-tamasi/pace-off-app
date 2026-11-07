@@ -50,7 +50,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 ### 8. Widget
 - Lock Screen + Home Screen widget rendering today's target from the shared App Group snapshot
 - Plan-aware: shows today's plan workout (summary + ✓ when completed); planned rest days keep the status dot green instead of the after-noon red nag
-- The foreground refresh and the background sync write the day in one go (`WidgetCache`: target, voice line, ran today, plan workout) and reload the widget's timeline, so a run shows within a refresh, not an hour later
+- After a fresh Health read, the foreground refresh and the background sync write the day in one go (`WidgetCache`: target, voice line, ran today, plan workout) and reload the widget's timeline, so a run shows within a refresh, not an hour later. A read that kept the cache writes nothing, and a day computed later is never overwritten by an earlier one
 - The timeline has entries at noon (the dot turns red) and at midnight. A day cached on an earlier date renders as "Open Pace Off" with a grey dot and no voice line, never as today's
 - Time-of-day-based status dot; no live "in-progress run" state yet
 
