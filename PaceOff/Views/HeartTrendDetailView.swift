@@ -320,7 +320,7 @@ struct HeartTrendDetailView: View {
                 title: "Heart Rate Variability",
                 unit: "ms",
                 symbol: "waveform.path.ecg",
-                readingName: "last night's HRV",
+                readingName: "your latest HRV reading, usually last night's,",
                 emptyTitle: "No HRV readings yet",
                 emptyBody: "Apple Watch records HRV while you sleep. Wear it to bed, and the readings appear here the next morning.",
                 explanation: [
