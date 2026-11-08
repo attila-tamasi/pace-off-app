@@ -34,6 +34,7 @@ The items come from the full code review of 2026-10-18, re-checked against the s
 ## Now · Owner's request (2026-11-08)
 
 Requests the owner put ahead of the waves, in their order:
+0. **First, every remaining fix** (owner, 2026-11-08, later the same day: "csináld meg az összes javítást loop-ban, nem kell approval"). Wave 1's R-05, R-07b and R-05b, then Wave 2's Q-02 to Q-11, come before F-10: the loop takes them in that order before anything below. The two blocked calls are Claude's to make; each item records the decision and the owner can reverse it.
 1. The app in TestFlight (T-01).
 2. Every card on Today opens a detail screen (F-09).
 3. A morning weather check that says what to run and when (F-10).
@@ -236,13 +237,14 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - `PushTargetEngineTests` cover a 5 km-baseline restart, a red day and a ceiling-clamped day.
 
 ### R-05 · Easy marathon plan: long run is most of the week
-- **Status:** blocked: needs the owner's call on plan volume. The 30% cap can't hold as the plans are built. An Easy week has 3 runs, so its long run is at least 33% of the week. The 37 km marathon long run (SPEC § 4) needs a week of at least 123 km, against Easy / Medium / Aggressive peaks of 45 / 65 / 95 km; the 20 km half long run needs 67 km, against 35 / 55. Which gives way? (a) A cap that fits the run count (about 45% for 3 runs, 35% for 4, 30% for 5), with long runs shortened to today's weekly peaks: marathon peaks of about 20 / 23 / 28 km. (b) Keep the long-run peaks and raise weekly volume or runs per week. (c) Another rule. Scaling week 1 from current fitness works with any of them.
+- **Status:** done (PR #34)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** In the Easy marathon plan, the long run is 82% of weekly distance, already 25.9 km in week 1, even for a beginner.
+- **Decision (Claude, 2026-11-08, on the owner's "nem kell approval"):** option (a). A 30% cap can't hold as the plans are built: three runs a week put the long run at a third at least, and the 37 km marathon long run needs a 123 km week. So the cap fits the run count, 45% with three runs, 35% with four, 30% with five, and the long run is cut to it. What it gives up goes to the easy runs, so no week gets bigger: weekly volume is the load the plan was already prescribing. Marathon long runs now peak at 20.3 / 22.3 / 25.5 km, the half's at 15.8 / 18.0 / 21.3 km, the Easy 10K's at 12.6 km; 5K and the other 10K tiers keep theirs. The options were (b) keep the long runs and raise weekly volume or runs per week, or (c) another rule; the owner can switch to either here.
 - **Where:** `PaceOffShared/TrainingPlanGenerator.swift` (week templates, long-run share).
 - **Done when:**
-  - The long run is at most about 30% of the week's distance, in every tier and goal.
-  - The week-1 long run scales from current fitness (recent long runs or VDOT).
+  - The long run is at most its run count's share of the week (45% with three runs, 35% with four, 30% with five), in every tier and goal, every week but the race's.
+  - The week-1 long run scales from current fitness: at most 10% past the runner's longest run of the last four weeks, never under 40% of the peak, 70% as before when nothing is known.
   - Tests assert both for every goal × tier.
 
 ### R-06 · Race-date plans jump in volume
@@ -273,6 +275,17 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 - **Done when:**
   - For any future race date, the plan has the race on its date.
   - If the plan starts later, the Plan tab says when.
+
+### R-05b · The run before the long run is nearly as long as it
+- **Status:** todo
+- **Size:** M   ·   **Merge:** auto
+- **Problem:** R-05 moved the long run's cut into the two easy runs, so the Medium and Aggressive marathon's easy runs peak at 16.7 and 20.3 km against long runs of 22.3 and 25.5 km. One of them is the day before the long run: a 20 km Saturday, then 25.5 km on Sunday. Found in R-05's review.
+- **Where:** `TrainingPlanGenerator.peakRuns`, `buildWeek` / `materialise` (distances are per kind today, not per slot); the tier templates.
+- **Done when:**
+  - The easy run on the day before the long run is at most 60% of that week's long run; the other easy run takes what it gives up, up to 80% of the long run. Distance that fits neither is dropped: a week never grows. The long run's share cap (R-05) still holds.
+  - Plans whose easy runs were already within those limits don't change.
+  - Tests cover every goal × tier, and long-run days other than Sunday.
+  - Also consider, in the same change: a plan too short to build from a low week 1 toward race distance (a beginner's marathon eight weeks out peaks near 12 km) says so on the plan's detail screen.
 
 ### R-08 · Slow runners get paces that are too fast
 - **Status:** done (PR #26)
@@ -547,6 +560,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · R-05: the long run takes at most 45 / 35 / 30% of a week with three / four / five runs, the cut going to the easy runs; week 1 starts from the runner's longest recent run (PR #34)
 - 2026-11-08 · T-01: every push to main builds Release for a device and, once the App Store Connect key's secrets exist, uploads to TestFlight; every item is now auto-merged (PR #33)
 - 2026-11-08 · F-09d: Readiness opens a screen with each signal against its baseline, how the two combine and what each colour does to the target; every Today card now has a detail (PR #32)
 - 2026-11-08 · F-09c: Last 7 days opens a week screen: each day's runs and, with a plan, its workout marked done, to do, missed or rest, with a way to the Plan tab (PR #31)

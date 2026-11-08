@@ -174,18 +174,18 @@ final class TrainingPlanGeneratorTests: XCTestCase {
                           "Race week should taper below peak")
     }
 
-    func test_generate_marathonLongestLongRunIs37km() {
-        for tier in PlanTier.allCases {
-            let p = plan(.marathon, tier)
-            let longestKm = p.weeks
-                .flatMap(\.days)
-                .filter { $0.workout.kind == .long }
-                .map(\.workout.distanceKm)
-                .max() ?? 0
-            // We accept ±0.05 km (50 m) of float drift around the 37 km peak.
-            XCTAssertEqual(longestKm, 37.0, accuracy: 0.05,
-                           "Marathon \(tier.displayName) plan should peak at 37 km long run")
-        }
+    private func longestLongRunKm(_ p: TrainingPlan) -> Double {
+        p.weeks.flatMap(\.days)
+            .filter { $0.workout.kind == .long }
+            .map(\.workout.distanceKm)
+            .max() ?? 0
+    }
+
+    func test_generate_marathonLongRunPeaks_fitTheirShareOfTheWeek() {
+        // The 37 km benchmark is cut to 45 / 35 / 30% of the peak week.
+        XCTAssertEqual(longestLongRunKm(plan(.marathon, .easy)), 20.25, accuracy: 0.05)
+        XCTAssertEqual(longestLongRunKm(plan(.marathon, .medium)), 22.28, accuracy: 0.05)
+        XCTAssertEqual(longestLongRunKm(plan(.marathon, .aggressive)), 25.5, accuracy: 0.05)
     }
 
     func test_generate_marathonLongRunBuildIsMonotonicUpToPeak() {
@@ -205,21 +205,137 @@ final class TrainingPlanGeneratorTests: XCTestCase {
                           "Race-day long run should be well below peak")
     }
 
-    func test_generate_nonMarathonLongRunsUnchangedCeilings() {
-        // Other distances keep their original ceilings (5K/10K/Half).
-        let half = plan(.halfMarathon, .aggressive)
-        let halfLong = half.weeks.flatMap(\.days)
-            .filter { $0.workout.kind == .long }
-            .map(\.workout.distanceKm).max() ?? 0
-        XCTAssertEqual(halfLong, 24.0, accuracy: 0.5,
-                       "Aggressive half-marathon long run should still peak around 24 km")
+    func test_generate_shorterGoals_keepTheirBenchmarkWhereItFits() {
+        // The half's 24 km is over 30% of an aggressive week, so it's cut;
+        // the 10K's 16 km fits and stays.
+        XCTAssertEqual(longestLongRunKm(plan(.halfMarathon, .aggressive)), 21.3, accuracy: 0.05)
+        XCTAssertEqual(longestLongRunKm(plan(.tenK, .aggressive)), 16.0, accuracy: 0.05)
+        XCTAssertEqual(longestLongRunKm(plan(.fiveK, .easy)), 8.0, accuracy: 0.05)
+    }
 
-        let tenK = plan(.tenK, .aggressive)
-        let tenKLong = tenK.weeks.flatMap(\.days)
-            .filter { $0.workout.kind == .long }
-            .map(\.workout.distanceKm).max() ?? 0
-        XCTAssertEqual(tenKLong, 16.0, accuracy: 0.5,
-                       "Aggressive 10K long run should still peak around 16 km")
+    // MARK: - Long-run share and week 1
+
+    /// The share cap for every goal and tier, checked in every week that
+    /// doesn't hold the race (the race is the goal, not training load).
+    private func assertLongRunShare(_ p: TrainingPlan, _ label: String,
+                                    file: StaticString = #filePath, line: UInt = #line) {
+        let cap = TrainingPlanGenerator.longRunShareCap(runsPerWeek: p.tier.runsPerWeek)
+        for week in p.weeks where !week.days.contains(where: { $0.workout.kind == .race }) {
+            let long = week.days.map(\.workout).filter { $0.kind == .long }.reduce(0) { $0 + $1.distanceKm }
+            let share = long / trainingKm(week)
+            XCTAssertLessThanOrEqual(share, cap + 1e-9,
+                                     "\(label) week \(week.index): long run is \(Int(share * 100))% of the week",
+                                     file: file, line: line)
+        }
+    }
+
+    func test_longRun_staysWithinItsShareOfTheWeek_everyGoalAndTier() {
+        for goal in RunningGoal.allCases {
+            for tier in PlanTier.allCases {
+                assertLongRunShare(plan(goal, tier), "\(goal) \(tier)")
+                for weeksOut in 4...20 {
+                    assertLongRunShare(racePlan(goal, tier, weeksOut: weeksOut),
+                                       "\(goal) \(tier), race \(weeksOut) weeks out")
+                }
+                for longest in [0.0, 5_000, 15_000] {
+                    let p = generator.generate(TrainingPlanInputs(
+                        goal: goal, tier: tier, vo2Max: 49.2, recentLongestRunMeters: longest
+                    ))
+                    assertLongRunShare(p, "\(goal) \(tier), longest recent run \(longest) m")
+                }
+            }
+        }
+    }
+
+    func test_longRunShareCap_loosensAsRunsGoDown() {
+        XCTAssertEqual(TrainingPlanGenerator.longRunShareCap(runsPerWeek: 3), 0.45)
+        XCTAssertEqual(TrainingPlanGenerator.longRunShareCap(runsPerWeek: 4), 0.35)
+        XCTAssertEqual(TrainingPlanGenerator.longRunShareCap(runsPerWeek: 5), 0.30)
+    }
+
+    func test_peakWeek_keepsItsDistance_whenTheLongRunIsCut() {
+        // The easy marathon's 37 km long run took 82% of a 45 km week. The
+        // cut goes to the easy runs, so the peak week is still 45 km.
+        let p = plan(.marathon, .easy)
+        let peak = p.weeks[p.weekCount - 4]
+        XCTAssertEqual(trainingKm(peak), 45.0, accuracy: 0.05)
+        let easy = peak.days.map(\.workout).filter { $0.kind == .easy || $0.kind == .strides }
+        XCTAssertEqual(easy.count, 2)
+        for run in easy {
+            XCTAssertEqual(run.distanceKm, 12.375, accuracy: 0.05)
+        }
+        XCTAssertEqual(trainingKm(plan(.marathon, .aggressive).weeks[12]), 85.0, accuracy: 0.05)
+    }
+
+    private func weekOneLongRunKm(_ goal: RunningGoal, _ tier: PlanTier, longest: Double?) -> Double {
+        let p = generator.generate(TrainingPlanInputs(
+            goal: goal, tier: tier, vo2Max: 49.2, recentLongestRunMeters: longest
+        ))
+        return p.weeks[0].days.map(\.workout).first { $0.kind == .long }!.distanceKm
+    }
+
+    func test_weekOne_longRun_startsFromTheRunnersLongestRecentRun() {
+        // Easy marathon, 20.25 km peak long run. 12 km lately: 10% past it.
+        XCTAssertEqual(weekOneLongRunKm(.marathon, .easy, longest: 12_000), 13.2, accuracy: 0.01)
+        // A beginner, 5 km at most: the 40% floor, 8.1 km.
+        XCTAssertEqual(weekOneLongRunKm(.marathon, .easy, longest: 5_000), 8.1, accuracy: 0.01)
+        // No run in four weeks: the floor too.
+        XCTAssertEqual(weekOneLongRunKm(.marathon, .easy, longest: 0), 8.1, accuracy: 0.01)
+        // Already past 70% of the peak: the usual 70%.
+        XCTAssertEqual(weekOneLongRunKm(.marathon, .easy, longest: 30_000), 14.175, accuracy: 0.01)
+        // Nothing known: the usual 70% as before.
+        XCTAssertEqual(weekOneLongRunKm(.marathon, .easy, longest: nil), 14.175, accuracy: 0.01)
+    }
+
+    func test_weekOne_startedLow_stillRisesTenPercent_andReachesThePeak() {
+        for goal in RunningGoal.allCases {
+            for tier in PlanTier.allCases {
+                let p = generator.generate(TrainingPlanInputs(
+                    goal: goal, tier: tier, vo2Max: 49.2, recentLongestRunMeters: 0
+                ))
+                let km = p.weeks.map(trainingKm)
+                for i in 1..<km.count {
+                    XCTAssertLessThanOrEqual(km[i], km[i - 1] * 1.10 + 1e-6, "\(goal) \(tier) week \(i + 1)")
+                }
+                // The 16-week marathon has the weeks to climb from 40% to
+                // the full peak; shorter plans peak lower (59% for the
+                // 5K, 71% 10K, 86% half) rather than jump.
+                let full = longestLongRunKm(plan(goal, tier))
+                if goal == .marathon {
+                    XCTAssertEqual(longestLongRunKm(p), full, accuracy: 0.05, "\(goal) \(tier) reaches its peak")
+                } else {
+                    XCTAssertLessThan(longestLongRunKm(p), full, "\(goal) \(tier) peaks lower")
+                }
+            }
+        }
+    }
+
+    func test_longestRecentRun_isTheLongestOfTheLastFourWeeks() {
+        let now = rampToday
+        func run(daysAgo: Double, km: Double) -> RunRecord {
+            let start = now.addingTimeInterval(-daysAgo * 86_400)
+            return RunRecord(startDate: start, endDate: start.addingTimeInterval(3_600),
+                             distanceMeters: km * 1000, durationSeconds: 3_600)
+        }
+        let runs = [run(daysAgo: 2, km: 8), run(daysAgo: 20, km: 14), run(daysAgo: 40, km: 30)]
+        XCTAssertEqual(TrainingPlanGenerator.longestRecentRunMeters(in: runs, today: now), 14_000)
+        XCTAssertEqual(TrainingPlanGenerator.longestRecentRunMeters(in: [run(daysAgo: 40, km: 30)], today: now), 0)
+        XCTAssertEqual(TrainingPlanGenerator.longestRecentRunMeters(in: [], today: now), 0)
+    }
+
+    func test_longestRecentRun_fromAStaleSnapshot_isUnknown_notZero() {
+        let now = rampToday
+        let run = RunRecord(startDate: now.addingTimeInterval(-40 * 86_400),
+                            endDate: now.addingTimeInterval(-40 * 86_400 + 3_600),
+                            distanceMeters: 25_000, durationSeconds: 3_600)
+        // Synced 40 days ago: its runs stop before the window, so it can't
+        // say the runner hasn't run.
+        let stale = HealthDataSnapshot(lastSyncedAt: now.addingTimeInterval(-40 * 86_400), runs: [run])
+        XCTAssertNil(TrainingPlanGenerator.longestRecentRunMeters(in: stale, today: now))
+        XCTAssertNil(TrainingPlanGenerator.longestRecentRunMeters(in: nil as HealthDataSnapshot?, today: now))
+        // Synced yesterday, nothing in four weeks: 0, a known nothing.
+        let fresh = HealthDataSnapshot(lastSyncedAt: now.addingTimeInterval(-86_400), runs: [run])
+        XCTAssertEqual(TrainingPlanGenerator.longestRecentRunMeters(in: fresh, today: now), 0)
     }
 
     // MARK: - Pace plausibility
