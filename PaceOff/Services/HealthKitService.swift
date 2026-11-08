@@ -688,12 +688,16 @@ public final class HealthKitService {
     ) {
         guard !observersStarted else { return }
         observersStarted = true
-        var types: [(HKSampleType, HKUpdateFrequency)] = [(HKObjectType.workoutType(), .immediate)]
+        // Runs only: other workouts, and the app's own writes, change
+        // nothing a refresh reads.
+        var types: [(HKSampleType, NSPredicate?, HKUpdateFrequency)] = [
+            (HKObjectType.workoutType(), HKQuery.predicateForWorkouts(with: .running), .immediate)
+        ]
         if let vo2 = HKQuantityType.quantityType(forIdentifier: .vo2Max) {
-            types.append((vo2, .hourly))
+            types.append((vo2, nil, .hourly))
         }
-        for (type, frequency) in types {
-            let query = HKObserverQuery(sampleType: type, predicate: nil) { _, completion, error in
+        for (type, predicate, frequency) in types {
+            let query = HKObserverQuery(sampleType: type, predicate: predicate) { _, completion, error in
                 let done = HealthUpdateCompletion(completion)
                 guard error == nil else {
                     done()
@@ -702,7 +706,15 @@ public final class HealthKitService {
                 onUpdate(done)
             }
             store.execute(query)
-            store.enableBackgroundDelivery(for: type, frequency: frequency) { _, _ in }
+            store.enableBackgroundDelivery(for: type, frequency: frequency) { success, error in
+                guard !success else { return }
+                // Typically Health access not granted yet: let a later
+                // launch, or the next call once it is, set them up again.
+                _ = error
+                Task { @MainActor in
+                    HealthKitService.shared.observersStarted = false
+                }
+            }
         }
     }
 }
