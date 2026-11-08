@@ -64,7 +64,9 @@ public enum VoiceState: Sendable, Equatable {
         }
         switch gap {
         case 1:
-            if let slope = target.vo2MaxSlope, slope < PushTargetEngine.vo2MaxDecliningSlope {
+            // The engine sets a slope only for a trend beyond noise, so any
+            // falling one is a real decline.
+            if let slope = target.vo2MaxSlope, slope < 0 {
                 // VO2Max declining wins over a neutral streak line.
                 self = .vo2MaxDeclining(deltaPerMonth: abs(slope) * 4.0, todayKm: displayedKm)
             } else if currentStreak >= 7 {

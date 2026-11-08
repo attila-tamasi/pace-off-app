@@ -9,6 +9,9 @@ struct VO2MaxDetailView: View {
 
     @State private var snapshots: [VO2MaxSnapshot] = []
     @State private var isLoading = true
+    /// The engine's reading of the last 4 weeks, worked out when the
+    /// readings arrive rather than on every render.
+    @State private var trend: PushTargetEngine.VO2Trend?
     @State private var userAge: Int?
 
     var body: some View {
@@ -149,7 +152,7 @@ struct VO2MaxDetailView: View {
             Text("The number tends to climb when you run consistently — especially mixing easy distance with the occasional hard effort — and tends to drift down when you skip weeks. Day-to-day jitter is normal; what matters is the slope over weeks.")
                 .font(.system(.body, design: .rounded))
 
-            Text("Pace Off reads the trend of your last 4 weeks, once there are at least 3 readings over 2 weeks. Readings wobble by a few tenths, so only a change beyond that counts. Falling means fitness is slipping, so today's target asks for more, up to 15% over your usual distance. Flat means it has stalled, so a little more, about 10%. Rising means the work is landing, so the target holds at your usual distance.")
+            Text("Pace Off reads the trend of your last 4 weeks, once there are at least 3 readings over 2 weeks. Readings wobble by a few tenths, so only a change beyond that counts, and readings scattered too widely don't count at all. On its own, a falling trend adds 15% to today's target, since fitness is slipping; a flat one adds 10%; a rising one adds nothing, since the work is landing. Skipped days, recovery and readiness still apply on top.")
                 .font(.system(.body, design: .rounded))
                 .foregroundStyle(.primary)
         }
@@ -190,18 +193,19 @@ struct VO2MaxDetailView: View {
         return String(format: "%.1f", v)
     }
 
-    /// The trend as the push engine reads it, so this screen and today's
-    /// target never disagree. Nil until there's enough for a trend.
+    /// The trend as the push engine reads it. Nil while loading or with no
+    /// readings, where the screen already says so.
     private var trendLabel: (text: String, icon: String, color: Color)? {
-        switch PushTargetEngine().vo2MaxTrend(snapshots, asOf: Date()) {
+        guard !isLoading, !snapshots.isEmpty else { return nil }
+        switch trend {
         case .declining(let slope):
-            return ("Falling \(String(format: "%.2f", abs(slope))) a week: today asks for more", "arrow.down.right", .orange)
+            return ("Falling \(String(format: "%.2f", abs(slope))) a week over 4 weeks", "arrow.down.right", .orange)
         case .plateau:
-            return ("Flat over the last 4 weeks: today asks a little more", "arrow.right", .secondary)
+            return ("Flat over the last 4 weeks", "arrow.right", .secondary)
         case .improving(let slope):
-            return ("Rising \(String(format: "%.2f", slope)) a week: today holds steady", "arrow.up.right", .green)
+            return ("Rising \(String(format: "%.2f", slope)) a week over 4 weeks", "arrow.up.right", .green)
         case nil:
-            return ("Not enough readings yet for a trend", "ellipsis", .secondary)
+            return ("No clear trend yet: too few readings, or too scattered", "ellipsis", .secondary)
         }
     }
 
@@ -224,9 +228,11 @@ struct VO2MaxDetailView: View {
         // First paint from cache if available so the chart is never empty.
         if let cached = await HealthDataCache.shared.load(), !cached.vo2Max.isEmpty {
             snapshots = cached.vo2Max
+            trend = PushTargetEngine().vo2MaxTrend(snapshots, asOf: Date())
             userAge = cached.userAge ?? HealthKitService.shared.userAge()
         }
         snapshots = await HealthKitService.shared.fetchVO2Max(daysBack: 365)
+        trend = PushTargetEngine().vo2MaxTrend(snapshots, asOf: Date())
         userAge = HealthKitService.shared.userAge()
         isLoading = false
     }
