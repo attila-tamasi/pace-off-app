@@ -268,7 +268,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Tests cover it.
 
 ### R-07b · A race further out than the plan
-- **Status:** todo
+- **Status:** done (PR #35)
 - **Decision (Claude, 2026-11-08, on the owner's "nem kell approval"):** option (a), start the plan later so it ends on race day. It's how race plans usually work, it keeps the plan's length the one the goal needs, and the weeks before it aren't empty: Today's daily target keeps the runner going. (b) base-building weeks before the build would make a plan of any length, up to a year; the owner can switch to it here.
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** The goal date is the race only when the plan's weeks can reach it (R-07a). A closer race ends the plan; a farther one doesn't.
@@ -547,6 +547,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #35: Plan tab with a race further out than the plan (preview "Plan tab — starts later"): "Starts 3 Mar" subtitle and hero, the First week card with no day marked, the Starts row; the plan detail's start line and Settings → Starts
 - [ ] PR #32: Today's Readiness card (chevron) and its screen: the verdict, the two signal cards with their grades (each opening its HRV / Resting HR screen), the rules card, and the not-enough-history state
 - [ ] PR #31: Today's Last 7 days card (chevron) and the week screen, with and without a plan: the bars and dashed plan lines, the plan card and its "Open training plan" button switching tabs, the day cards and their marks, a run opening its detail
 - [ ] PR #30: Today's Last run card (chevron) and the run detail: start–end time, the summary tiles, the heart rate chart, the elevation profile, the splits table; a treadmill run shows "Indoor" and no elevation
@@ -561,6 +562,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · R-07b: a race further out than the plan starts the plan later, so it ends on race day; the Plan tab says when it starts (PR #35)
 - 2026-11-08 · R-05: the long run takes at most 45 / 35 / 30% of a week with three / four / five runs, the cut going to the easy runs; week 1 starts from the runner's longest recent run (PR #34)
 - 2026-11-08 · T-01: every push to main builds Release for a device and, once the App Store Connect key's secrets exist, uploads to TestFlight; every item is now auto-merged (PR #33)
 - 2026-11-08 · F-09d: Readiness opens a screen with each signal against its baseline, how the two combine and what each colour does to the target; every Today card now has a detail (PR #32)
