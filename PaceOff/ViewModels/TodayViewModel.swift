@@ -256,6 +256,7 @@ public final class TodayViewModel {
         age: Int? = 33,
         hrv: Double? = 62,
         avgHR: Double? = 68,
+        yesterdayDayName: String? = "yesterday",
         restingHR: Double? = 51,
         readiness: DailyReadiness? = .sample,
         trends: Bool = true,
@@ -272,6 +273,7 @@ public final class TodayViewModel {
         vm.userAge = age
         vm.yesterdayHRV = hrv
         vm.yesterdayAvgHeartRate = avgHR
+        vm.yesterdayValuesDayName = yesterdayDayName
         vm.latestRestingHeartRate = restingHR
         vm.readiness = readiness
         if trends {

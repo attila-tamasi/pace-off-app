@@ -268,7 +268,7 @@ struct TodayView: View {
                         showsChevron: true,
                         value: todayVM.yesterdayHRV.map { "\(Int($0.rounded()))" } ?? "—",
                         unit: "ms",
-                        note: todayVM.yesterdayValuesDayName?.capitalized,
+                        note: todayVM.yesterdayValuesDayName?.localizedCapitalized,
                         layout: .compact
                     ) {
                         if todayVM.hrvTrend.count > 1 {
@@ -649,6 +649,14 @@ private extension View {
             hrv: nil, avgHR: nil, restingHR: nil, readiness: nil, trends: false,
             needsFirstRun: true
         ))
+        .environment(PreviewProfileStore.populated)
+        .environment(TrainingPlanStore.shared)
+        .environment(AppNavigation())
+}
+
+#Preview("Today (cache from Thursday)") {
+    NavigationStack { TodayView() }
+        .environment(TodayViewModel.preview(yesterdayDayName: "Thursday"))
         .environment(PreviewProfileStore.populated)
         .environment(TrainingPlanStore.shared)
         .environment(AppNavigation())
