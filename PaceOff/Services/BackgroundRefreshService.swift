@@ -147,7 +147,17 @@ public final class BackgroundRefreshService {
             restingHeartRate: rhr,
             readiness: readiness?.level
         )
-        let target = PushTargetEngine().compute(inputs)
+        // A runner never seen to run: nothing to target or push. Clear any
+        // pushes left from an earlier day; Today shows how to log a first run.
+        let defaults = AppGroup.sharedDefaults
+        if !runs.isEmpty { defaults?.set(true, forKey: AppGroup.Keys.hasSeenRun) }
+        guard let target = PushTargetEngine().target(
+            inputs, hasRunBefore: defaults?.bool(forKey: AppGroup.Keys.hasSeenRun) ?? false
+        ) else {
+            NotificationScheduler.shared.cancelDailyPushes()
+            log.info("Background refresh completed — no runs yet, no target")
+            return true
+        }
 
         let yesterday = mostRecentRunBefore(today: now, in: runs)
         let todayRun = mostRecentRunOn(day: now, in: runs)

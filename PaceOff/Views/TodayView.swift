@@ -22,6 +22,7 @@ struct TodayView: View {
     @Environment(TrainingPlanStore.self) private var planStore
 
     @State private var profilePresented = false
+    @Environment(\.openURL) private var openURL
 
     var body: some View {
         ScrollView {
@@ -30,7 +31,11 @@ struct TodayView: View {
                     .padding(.horizontal, 4)
                     .padding(.bottom, 14)
 
-                heroCard
+                if todayVM.needsFirstRun {
+                    firstRunCard
+                } else {
+                    heroCard
+                }
 
                 recoverySection
                 runningSection
@@ -166,31 +171,71 @@ struct TodayView: View {
                 .padding(.trailing, 96)
 
             if let planLine {
-                HStack(spacing: 7) {
-                    Circle()
-                        .fill(BrandPalette.trackLight)
-                        .frame(width: 7, height: 7)
-                        .shadow(color: BrandPalette.trackLight, radius: 4)
-                    Text(planLine)
-                        .font(.system(.footnote, design: .rounded, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.92))
-                }
-                .padding(.top, 4)
-                .padding(.trailing, 96)
+                planLineRow(planLine)
             }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(alignment: .bottomTrailing) {
-            ZStack(alignment: .bottomTrailing) {
-                BrandPalette.cardGradient
-                TrackBend(radius: 0.75, width: 0.27)
-                    .frame(width: 150, height: 150)
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .shadow(color: BrandPalette.deepBlue.opacity(0.25), radius: 16, x: 0, y: 8)
+        .heroSurface(trackSize: 150)
         .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - First run
+
+    /// In the hero's place while Health holds no run: what Pace Off needs,
+    /// how to log a run, and where to check its access. HealthKit never
+    /// says whether read access was denied, so the access hint is always
+    /// there.
+    private var firstRunCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("GET STARTED")
+                .font(.system(.caption, design: .rounded, weight: .semibold))
+                .kerning(1.1)
+                .foregroundStyle(.white.opacity(0.85))
+
+            Text("Log your first run")
+                .font(.system(.title, design: .rounded, weight: .heavy))
+                .foregroundStyle(.white)
+
+            Text("Pace Off sets each day's target from your runs in Apple Health. Record a run with Apple Watch, the Fitness app or any app that saves workouts to Health, and your first target appears here.")
+                .font(.system(.body, design: .rounded, weight: .medium))
+                .foregroundStyle(.white)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text("Already running but nothing shows? Pace Off may not be allowed to read your workouts. In the Health app, open your profile, then Apps, then Pace Off, and turn on Workouts.")
+                .font(.system(.footnote, design: .rounded))
+                .foregroundStyle(.white.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.trailing, 72)
+
+            Button {
+                if let url = URL(string: "x-apple-health://") { openURL(url) }
+            } label: {
+                Label("Open Health", systemImage: "heart.text.square")
+                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .buttonStyle(.glass)
+            .padding(.top, 2)
+
+            if let planLine {
+                planLineRow(planLine)
+            }
+        }
+        .heroSurface(trackSize: 120)
+    }
+
+    /// Today's plan workout under the hero's copy, on a glowing track dot.
+    private func planLineRow(_ line: String) -> some View {
+        HStack(spacing: 7) {
+            Circle()
+                .fill(BrandPalette.trackLight)
+                .frame(width: 7, height: 7)
+                .shadow(color: BrandPalette.trackLight, radius: 4)
+            Text(line)
+                .font(.system(.footnote, design: .rounded, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.92))
+        }
+        .padding(.top, 4)
+        .padding(.trailing, 96)
     }
 
     /// "Half Marathon plan · Tempo", or "Rest day in your plan". Nil when
@@ -552,6 +597,24 @@ private enum TodayDestination: Hashable {
     case readiness
 }
 
+private extension View {
+    /// The hero's surface: the icon's blue gradient with its running track
+    /// in the corner, rounded and lifted, as on Today's target card.
+    func heroSurface(trackSize: CGFloat) -> some View {
+        padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(alignment: .bottomTrailing) {
+                ZStack(alignment: .bottomTrailing) {
+                    BrandPalette.cardGradient
+                    TrackBend(radius: 0.75, width: 0.27)
+                        .frame(width: trackSize, height: trackSize)
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .shadow(color: BrandPalette.deepBlue.opacity(0.25), radius: 16, x: 0, y: 8)
+    }
+}
+
 #if DEBUG
 #Preview("Today (populated)") {
     NavigationStack { TodayView() }
@@ -572,6 +635,18 @@ private enum TodayDestination: Hashable {
 #Preview("Today (rest day)") {
     NavigationStack { TodayView() }
         .environment(TodayViewModel.preview(readiness: .sampleRed))
+        .environment(PreviewProfileStore.populated)
+        .environment(TrainingPlanStore.shared)
+        .environment(AppNavigation())
+}
+
+#Preview("Today (first run)") {
+    NavigationStack { TodayView() }
+        .environment(TodayViewModel.preview(
+            target: nil, voiceLine: "", yesterday: nil, vo2Max: nil, streak: 0,
+            hrv: nil, avgHR: nil, restingHR: nil, readiness: nil, trends: false,
+            needsFirstRun: true
+        ))
         .environment(PreviewProfileStore.populated)
         .environment(TrainingPlanStore.shared)
         .environment(AppNavigation())

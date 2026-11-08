@@ -12,6 +12,9 @@ import WidgetKit
 public final class TodayViewModel {
 
     public private(set) var target: RunTarget?
+    /// True once Health has been read and holds no run to base a target
+    /// on. Today then shows how to log a first run, and nothing is pushed.
+    public private(set) var needsFirstRun: Bool = false
     public private(set) var voiceLine: String = "Sync with Apple Health to compute your push."
     public private(set) var notificationLine: String = ""
     public private(set) var yesterday: RunRecord?
@@ -80,9 +83,12 @@ public final class TodayViewModel {
             ? await HealthKitService.shared.fetchTodayRunRoute()
             : []
 
-        // applySnapshot always produces a non-nil target; this guard keeps the
-        // compiler happy without changing the public type.
-        guard let target else { return }
+        // No run in Health yet: no target, so no voice line, widget day or
+        // pushes. Clear any pushes left from an earlier day.
+        guard let target else {
+            NotificationScheduler.shared.cancelDailyPushes()
+            return
+        }
 
         // Plan-aware voice and scheduling — the same reconciliation the
         // background refresh does, so foreground and background never
@@ -157,8 +163,11 @@ public final class TodayViewModel {
             restingHeartRate: rhr,
             readiness: self.readiness?.level
         )
-        let computed = engine.compute(inputs)
+        let defaults = AppGroup.sharedDefaults
+        if !runs.isEmpty { defaults?.set(true, forKey: AppGroup.Keys.hasSeenRun) }
+        let computed = engine.target(inputs, hasRunBefore: defaults?.bool(forKey: AppGroup.Keys.hasSeenRun) ?? false)
         self.target = computed
+        self.needsFirstRun = computed == nil
         self.yesterday = mostRecentRunBefore(today: now, in: runs)
         self.todayRun = mostRecentRunOn(day: now, in: runs)
         self.currentVO2Max = vo2.last?.value
@@ -240,10 +249,12 @@ public final class TodayViewModel {
         avgHR: Double? = 68,
         restingHR: Double? = 51,
         readiness: DailyReadiness? = .sample,
-        trends: Bool = true
+        trends: Bool = true,
+        needsFirstRun: Bool = false
     ) -> TodayViewModel {
         let vm = TodayViewModel()
         vm.target = target
+        vm.needsFirstRun = needsFirstRun
         vm.voiceLine = voiceLine
         vm.yesterday = yesterday
         vm.todayRun = todayRun

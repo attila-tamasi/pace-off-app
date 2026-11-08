@@ -34,7 +34,7 @@ The items come from the full code review of 2026-10-18, re-checked against the s
 ## Now · Owner's request (2026-11-08)
 
 Requests the owner put ahead of the waves, in their order:
-0. **First, every remaining fix** (owner, 2026-11-08, later the same day: "csináld meg az összes javítást loop-ban, nem kell approval"). Wave 1's R-05 and R-07b, Wave 2's Q-02, Wave 1's R-05b, then Wave 2's Q-03 to Q-11, come before F-10: the loop takes them in that order before anything below. (Q-02 goes before R-05b only because it was ready.) The two blocked calls are Claude's to make; each item records the decision and the owner can reverse it.
+0. **First, every remaining fix** (owner, 2026-11-08, later the same day: "csináld meg az összes javítást loop-ban, nem kell approval"). Wave 1's R-05 and R-07b, Wave 2's Q-02 to Q-11, then R-05b, come before F-10: the loop takes them in that order before anything below. R-05b went last once its first rule proved to cut the marathon plans too far (see the item). The two blocked calls are Claude's to make; each item records the decision and the owner can reverse it.
 1. The app in TestFlight (T-01).
 2. Every card on Today opens a detail screen (F-09).
 3. A morning weather check that says what to run and when (F-10).
@@ -280,13 +280,15 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 ### R-05b · The run before the long run is nearly as long as it
 - **Status:** todo
 - **Size:** M   ·   **Merge:** auto
-- **Problem:** R-05 moved the long run's cut into the two easy runs, so the Medium and Aggressive marathon's easy runs peak at 16.7 and 20.3 km against long runs of 22.3 and 25.5 km. One of them is the day before the long run: a 20 km Saturday, then 25.5 km on Sunday. Found in R-05's review.
-- **Where:** `TrainingPlanGenerator.peakRuns`, `buildWeek` / `materialise` (distances are per kind today, not per slot); the tier templates.
+- **Problem:** R-05 moved the long run's cut into the two easy runs, so the Medium and Aggressive marathon's easy runs peak at 16.7 and 20.3 km against long runs of 22.3 and 25.5 km. One of them is the day before the long run: a 20 km Saturday, then 25.5 km on Sunday. The weekend is still lighter than before R-05 (45.8 km against 51.5), so it waits behind Wave 2. Found in R-05's review.
+- **Why not just cap the easy runs:** with the quality sessions at today's fixed 8–10 km, capping the day-before run at 60% and the other at 80% of the long run, while the long run keeps its share, forces the long run down to about 20 km for the Aggressive marathon and 17.5 km for the Medium, and the peak week from 85 to 68 km. The quality sessions are what's short: marathoners run longer threshold and interval sessions.
+- **Where:** `TrainingPlanGenerator` (`thresholdMeters`, `intervalMeters`, session notes, `peakRuns`, `buildWeek` / `materialise`: distances are per kind today, not per slot).
 - **Done when:**
-  - The easy run on the day before the long run is at most 60% of that week's long run; the other easy run takes what it gives up, up to 80% of the long run. Distance that fits neither is dropped: a week never grows. The long run's share cap (R-05) still holds.
-  - Plans whose easy runs were already within those limits don't change.
+  - Half and marathon quality sessions are longer, with notes that add up to their distance: about 11 / 10 km for the half's threshold / intervals and 14 / 12 km for the marathon's (Aggressive; Medium's single session 12 km for the marathon, 9 for the half).
+  - The easy run on the day before the long run is at most 60% of that week's long run; the other easy run takes what it gives up, up to 80% of the long run. With the longer sessions nothing needs dropping in the marathon and half tiers; if anything still doesn't fit, it's dropped, and no week grows.
+  - R-05's share cap still holds; 5K and 10K plans, already within these limits, don't change.
   - Tests cover every goal × tier, and long-run days other than Sunday.
-  - Also consider, in the same change: a plan too short to build from a low week 1 toward race distance (a beginner's marathon eight weeks out peaks near 12 km) says so on the plan's detail screen.
+  - Also: a plan too short to build from a low week 1 toward race distance (a beginner's marathon eight weeks out peaks near 12 km) says so on the plan's detail screen.
 
 ### R-08 · Slow runners get paces that are too fast
 - **Status:** done (PR #26)
@@ -327,7 +329,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 - **Done when:** only `.fullName` is requested, and nothing reads an email.
 
 ### Q-03 · No empty state for a new runner
-- **Status:** todo
+- **Status:** done (PR #37)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** With no runs, or with Health access denied, Today shows a 3 km restart target and a skip count, and the evening "Last call" fires.
 - **Where:** `TodayViewModel`, `TodayView`, `PushTargetEngine` with zero runs, `NotificationScheduler`.
@@ -547,6 +549,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #37: Today with no runs (preview "Today (first run)"): the Log your first run card, its glass Open Health button on the blue card, and that it opens Health
 - [ ] PR #35: Plan tab with a race further out than the plan (preview "Plan tab — starts later"): "Starts 3 Mar" subtitle and hero, the First week card with no day marked, the Starts row; the plan detail's start line and Settings → Starts
 - [ ] PR #32: Today's Readiness card (chevron) and its screen: the verdict, the two signal cards with their grades (each opening its HRV / Resting HR screen), the rules card, and the not-enough-history state
 - [ ] PR #31: Today's Last 7 days card (chevron) and the week screen, with and without a plan: the bars and dashed plan lines, the plan card and its "Open training plan" button switching tabs, the day cards and their marks, a run opening its detail
@@ -562,6 +565,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · Q-03: no target and no pushes until Health holds a run; Today shows how to log a first run instead (PR #37)
 - 2026-11-08 · Q-02: Sign in with Apple asks only for the name, never the email (PR #36)
 - 2026-11-08 · R-07b: a race further out than the plan starts the plan later, so it ends on race day; the Plan tab says when it starts (PR #35)
 - 2026-11-08 · R-05: the long run takes at most 45 / 35 / 30% of a week with three / four / five runs, the cut going to the easy runs; week 1 starts from the runner's longest recent run (PR #34)

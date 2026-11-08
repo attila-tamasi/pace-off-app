@@ -27,6 +27,41 @@ final class PushTargetEngineTests: XCTestCase {
         VO2MaxSnapshot(date: date(daysAgo, from: today), value: value)
     }
 
+    // MARK: - No runs yet
+
+    func test_target_isNil_withNoRuns() {
+        let today = Date()
+        let inputs = PushTargetEngine.Inputs(today: today, runs: [], vo2Max: [vo2(daysAgo: 3, value: 45, today: today)],
+                                             restingHeartRate: [])
+        XCTAssertNil(engine.target(inputs))
+        XCTAssertFalse(PushTargetEngine.hasRunHistory([], today: today))
+    }
+
+    func test_target_isNil_whenTheOnlyRunIsAfterToday() {
+        // A run stamped after `today` (a clock change, a bad import) isn't history.
+        let today = Date()
+        let later = run(daysAgo: -1, km: 5, today: today)
+        XCTAssertNil(engine.target(PushTargetEngine.Inputs(today: today, runs: [later], vo2Max: [], restingHeartRate: [])))
+    }
+
+    func test_target_forARunnerSeenBefore_isTheRestartTarget_evenWithNoRunInTheWindow() {
+        // Back after more than 90 days off: the snapshot holds no run, but
+        // Pace Off has seen this runner run, so it's a restart, not a start.
+        let today = Date()
+        let inputs = PushTargetEngine.Inputs(today: today, runs: [], vo2Max: [], restingHeartRate: [])
+        let target = engine.target(inputs, hasRunBefore: true)
+        XCTAssertEqual(target?.tone, .restart)
+        XCTAssertEqual(target?.distanceMeters, 3_000)
+    }
+
+    func test_target_withARun_isTheComputedTarget() {
+        let today = Date()
+        let inputs = PushTargetEngine.Inputs(today: today, runs: [run(daysAgo: 1, km: 5, today: today)],
+                                             vo2Max: [], restingHeartRate: [])
+        XCTAssertEqual(engine.target(inputs), engine.compute(inputs))
+        XCTAssertNotNil(engine.target(inputs))
+    }
+
     // MARK: - Median helper
 
     func test_median_oddCount() {

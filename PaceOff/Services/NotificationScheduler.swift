@@ -47,7 +47,7 @@ public final class NotificationScheduler {
         planStatus: PlanDayStatus?,
         overrideBody: String? = nil
     ) {
-        center.removePendingNotificationRequests(withIdentifiers: Self.dailyIds)
+        cancelDailyPushes()
 
         let defaults = AppGroup.sharedDefaults
         guard defaults?.bool(forKey: AppGroup.Keys.onboardingComplete) == true else { return }
@@ -108,6 +108,12 @@ public final class NotificationScheduler {
 
         let request = UNNotificationRequest(identifier: Self.id(for: push.slot), content: content, trigger: trigger)
         center.add(request)
+    }
+
+    /// Removes today's scheduled pushes and leaves everything else. Called
+    /// when there's no target to push for: no runs in Health yet.
+    public func cancelDailyPushes() {
+        center.removePendingNotificationRequests(withIdentifiers: Self.dailyIds)
     }
 
     /// Removes every scheduled and delivered Pace Off notification. Called
