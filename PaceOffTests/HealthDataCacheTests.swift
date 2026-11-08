@@ -48,6 +48,54 @@ final class HealthDataCacheTests: XCTestCase {
         XCTAssertEqual(decoded, original)
     }
 
+    // MARK: - The day "yesterday" values describe
+
+    private func utcCalendar() -> Calendar {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "UTC")!
+        cal.locale = Locale(identifier: "en_US_POSIX")
+        return cal
+    }
+
+    func test_yesterdayValues_fromASyncToday_areYesterdays() {
+        let cal = utcCalendar()
+        let now = cal.date(from: DateComponents(year: 2026, month: 11, day: 8, hour: 18))!   // a Sunday
+        let synced = cal.date(from: DateComponents(year: 2026, month: 11, day: 8, hour: 7))!
+        let snapshot = HealthDataSnapshot(lastSyncedAt: synced, yesterdayHRV: 60)
+        XCTAssertEqual(snapshot.yesterdayValuesDayName(now: now, calendar: cal), "yesterday")
+    }
+
+    func test_yesterdayValues_fromAnEarlierSync_nameTheirOwnDay() {
+        // Synced Friday morning, seen Sunday: the values are Thursday's.
+        let cal = utcCalendar()
+        let now = cal.date(from: DateComponents(year: 2026, month: 11, day: 8, hour: 9))!
+        let synced = cal.date(from: DateComponents(year: 2026, month: 11, day: 6, hour: 8))!
+        let snapshot = HealthDataSnapshot(lastSyncedAt: synced, yesterdayHRV: 60)
+        XCTAssertEqual(snapshot.yesterdayValuesDayName(now: now, calendar: cal), "Thursday")
+    }
+
+    func test_yesterdayValues_sixDaysOld_nameTheirDay_aWeekOld_areHidden() {
+        let cal = utcCalendar()
+        let now = cal.date(from: DateComponents(year: 2026, month: 11, day: 8, hour: 9))!
+        // Synced Tuesday: Monday's values, six days back.
+        let tuesday = cal.date(from: DateComponents(year: 2026, month: 11, day: 3, hour: 8))!
+        XCTAssertEqual(HealthDataSnapshot(lastSyncedAt: tuesday, yesterdayHRV: 60)
+                        .yesterdayValuesDayName(now: now, calendar: cal), "Monday")
+        // Synced Monday: last Sunday's, a week back.
+        let monday = cal.date(from: DateComponents(year: 2026, month: 11, day: 2, hour: 8))!
+        XCTAssertNil(HealthDataSnapshot(lastSyncedAt: monday, yesterdayHRV: 60)
+                        .yesterdayValuesDayName(now: now, calendar: cal))
+    }
+
+    func test_yesterdayValues_fromASyncDatedTomorrow_areHidden() {
+        // A clock that ran ahead: the values would be today's, not yesterday's.
+        let cal = utcCalendar()
+        let now = cal.date(from: DateComponents(year: 2026, month: 11, day: 8, hour: 9))!
+        let synced = cal.date(from: DateComponents(year: 2026, month: 11, day: 9, hour: 8))!
+        XCTAssertNil(HealthDataSnapshot(lastSyncedAt: synced, yesterdayHRV: 60)
+                        .yesterdayValuesDayName(now: now, calendar: cal))
+    }
+
     func test_snapshot_isEmpty_detectsFreshConstruction() {
         let blank = HealthDataSnapshot()
         XCTAssertTrue(blank.isEmpty)

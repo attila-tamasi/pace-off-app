@@ -94,6 +94,26 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
         !hasReadings && userAge == nil
     }
 
+    /// What to call the day `yesterdayHRV` and `yesterdayAvgHeartRate`
+    /// describe, seen on `now`: they're the day before the sync, which is
+    /// yesterday only for a snapshot synced today. "yesterday" then; the
+    /// weekday ("Thursday") for one from earlier in the week, so a cached
+    /// snapshot never passes an older day off as yesterday; nil, hide
+    /// them, once they're a week old or more.
+    public func yesterdayValuesDayName(now: Date = Date(), calendar: Calendar = .current) -> String? {
+        let today = calendar.startOfDay(for: now)
+        guard let valuesDay = calendar.date(byAdding: .day, value: -1,
+                                            to: calendar.startOfDay(for: lastSyncedAt)),
+              let daysAgo = calendar.dateComponents([.day], from: valuesDay, to: today).day,
+              daysAgo >= 1, daysAgo < 7
+        else { return nil }
+        if daysAgo == 1 { return "yesterday" }
+        let style = Date.FormatStyle(locale: calendar.locale ?? .current,
+                                     calendar: calendar,
+                                     timeZone: calendar.timeZone).weekday(.wide)
+        return valuesDay.formatted(style)
+    }
+
     /// Whether the snapshot is older than `maxAge` and should be refreshed.
     public func isStale(maxAge: TimeInterval, now: Date = Date()) -> Bool {
         now.timeIntervalSince(lastSyncedAt) > maxAge

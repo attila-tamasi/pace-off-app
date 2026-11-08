@@ -29,6 +29,9 @@ public final class TodayViewModel {
     // at the top of the Today screen.
     public private(set) var yesterdayHRV: Double?
     public private(set) var yesterdayAvgHeartRate: Double?
+    /// The day those two describe: "yesterday", or the weekday when the
+    /// snapshot was synced on an earlier day. Nil hides them.
+    public private(set) var yesterdayValuesDayName: String? = "yesterday"
     public private(set) var latestRestingHeartRate: Double?
 
     // Daily traffic light. Nil until there's enough HRV/RHR history to
@@ -175,8 +178,12 @@ public final class TodayViewModel {
         self.currentVO2Max = vo2.last?.value
         self.currentStreak = RunStreak.current(runs: runs, today: now)
         self.userAge = snapshot.userAge ?? HealthKitService.shared.userAge()
-        self.yesterdayHRV = snapshot.yesterdayHRV
-        self.yesterdayAvgHeartRate = snapshot.yesterdayAvgHeartRate
+        // The snapshot's "yesterday" is the day before its sync: name that
+        // day, or hide the values once they're too old to matter.
+        let dayName = snapshot.yesterdayValuesDayName(now: now)
+        self.yesterdayValuesDayName = dayName
+        self.yesterdayHRV = dayName == nil ? nil : snapshot.yesterdayHRV
+        self.yesterdayAvgHeartRate = dayName == nil ? nil : snapshot.yesterdayAvgHeartRate
         self.latestRestingHeartRate = snapshot.latestRestingHeartRate
 
         self.hrvTrend = Self.dailyMeans(snapshot.hrv.map { ($0.date, $0.sdnnMs) }, days: 7, now: now)
@@ -249,6 +256,7 @@ public final class TodayViewModel {
         age: Int? = 33,
         hrv: Double? = 62,
         avgHR: Double? = 68,
+        yesterdayDayName: String? = "yesterday",
         restingHR: Double? = 51,
         readiness: DailyReadiness? = .sample,
         trends: Bool = true,
@@ -265,6 +273,7 @@ public final class TodayViewModel {
         vm.userAge = age
         vm.yesterdayHRV = hrv
         vm.yesterdayAvgHeartRate = avgHR
+        vm.yesterdayValuesDayName = yesterdayDayName
         vm.latestRestingHeartRate = restingHR
         vm.readiness = readiness
         if trends {
