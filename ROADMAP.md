@@ -34,7 +34,7 @@ The items come from the full code review of 2026-10-18, re-checked against the s
 ## Now · Owner's request (2026-11-08)
 
 Requests the owner put ahead of the waves, in their order:
-0. **First, every remaining fix** (owner, 2026-11-08, later the same day: "csináld meg az összes javítást loop-ban, nem kell approval"). Wave 1's R-05 and R-07b, then Wave 2's Q-02 to Q-11, come before F-10: the loop takes them in that order before anything below. The two blocked calls are Claude's to make; each item records the decision and the owner can reverse it.
+0. **First, every remaining fix** (owner, 2026-11-08, later the same day: "csináld meg az összes javítást loop-ban, nem kell approval"). Wave 1's R-05, R-07b and R-05b, then Wave 2's Q-02 to Q-11, come before F-10: the loop takes them in that order before anything below. The two blocked calls are Claude's to make; each item records the decision and the owner can reverse it.
 1. The app in TestFlight (T-01).
 2. Every card on Today opens a detail screen (F-09).
 3. A morning weather check that says what to run and when (F-10).
@@ -275,6 +275,17 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 - **Done when:**
   - For any future race date, the plan has the race on its date.
   - If the plan starts later, the Plan tab says when.
+
+### R-05b · The run before the long run is nearly as long as it
+- **Status:** todo
+- **Size:** M   ·   **Merge:** auto
+- **Problem:** R-05 moved the long run's cut into the two easy runs, so the Medium and Aggressive marathon's easy runs peak at 16.7 and 20.3 km against long runs of 22.3 and 25.5 km. One of them is the day before the long run: a 20 km Saturday, then 25.5 km on Sunday. Found in R-05's review.
+- **Where:** `TrainingPlanGenerator.peakRuns`, `buildWeek` / `materialise` (distances are per kind today, not per slot); the tier templates.
+- **Done when:**
+  - The easy run on the day before the long run is at most 60% of that week's long run; the other easy run takes what it gives up, up to 80% of the long run. Distance that fits neither is dropped: a week never grows. The long run's share cap (R-05) still holds.
+  - Plans whose easy runs were already within those limits don't change.
+  - Tests cover every goal × tier, and long-run days other than Sunday.
+  - Also consider, in the same change: a plan too short to build from a low week 1 toward race distance (a beginner's marathon eight weeks out peaks near 12 km) says so on the plan's detail screen.
 
 ### R-08 · Slow runners get paces that are too fast
 - **Status:** done (PR #26)

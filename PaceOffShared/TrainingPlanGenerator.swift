@@ -644,8 +644,10 @@ public struct TrainingPlanGenerator: Sendable {
 
     // MARK: Volume curves
 
-    /// Peak weekly km we'd build toward at this tier + goal. The buildup
-    /// scales other distances against this.
+    /// Sizes the easy runs: this, less the long-run benchmark, shared over
+    /// the week's other runs as if each were easy. Quality sessions keep
+    /// their own distances, so a week that has them comes out under this
+    /// figure (the aggressive marathon's peak week is 85 km, not 95).
     private func peakWeeklyKm(goal: RunningGoal, tier: PlanTier) -> Double {
         switch (goal, tier) {
         case (.fiveK,        .easy):        return 22
@@ -696,25 +698,35 @@ public struct TrainingPlanGenerator: Sendable {
         let easyKm: Double
     }
 
-    /// The peak week's long and easy runs. The week as laid out holds the
-    /// long run, the tier's quality sessions and two easy runs (one of
-    /// them the Easy tier's strides run). The long run is the goal's
-    /// benchmark, cut to the tier's share of that week; the distance it
-    /// gives up goes to the easy runs, so the week's total stays the same.
+    /// The peak week's long and easy runs. The week as the tier's template
+    /// lays it out holds the long run, its quality sessions at their own
+    /// distances, and its easy runs (a strides run counts as one). The long
+    /// run is the goal's benchmark, cut to the tier's share of that week;
+    /// the distance it gives up goes to the easy runs, so the week's total
+    /// is what it was with the full benchmark.
     func peakRuns(goal: RunningGoal, tier: PlanTier) -> PeakRuns {
         let benchmark = longRunBenchmarkKm(goal: goal, tier: tier)
         let peakWeek = peakWeeklyKm(goal: goal, tier: tier)
         let easy = max((peakWeek - benchmark) / Double(tier.runsPerWeek - 1), 4)
-        let quality: Double
-        switch tier {
-        case .easy:       quality = 0
-        case .medium:     quality = max(thresholdMeters(tier: tier), intervalMeters(tier: tier)) / 1000
-        case .aggressive: quality = (thresholdMeters(tier: tier) + intervalMeters(tier: tier)) / 1000
-        }
-        let easyRuns = 2.0
+        // Every week of a tier has the same easy-run count and quality
+        // distance (the medium tier's alternating sessions are equally
+        // long), so any week's template stands for the peak week.
+        let layout = workoutTemplate(tier: tier, week: 1, of: 1, goal: goal)
+        let easyRuns = Double(max(layout.filter { $0 == .easy || $0 == .strides }.count, 1))
+        let quality = layout.reduce(0) { $0 + qualityMeters($1, tier: tier, goal: goal) } / 1000
         let week = benchmark + quality + easyRuns * easy
         let long = min(benchmark, Self.longRunShareCap(runsPerWeek: tier.runsPerWeek) * week)
         return PeakRuns(longKm: long, easyKm: easy + (benchmark - long) / easyRuns)
+    }
+
+    /// A quality session's distance at the peak; 0 for any other kind.
+    private func qualityMeters(_ kind: WorkoutKind, tier: PlanTier, goal: RunningGoal) -> Double {
+        switch kind {
+        case .tempo, .threshold: return thresholdMeters(tier: tier)
+        case .interval:          return intervalMeters(tier: tier)
+        case .marathonPace:      return marathonPaceMeters(goal: goal)
+        default:                 return 0
+        }
     }
 
     /// Weekly distance rises by at most this factor from one week to the
@@ -737,16 +749,35 @@ public struct TrainingPlanGenerator: Sendable {
         return min(Self.defaultStartFraction, max(Self.minimumStartFraction, reach))
     }
 
-    /// The longest run in `runs` that started in the `days` days before
-    /// `today`, in meters: 0 when there was none.
+    /// How far back the runner's longest recent run is looked for.
+    public static let recentRunWindowDays = 28
+
+    /// The longest run in `runs` that started in the last `days` calendar
+    /// days, today included, in meters: 0 when there was none.
     public static func longestRecentRunMeters(in runs: [RunRecord],
                                               today: Date = Date(),
-                                              days: Int = 28) -> Double {
-        let from = today.addingTimeInterval(-Double(days) * 86_400)
+                                              days: Int = TrainingPlanGenerator.recentRunWindowDays) -> Double {
+        let cal = Calendar.current
+        let from = cal.date(byAdding: .day, value: -days, to: cal.startOfDay(for: today)) ?? today
         return runs
             .filter { $0.startDate >= from && $0.startDate <= today }
             .map(\.distanceMeters)
             .max() ?? 0
+    }
+
+    /// The longest recent run from a Health snapshot, or nil when the
+    /// snapshot can't say: none at all, or one synced before the window
+    /// began, whose runs stop short of it. Nil starts week 1 at the usual
+    /// 70%, where a stale 0 would drop it to the floor.
+    public static func longestRecentRunMeters(in snapshot: HealthDataSnapshot?,
+                                              today: Date = Date()) -> Double? {
+        guard let snapshot else { return nil }
+        let cal = Calendar.current
+        guard let windowStart = cal.date(byAdding: .day, value: -Self.recentRunWindowDays,
+                                         to: cal.startOfDay(for: today)),
+              snapshot.lastSyncedAt >= windowStart
+        else { return nil }
+        return longestRecentRunMeters(in: snapshot.runs, today: today)
     }
 
     /// Each week's share of the peak week, week 1 first. The build runs

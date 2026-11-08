@@ -17,6 +17,9 @@ struct TrainingPlanPickerView: View {
     @State private var detailPresented: Bool = false
     @State private var vo2Max: Double?
     @State private var recentLongestRunMeters: Double?
+    /// The tier cards wait for the Health snapshot, so a plan is never
+    /// built before the paces and week 1 can use it.
+    @State private var healthLoaded = false
 
     private let generator = TrainingPlanGenerator()
 
@@ -28,6 +31,7 @@ struct TrainingPlanPickerView: View {
                 longRunDayPicker
                 ForEach(PlanTier.allCases) { tier in
                     tierCard(tier)
+                        .disabled(!healthLoaded)
                 }
             }
             .padding(20)
@@ -214,7 +218,8 @@ struct TrainingPlanPickerView: View {
     private func loadHealth() async {
         let cached = await HealthDataCache.shared.load()
         vo2Max = cached?.vo2Max.last?.value
-        recentLongestRunMeters = cached.map { TrainingPlanGenerator.longestRecentRunMeters(in: $0.runs) }
+        recentLongestRunMeters = TrainingPlanGenerator.longestRecentRunMeters(in: cached)
+        healthLoaded = true
     }
 }
 

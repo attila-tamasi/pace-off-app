@@ -213,7 +213,7 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         XCTAssertEqual(longestLongRunKm(plan(.fiveK, .easy)), 8.0, accuracy: 0.05)
     }
 
-    // MARK: - Long-run share and week 1 (R-05)
+    // MARK: - Long-run share and week 1
 
     /// The share cap for every goal and tier, checked in every week that
     /// doesn't hold the race (the race is the goal, not training load).
@@ -321,6 +321,21 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         XCTAssertEqual(TrainingPlanGenerator.longestRecentRunMeters(in: runs, today: now), 14_000)
         XCTAssertEqual(TrainingPlanGenerator.longestRecentRunMeters(in: [run(daysAgo: 40, km: 30)], today: now), 0)
         XCTAssertEqual(TrainingPlanGenerator.longestRecentRunMeters(in: [], today: now), 0)
+    }
+
+    func test_longestRecentRun_fromAStaleSnapshot_isUnknown_notZero() {
+        let now = rampToday
+        let run = RunRecord(startDate: now.addingTimeInterval(-40 * 86_400),
+                            endDate: now.addingTimeInterval(-40 * 86_400 + 3_600),
+                            distanceMeters: 25_000, durationSeconds: 3_600)
+        // Synced 40 days ago: its runs stop before the window, so it can't
+        // say the runner hasn't run.
+        let stale = HealthDataSnapshot(lastSyncedAt: now.addingTimeInterval(-40 * 86_400), runs: [run])
+        XCTAssertNil(TrainingPlanGenerator.longestRecentRunMeters(in: stale, today: now))
+        XCTAssertNil(TrainingPlanGenerator.longestRecentRunMeters(in: nil as HealthDataSnapshot?, today: now))
+        // Synced yesterday, nothing in four weeks: 0, a known nothing.
+        let fresh = HealthDataSnapshot(lastSyncedAt: now.addingTimeInterval(-86_400), runs: [run])
+        XCTAssertEqual(TrainingPlanGenerator.longestRecentRunMeters(in: fresh, today: now), 0)
     }
 
     // MARK: - Pace plausibility
