@@ -45,14 +45,10 @@ final class WorkoutProfileTests: XCTestCase {
 
     // MARK: - Elevation
 
-    /// Points about 11 m apart heading north, one per second, at the given
-    /// altitudes.
-    private func route(_ altitudes: [Double]) -> [(date: Date, lat: Double, lon: Double, altitude: Double)] {
+    /// Points 11 m apart along the route at the given altitudes.
+    private func route(_ altitudes: [Double]) -> [(meters: Double, altitude: Double)] {
         altitudes.enumerated().map { index, altitude in
-            (date: start.addingTimeInterval(Double(index)),
-             lat: 47.5 + Double(index) * 0.0001,
-             lon: 19.05,
-             altitude: altitude)
+            (meters: Double(index) * 11, altitude: altitude)
         }
     }
 
@@ -87,9 +83,21 @@ final class WorkoutProfileTests: XCTestCase {
         XCTAssertLessThanOrEqual(points.count, 151)
         XCTAssertEqual(points.first?.meters, 0)
         XCTAssertEqual(points.map(\.meters), points.map(\.meters).sorted())
-        // The last point is the finish: about 999 × 11.1 m along.
-        XCTAssertEqual(points.last?.meters ?? 0, 11_100, accuracy: 150)
+        // The last point is the finish, 999 × 11 m along.
+        XCTAssertEqual(points.last?.meters ?? 0, 10_989, accuracy: 0.001)
         XCTAssertEqual(points.last?.altitude, altitudes.last)
+        XCTAssertEqual(Set(points.map(\.id)).count, points.count)
+    }
+
+    func test_elevation_standingStill_keepsUniqueIDs() {
+        // Waiting at a crossing: three points at the same distance.
+        let samples: [(meters: Double, altitude: Double)] = [
+            (meters: 0, altitude: 10), (meters: 0, altitude: 10), (meters: 0, altitude: 11),
+            (meters: 20, altitude: 15),
+        ]
+        let points = WorkoutElevation(samples: samples)?.points ?? []
+        XCTAssertEqual(points.count, 4)
+        XCTAssertEqual(Set(points.map(\.id)).count, 4)
     }
 
     func test_elevation_isNil_withFewerThanTwoPoints() {

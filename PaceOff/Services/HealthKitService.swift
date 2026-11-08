@@ -540,12 +540,31 @@ public final class HealthKitService {
         return WorkoutExtras(
             indoor: (metadata[HKMetadataKeyIndoorWorkout] as? NSNumber)?.boolValue,
             elevationGainMeters: quantity(HKMetadataKeyElevationAscended, .meter()),
+            elevationLossMeters: quantity(HKMetadataKeyElevationDescended, .meter()),
             temperatureCelsius: quantity(HKMetadataKeyWeatherTemperature, .degreeCelsius()),
             // Health stores humidity as a percent quantity: 0.65 is 65%.
             humidityPercent: quantity(HKMetadataKeyWeatherHumidity, .percent()).map { $0 * 100 },
-            steps: await cumulativeSum(.stepCount, for: workout, unit: .count(), log: nil),
+            steps: await stepCount(from: workout.startDate, to: workout.endDate),
             averageMETs: quantity(HKMetadataKeyAverageMETs, metsUnit)
         )
+    }
+
+    /// Steps taken between two moments, from every source, merged the way
+    /// Health shows them. Step samples usually aren't attached to the
+    /// workout itself, so they're found by time, not by workout.
+    private func stepCount(from start: Date, to end: Date) async -> Double? {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .stepCount) else { return nil }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: [])
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsQuery(
+                quantityType: type,
+                quantitySamplePredicate: predicate,
+                options: .cumulativeSum
+            ) { _, stats, _ in
+                continuation.resume(returning: stats?.sumQuantity()?.doubleValue(for: .count()))
+            }
+            store.execute(query)
+        }
     }
 
     /// The running workout `record` was made from: the one starting

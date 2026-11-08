@@ -52,10 +52,12 @@ public struct WorkoutHeartRate: Equatable, Sendable {
 public struct WorkoutElevation: Equatable, Sendable {
 
     public struct Point: Equatable, Identifiable, Sendable {
+        /// Position in the route, which stays unique while standing still.
+        public let index: Int
         /// Distance from the start, in metres.
         public let meters: Double
         public let altitude: Double
-        public var id: Double { meters }
+        public var id: Int { index }
     }
 
     /// Climbing and descending in metres, counting a change only once it
@@ -67,14 +69,14 @@ public struct WorkoutElevation: Equatable, Sendable {
     /// At most `maxPoints` points along the route, for the chart.
     public let points: [Point]
 
-    /// Nil with fewer than two points.
-    public init?(samples: [(date: Date, lat: Double, lon: Double, altitude: Double)],
+    /// `samples` are the route's points that carry an altitude, each with
+    /// its distance from the start measured along the whole route. Nil
+    /// with fewer than two.
+    public init?(samples: [(meters: Double, altitude: Double)],
                  noise: Double = 3,
                  maxPoints: Int = 150) {
         guard samples.count >= 2, maxPoints >= 2 else { return nil }
-        let distances = PaceDecayAnalyser.locationSamples(
-            from: samples.map { (date: $0.date, lat: $0.lat, lon: $0.lon) }
-        ).map(\.cumulativeMeters)
+        let distances = samples.map(\.meters)
         let altitudes = samples.map(\.altitude)
 
         var gain = 0.0, loss = 0.0
@@ -96,7 +98,7 @@ public struct WorkoutElevation: Equatable, Sendable {
         let step = max(1, Int((Double(samples.count) / Double(maxPoints)).rounded(.up)))
         var kept = Array(stride(from: 0, to: samples.count, by: step))
         if kept.last != samples.count - 1 { kept.append(samples.count - 1) }
-        points = kept.map { Point(meters: distances[$0], altitude: altitudes[$0]) }
+        points = kept.map { Point(index: $0, meters: distances[$0], altitude: altitudes[$0]) }
     }
 }
 
@@ -106,9 +108,10 @@ public struct WorkoutElevation: Equatable, Sendable {
 /// opens. Each is nil when the workout doesn't carry it.
 public struct WorkoutExtras: Equatable, Sendable {
     public var indoor: Bool?
-    /// Health's own elevation gain, in metres; preferred over the one
-    /// worked out from the route.
+    /// Health's own elevation gain and loss, in metres; preferred over
+    /// the ones worked out from the route.
     public var elevationGainMeters: Double?
+    public var elevationLossMeters: Double?
     public var temperatureCelsius: Double?
     /// 0–100.
     public var humidityPercent: Double?
@@ -117,12 +120,14 @@ public struct WorkoutExtras: Equatable, Sendable {
 
     public init(indoor: Bool? = nil,
                 elevationGainMeters: Double? = nil,
+                elevationLossMeters: Double? = nil,
                 temperatureCelsius: Double? = nil,
                 humidityPercent: Double? = nil,
                 steps: Double? = nil,
                 averageMETs: Double? = nil) {
         self.indoor = indoor
         self.elevationGainMeters = elevationGainMeters
+        self.elevationLossMeters = elevationLossMeters
         self.temperatureCelsius = temperatureCelsius
         self.humidityPercent = humidityPercent
         self.steps = steps

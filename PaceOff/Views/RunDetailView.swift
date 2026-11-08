@@ -122,6 +122,12 @@ struct RunDetailView: View {
     private func loadRouteAndSplits() async {
         isLoadingRoute = true
         isLoadingSplits = true
+        heartRate = nil
+        elevation = nil
+        extras = nil
+        // Read alongside the route and heart rate, not after them.
+        let run = self.run
+        let workoutExtras = Task { await HealthKitService.shared.fetchWorkoutExtras(for: run) }
 
         // Fetch the full CLLocation stream (with timestamps) so we can
         // both draw the map polyline AND compute pace-decay splits from
@@ -152,14 +158,12 @@ struct RunDetailView: View {
         isLoadingSplits = false
 
         heartRate = WorkoutHeartRate(samples: hrRaw, start: run.startDate, end: run.endDate)
-        // A negative vertical accuracy marks a point without a valid altitude.
-        elevation = WorkoutElevation(samples: locations
-            .filter { $0.verticalAccuracy >= 0 }
-            .map { (date: $0.timestamp,
-                    lat: $0.coordinate.latitude,
-                    lon: $0.coordinate.longitude,
-                    altitude: $0.altitude) })
-        extras = await HealthKitService.shared.fetchWorkoutExtras(for: run)
+        // Distances along the whole route; a negative vertical accuracy
+        // marks a point without a valid altitude, which the profile skips.
+        elevation = WorkoutElevation(samples: zip(locations, locationSamples)
+            .filter { $0.0.verticalAccuracy >= 0 }
+            .map { (meters: $0.1.cumulativeMeters, altitude: $0.0.altitude) })
+        extras = await workoutExtras.value
     }
 
     private func updateCamera(for coords: [CLLocationCoordinate2D]) {
@@ -235,11 +239,18 @@ struct RunDetailView: View {
         if let kcal = run.activeEnergyKcal {
             items.append(SummaryItem(label: "ACTIVE ENERGY", value: "\(Int(kcal.rounded())) kcal", icon: "flame.fill"))
         }
-        if let gain = extras?.elevationGainMeters ?? elevation?.gain {
-            items.append(SummaryItem(label: "ELEVATION GAIN", value: "\(Int(gain.rounded())) m", icon: "arrow.up.right"))
-        }
-        if let loss = elevation?.loss {
-            items.append(SummaryItem(label: "ELEVATION LOSS", value: "\(Int(loss.rounded())) m", icon: "arrow.down.right"))
+        // Gain and loss from one source: Health's own figures when it has
+        // them, else the route's. Indoors there's no elevation to speak of.
+        if extras?.indoor != true {
+            let fromHealth = extras?.elevationGainMeters != nil
+            let gain = fromHealth ? extras?.elevationGainMeters : elevation?.gain
+            let loss = fromHealth ? extras?.elevationLossMeters : elevation?.loss
+            if let gain {
+                items.append(SummaryItem(label: "ELEVATION GAIN", value: "\(Int(gain.rounded())) m", icon: "arrow.up.right"))
+            }
+            if let loss {
+                items.append(SummaryItem(label: "ELEVATION LOSS", value: "\(Int(loss.rounded())) m", icon: "arrow.down.right"))
+            }
         }
         if let steps = extras?.steps {
             items.append(SummaryItem(label: "STEPS", value: Int(steps.rounded()).formatted(), icon: "shoeprints.fill"))
@@ -323,7 +334,7 @@ struct RunDetailView: View {
                     AxisGridLine()
                     AxisValueLabel {
                         if let km = value.as(Double.self) {
-                            Text(String(format: "%.0f km", km))
+                            Text(String(format: km == km.rounded() ? "%.0f km" : "%.1f km", km))
                                 .font(.system(.caption2, design: .rounded))
                         }
                     }
