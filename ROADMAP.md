@@ -34,7 +34,7 @@ The items come from the full code review of 2026-10-18, re-checked against the s
 ## Now · Owner's request (2026-11-08)
 
 Requests the owner put ahead of the waves, in their order:
-0. **First, every remaining fix** (owner, 2026-11-08, later the same day: "csináld meg az összes javítást loop-ban, nem kell approval"). Wave 1's R-05, R-07b and R-05b, then Wave 2's Q-02 to Q-11, come before F-10: the loop takes them in that order before anything below. The two blocked calls are Claude's to make; each item records the decision and the owner can reverse it.
+0. **First, every remaining fix** (owner, 2026-11-08, later the same day: "csináld meg az összes javítást loop-ban, nem kell approval"). Wave 1's R-05 and R-07b, Wave 2's Q-02, Wave 1's R-05b, then Wave 2's Q-03 to Q-11, come before F-10: the loop takes them in that order before anything below. (Q-02 goes before R-05b only because it was ready.) The two blocked calls are Claude's to make; each item records the decision and the owner can reverse it.
 1. The app in TestFlight (T-01).
 2. Every card on Today opens a detail screen (F-09).
 3. A morning weather check that says what to run and when (F-10).

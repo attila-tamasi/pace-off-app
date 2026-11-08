@@ -32,7 +32,7 @@ struct AuthGateView: View {
                 }
 
                 SignInWithAppleButton(.continue) { request in
-                    request.requestedScopes = [.fullName, .email]
+                    request.requestedScopes = [.fullName]
                 } onCompletion: { result in
                     handleResult(result)
                 }
