@@ -431,7 +431,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - A pure check with tests decides it.
 
 ### Q-12 · Session notes describe the peak session in every week
-- **Status:** todo
+- **Status:** done (PR #47)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** A quality session's distance follows the week's volume (70% in week 1, 30% in race week), but its notes always describe the peak session: week 1's 9.8 km marathon threshold says "WU 3 km · 5 × 1.6 km @ T w/ 250 m jog · CD 2 km", which is 14 km. Found in R-05b.
 - **Where:** `TrainingPlanGenerator` (`thresholdNotes`, `intervalNotes`, `materialise`).
@@ -560,6 +560,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #47: plan detail session notes in week 1, mid-build and race week match each session's distance (fewer reps, warm-up and cool-down to 0.1 km; one rep, no jog, in race week)
 - [ ] PR #46: the plan detail's orange "too few weeks" line (preview "Plan detail — beginner's marathon, 8 weeks"); half and marathon plans' longer threshold and interval sessions with their notes, and the shorter Saturday easy run before a Sunday long run
 - [ ] PR #45: Today's HRV and Resting HR cards: "Yesterday" / "Avg yesterday 58 bpm" after a sync today; after a cold launch on a cache from an earlier day, the weekday ("Thursday", "Avg Thursday 58 bpm"); a week-old cache shows no yesterday values
 - [ ] PR #44: at the largest accessibility text size: Today's hero, Plan, Week, VO₂ max, Heart trend and Run detail heroes, Profile's goal card, onboarding; onboarding with Reduce Motion; VoiceOver on the profile-photo picker
@@ -585,6 +586,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · Q-12: a quality session below the peak is the peak session cut to its distance, so its notes add up in every week (PR #47)
 - 2026-11-08 · R-05b: half and marathon quality sessions are longer, the easy run before the long run keeps to 60% of it and the other to 80%, and a plan that can't build far says so (PR #46)
 - 2026-11-08 · Q-11: yesterday's HRV and average heart rate name their own day when the cached snapshot was synced on an earlier day, and hide from a week back (PR #45)
 - 2026-11-08 · Q-10: the big custom font sizes follow Dynamic Type (scaledFont), the photo picker has a VoiceOver label, and repeating or sliding animations respect Reduce Motion (PR #44)

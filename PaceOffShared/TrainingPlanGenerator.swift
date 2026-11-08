@@ -556,35 +556,65 @@ public struct TrainingPlanGenerator: Sendable {
             )
 
         case .tempo, .threshold:
-            let pace = vdotCalc.paceSecPerKm(vdot: vdot,
-                                             fractionOfVDOT: TrainingIntensity.threshold.fractionOfVDOT)
-            let tol = TrainingIntensity.threshold.paceToleranceSec
-            return Workout(
-                kind: .threshold,
-                distanceMeters: thresholdMeters(tier: tier, goal: goal) * fraction,
-                paceMinSecPerKm: pace - tol,
-                paceMaxSecPerKm: pace + tol,
-                notes: kind == .threshold
-                    ? thresholdNotes(tier: tier, goal: goal)
-                    : "WU 2 km · 20 min @ T continuous · CD 2 km"
-            )
+            return qualityWorkout(.threshold, session: thresholdSession(tier: tier, goal: goal),
+                                  fraction: fraction, vdot: vdot)
 
         case .interval:
-            let pace = vdotCalc.paceSecPerKm(vdot: vdot,
-                                             fractionOfVDOT: TrainingIntensity.interval.fractionOfVDOT)
-            let tol = TrainingIntensity.interval.paceToleranceSec
-            return Workout(
-                kind: .interval,
-                distanceMeters: intervalMeters(tier: tier, goal: goal) * fraction,
-                paceMinSecPerKm: pace - tol,
-                paceMaxSecPerKm: pace + tol,
-                notes: intervalNotes(tier: tier, goal: goal)
-            )
+            return qualityWorkout(.interval, session: intervalSession(tier: tier, goal: goal),
+                                  fraction: fraction, vdot: vdot)
 
         case .race:
             // Templates never hold a race; `placingRace` sets it on its date.
             return raceWorkout(goal: goal)
         }
+    }
+
+    /// A week's threshold or interval workout: the peak session at the
+    /// week's fraction, its notes the session cut to that distance.
+    private func qualityWorkout(_ kind: WorkoutKind,
+                                session peak: QualitySession,
+                                fraction: Double,
+                                vdot: Double) -> Workout {
+        let intensity = TrainingIntensity.forKind(kind)
+        let pace = vdotCalc.paceSecPerKm(vdot: vdot, fractionOfVDOT: intensity.fractionOfVDOT)
+        let distance = peak.km * 1000 * fraction
+        return Workout(
+            kind: kind,
+            distanceMeters: distance,
+            paceMinSecPerKm: pace - intensity.paceToleranceSec,
+            paceMaxSecPerKm: pace + intensity.paceToleranceSec,
+            notes: peak.scaled(toKm: distance / 1000).notes
+        )
+    }
+
+    /// The plan with each threshold and interval session's notes worked
+    /// out from its own distance. A plan saved before the notes followed
+    /// the week's distance described the peak session in every week; a
+    /// plan made now comes back as it was.
+    public func withSessionNotes(_ plan: TrainingPlan) -> TrainingPlan {
+        let threshold = thresholdSession(tier: plan.tier, goal: plan.goal)
+        let interval = intervalSession(tier: plan.tier, goal: plan.goal)
+        let weeks = plan.weeks.map { week in
+            TrainingWeek(index: week.index, days: week.days.map { (day: TrainingDay) -> TrainingDay in
+                let w = day.workout
+                let session: QualitySession
+                switch w.kind {
+                case .threshold, .tempo: session = threshold
+                case .interval:          session = interval
+                default:                 return day
+                }
+                let notes = session.scaled(toKm: w.distanceKm).notes
+                guard notes != w.notes else { return day }
+                return TrainingDay(weekday: day.weekday,
+                                   workout: Workout(kind: w.kind, distanceMeters: w.distanceMeters,
+                                                    paceMinSecPerKm: w.paceMinSecPerKm,
+                                                    paceMaxSecPerKm: w.paceMaxSecPerKm,
+                                                    notes: notes))
+            })
+        }
+        return TrainingPlan(id: plan.id, goal: plan.goal, tier: plan.tier, longRunDay: plan.longRunDay,
+                            weeks: weeks, vdot: plan.vdot, usedBeginnerDefault: plan.usedBeginnerDefault,
+                            createdAt: plan.createdAt, startDate: plan.startDate)
     }
 
     // MARK: Race day
@@ -776,8 +806,8 @@ public struct TrainingPlanGenerator: Sendable {
     /// A quality session's distance at the peak; 0 for any other kind.
     private func qualityMeters(_ kind: WorkoutKind, tier: PlanTier, goal: RunningGoal) -> Double {
         switch kind {
-        case .tempo, .threshold: return thresholdMeters(tier: tier, goal: goal)
-        case .interval:          return intervalMeters(tier: tier, goal: goal)
+        case .tempo, .threshold: return thresholdSession(tier: tier, goal: goal).km * 1000
+        case .interval:          return intervalSession(tier: tier, goal: goal).km * 1000
         case .marathonPace:      return marathonPaceMeters(goal: goal)
         default:                 return 0
         }
@@ -867,57 +897,41 @@ public struct TrainingPlanGenerator: Sendable {
         }
     }
 
-    /// The threshold session at the peak: warm-up, main set and cool-down.
-    /// Longer for the half and the marathon, whose weeks are longer: the
-    /// aggressive marathon's 8 km at threshold stays under Daniels' 10% of
-    /// the week. `thresholdNotes` add up to it.
-    private func thresholdMeters(tier: PlanTier, goal: RunningGoal) -> Double {
+    /// The threshold session at the peak: cruise intervals between a
+    /// warm-up and a cool-down. Longer for the half and the marathon, whose
+    /// weeks are longer: the aggressive marathon's 8 km at threshold stays
+    /// under Daniels' 10% of the week.
+    private func thresholdSession(tier: PlanTier, goal: RunningGoal) -> QualitySession {
         switch (goal, tier) {
-        case (.marathon, .aggressive):     return 14_000
-        case (.marathon, _):               return 12_000
-        case (.halfMarathon, .aggressive): return 11_000
-        case (.halfMarathon, _):           return 9_000
-        case (_, .aggressive):             return 10_000
-        default:                           return 8_000
+        case (.marathon, .aggressive):     // 14 km
+            return QualitySession(.threshold, warmUpKm: 3, reps: 5, repKm: 1.6, jogKm: 0.2, coolDownKm: 2.2)
+        case (.marathon, _):               // 12 km
+            return QualitySession(.threshold, warmUpKm: 3, reps: 4, repKm: 1.6, jogKm: 0.2, coolDownKm: 2)
+        case (.halfMarathon, .aggressive): // 11 km
+            return QualitySession(.threshold, warmUpKm: 2, reps: 6, repKm: 1, jogKm: 0.2, coolDownKm: 2)
+        case (.halfMarathon, _):           // 9 km
+            return QualitySession(.threshold, warmUpKm: 2, reps: 3, repKm: 1.6, jogKm: 0.2, coolDownKm: 1.8)
+        case (_, .aggressive):             // 10 km
+            return QualitySession(.threshold, warmUpKm: 2, reps: 5, repKm: 1, jogKm: 0.2, coolDownKm: 2.2)
+        default:                           // 8 km
+            return QualitySession(.threshold, warmUpKm: 2, reps: 3, repKm: 1.2, jogKm: 0.2, coolDownKm: 2)
         }
     }
 
-    /// The interval session at the peak: warm-up, reps, jogs and cool-down.
-    /// Below the aggressive tier it matches the threshold session, since
-    /// the medium tier alternates the two: weeks then differ only by the
-    /// volume fraction. `intervalNotes` add up to it.
-    private func intervalMeters(tier: PlanTier, goal: RunningGoal) -> Double {
+    /// The interval session at the peak; its jogs take about as long as
+    /// its reps. Below the aggressive tier it is as long as the threshold
+    /// session, since the medium tier alternates the two: weeks then
+    /// differ only by the volume fraction.
+    private func intervalSession(tier: PlanTier, goal: RunningGoal) -> QualitySession {
         switch (goal, tier) {
-        case (.marathon, _):               return 12_000
-        case (.halfMarathon, .aggressive): return 10_000
-        case (.halfMarathon, _):           return 9_000
-        case (_, .aggressive):             return 9_000
-        default:                           return 8_000
-        }
-    }
-
-    /// The threshold session at the peak, cruise intervals between a
-    /// warm-up and a cool-down. For the half and the marathon the parts,
-    /// jogs included, add up to `thresholdMeters`.
-    private func thresholdNotes(tier: PlanTier, goal: RunningGoal) -> String {
-        switch (goal, tier) {
-        case (.marathon, .aggressive):     return "WU 3 km · 5 × 1.6 km @ T w/ 250 m jog · CD 2 km"
-        case (.marathon, _):               return "WU 3 km · 4 × 1.6 km @ T w/ 200 m jog · CD 2 km"
-        case (.halfMarathon, .aggressive): return "WU 2 km · 6 × 1 km @ T w/ 200 m jog · CD 2 km"
-        case (.halfMarathon, _):           return "WU 2 km · 3 × 1.5 km @ T w/ 250 m jog · CD 2 km"
-        default:                           return "WU 2 km · 4 × 1 km @ T w/ 60 s jog · CD 2 km"
-        }
-    }
-
-    /// The interval session at the peak. The jogs take about as long as
-    /// the reps; for the half and the marathon the parts add up to
-    /// `intervalMeters`.
-    private func intervalNotes(tier: PlanTier, goal: RunningGoal) -> String {
-        switch (goal, tier) {
-        case (.marathon, _):               return "WU 3 km · 5 × 1 km @ I w/ 500 m jog · CD 2 km"
-        case (.halfMarathon, .aggressive): return "WU 2 km · 5 × 800 m @ I w/ 500 m jog · CD 2 km"
-        case (.halfMarathon, _):           return "WU 2 km · 4 × 800 m @ I w/ 600 m jog · CD 2 km"
-        default:                           return "WU 2 km · 5 × 800 m @ I w/ equal-time jog · CD 2 km"
+        case (.marathon, _):                          // 12 km
+            return QualitySession(.interval, warmUpKm: 3, reps: 5, repKm: 1, jogKm: 0.5, coolDownKm: 2)
+        case (.halfMarathon, .aggressive):            // 10 km
+            return QualitySession(.interval, warmUpKm: 2, reps: 5, repKm: 0.8, jogKm: 0.5, coolDownKm: 2)
+        case (.halfMarathon, _), (_, .aggressive):    // 9 km
+            return QualitySession(.interval, warmUpKm: 2, reps: 4, repKm: 0.8, jogKm: 0.6, coolDownKm: 2)
+        default:                                      // 8 km
+            return QualitySession(.interval, warmUpKm: 2, reps: 3, repKm: 1, jogKm: 0.5, coolDownKm: 2)
         }
     }
 
@@ -983,5 +997,98 @@ extension TrainingPlan {
         return BuildShortfall(longestLongRunMeters: longest,
                               fullBuildLongRunMeters: full,
                               laterRaceDateHelps: weekCount < fullWeeks && fullLengthPeak * full >= line)
+    }
+}
+
+// MARK: - Quality sessions
+
+/// A threshold or interval session: a warm-up, reps at the session's pace
+/// with a jog between each, and a cool-down, all in km. Every part is a
+/// whole number of tenths of a km, as the notes show them.
+struct QualitySession: Equatable, Sendable {
+    /// The pace the reps are run at: threshold or interval.
+    let intensity: TrainingIntensity
+    var warmUpKm: Double
+    var reps: Int
+    var repKm: Double
+    var jogKm: Double
+    var coolDownKm: Double
+
+    init(_ intensity: TrainingIntensity, warmUpKm: Double, reps: Int, repKm: Double,
+         jogKm: Double, coolDownKm: Double) {
+        self.intensity = intensity
+        self.warmUpKm = warmUpKm
+        self.reps = reps
+        self.repKm = repKm
+        self.jogKm = jogKm
+        self.coolDownKm = coolDownKm
+    }
+
+    /// The reps and the jogs between them.
+    var setKm: Double { Double(reps) * repKm + Double(max(reps - 1, 0)) * jogKm }
+
+    /// The whole session.
+    var km: Double { warmUpKm + setKm + coolDownKm }
+
+    /// The least warm-up and cool-down together, as in every peak session.
+    static let minimumEndsKm = 2.0
+
+    /// This session cut to `target` km, for a week below the peak, its
+    /// parts adding up to `target` as shown, to the tenth of a km. The reps
+    /// go down with the session, never to a larger share of it than at the
+    /// peak (week 1's 9.8 km of the 14 km marathon session has three of its
+    /// five), and the warm-up and cool-down take the rest, in their peak
+    /// proportion, never under 2 km together: fewer reps first, then, with
+    /// one left, a shorter rep. Only a session under 2.2 km has less, a
+    /// fifth of it as the rep.
+    func scaled(toKm target: Double) -> QualitySession {
+        // Whole tenths of a km; the total rounds as the distance shows.
+        let total = Int((target * 10).rounded(.toNearestOrEven))
+        guard total > 0, total < Self.tenths(km) else { return self }
+        let jog = Self.tenths(jogKm)
+        func set(_ reps: Int, _ rep: Int) -> Int { reps * rep + (reps - 1) * jog }
+        let minEnds = min(Self.tenths(Self.minimumEndsKm), Self.tenths(warmUpKm + coolDownKm))
+        // The epsilon keeps a whole share (4 reps at half the session: 2)
+        // from flooring one lower on a rounding error.
+        var count = max(1, Int((Double(reps) * target / km + 1e-9).rounded(.down)))
+        while count > 1 && total - set(count, Self.tenths(repKm)) < minEnds { count -= 1 }
+        var rep = Self.tenths(repKm)
+        if total - set(count, rep) < minEnds {
+            rep = total - minEnds >= 2 ? total - minEnds : max(1, total / 5)
+        }
+        let ends = total - set(count, rep)
+        let peakEnds = warmUpKm + coolDownKm
+        let warmUp = Int((Double(ends) * (peakEnds > 0 ? warmUpKm / peakEnds : 0.5)).rounded())
+        return QualitySession(intensity, warmUpKm: Double(warmUp) / 10, reps: count,
+                              repKm: Double(rep) / 10, jogKm: jogKm,
+                              coolDownKm: Double(ends - warmUp) / 10)
+    }
+
+    /// "WU 3 km · 5 × 1.6 km @ T w/ 200 m jog · CD 2.2 km". A single rep
+    /// has no jog.
+    var notes: String {
+        let pace = intensity == .interval ? "I" : "T"
+        let set = reps == 1
+            ? "1 × \(Self.repText(repKm)) @ \(pace)"
+            : "\(reps) × \(Self.repText(repKm)) @ \(pace) w/ \(Self.metersText(jogKm)) jog"
+        return "WU \(Self.kmText(warmUpKm)) · \(set) · CD \(Self.kmText(coolDownKm))"
+    }
+
+    private static func tenths(_ km: Double) -> Int { Int((km * 10).rounded()) }
+
+    /// "3 km", "2.5 km": to a tenth of a km.
+    static func kmText(_ km: Double) -> String {
+        let t = tenths(km)
+        return t % 10 == 0 ? "\(t / 10) km" : "\(t / 10).\(t % 10) km"
+    }
+
+    /// "200 m": to 10 m.
+    static func metersText(_ km: Double) -> String {
+        "\(Int((km * 100).rounded()) * 10) m"
+    }
+
+    /// A rep under a km in meters ("800 m"), from a km in km ("1.6 km").
+    static func repText(_ km: Double) -> String {
+        km < 0.995 ? metersText(km) : kmText(km)
     }
 }

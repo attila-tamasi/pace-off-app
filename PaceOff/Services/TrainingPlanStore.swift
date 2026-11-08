@@ -43,7 +43,9 @@ public final class TrainingPlanStore {
         decoder.dateDecodingStrategy = .iso8601
         if let data = try? Data(contentsOf: url),
            let plan = try? decoder.decode(TrainingPlan.self, from: data) {
-            activePlan = plan
+            // A plan saved before session notes followed the week's
+            // distance gets notes that add up to it.
+            activePlan = TrainingPlanGenerator().withSessionNotes(plan)
         } else {
             activePlan = nil
         }
