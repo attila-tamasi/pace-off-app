@@ -361,7 +361,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Tests cover the noise case.
 
 ### Q-06 · Notification settings don't match what fires
-- **Status:** todo
+- **Status:** done (PR #40)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:**
   - The afternoon time shows :00, but the push fires at :30.
@@ -549,6 +549,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #40: Profile → Notifications: the Daily pushes switch, the afternoon at :30, steppers greyed out when off; on a device, the permission prompt when switching on after "Not now"
 - [ ] PR #39: the VO₂ max screen's trend line (falling / flat / rising / not enough readings) and its What it means copy
 - [ ] PR #38: the onboarding PB step (new title, distance picker), Profile → Edit PB section, Profile's "10K PB" chip and "PB · 10K" row
 - [ ] PR #37: Today with no runs (preview "Today (first run)"): the Log your first run card, its glass Open Health button on the blue card, and that it opens Health
@@ -567,6 +568,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · Q-06: notification settings show the times pushes fire at, get an on/off switch, and reschedule at once (PR #40)
 - 2026-11-08 · Q-05: the VO₂ max trend needs 3 readings over 14 days and a change beyond noise before it moves the target; the VO₂ max screen reads the same rule (PR #39)
 - 2026-11-08 · Q-04: the PB records its distance; a PB for another distance converts through VDOT for the plan and the prediction (PR #38)
 - 2026-11-08 · Q-03: no target and no pushes until Health holds a run; Today shows how to log a first run instead (PR #37)

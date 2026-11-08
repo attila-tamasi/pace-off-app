@@ -16,6 +16,22 @@ public final class NotificationScheduler {
 
     public private(set) var permissionGranted: Bool = false
 
+    /// What the last scheduling call was given, so a settings change can
+    /// reschedule today at once instead of waiting for the next refresh.
+    private struct DayInputs {
+        /// The calendar day these inputs were for; they're never replayed
+        /// on another.
+        let day: Date
+        let target: RunTarget
+        let yesterday: RunRecord?
+        let currentStreak: Int
+        let runs: [RunRecord]
+        let plan: TrainingPlan?
+        let planStatus: PlanDayStatus?
+        let overrideBody: String?
+    }
+    @ObservationIgnored private var lastDay: DayInputs?
+
     private init() {}
 
     public func requestAuthorization() async {
@@ -47,10 +63,15 @@ public final class NotificationScheduler {
         planStatus: PlanDayStatus?,
         overrideBody: String? = nil
     ) {
+        lastDay = DayInputs(day: Calendar.current.startOfDay(for: Date()),
+                            target: target, yesterday: yesterday, currentStreak: currentStreak,
+                            runs: runs, plan: plan, planStatus: planStatus, overrideBody: overrideBody)
         cancelDailyPushes()
 
         let defaults = AppGroup.sharedDefaults
-        guard defaults?.bool(forKey: AppGroup.Keys.onboardingComplete) == true else { return }
+        guard defaults?.bool(forKey: AppGroup.Keys.onboardingComplete) == true,
+              DailyPushPlanner.pushesEnabled(in: defaults)
+        else { return }
 
         let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak, planStatus: planStatus)
         let times = DailyPushPlanner.Schedule(
@@ -72,10 +93,60 @@ public final class NotificationScheduler {
         }
     }
 
+    /// Reschedules today after a push time or the on/off switch changed:
+    /// from the last scheduling call's inputs when they're today's, or
+    /// else from a fresh refresh, so pushes are never rebuilt from another
+    /// day's target and are never left at the old times.
+    public func rescheduleToday() async {
+        if let day = lastDay, Calendar.current.isDateInToday(day.day) {
+            scheduleDailyPushes(target: day.target, yesterday: day.yesterday,
+                                currentStreak: day.currentStreak, runs: day.runs,
+                                plan: day.plan, planStatus: day.planStatus,
+                                overrideBody: day.overrideBody)
+        } else {
+            await BackgroundRefreshService.shared.refreshHealthData()
+        }
+    }
+
+    /// Today has no target (no run in Health yet): clear its pushes and
+    /// forget its inputs, so a settings change can't bring them back.
+    public func clearToday() {
+        lastDay = nil
+        cancelDailyPushes()
+    }
+
+    /// The Profile switch moved (it's already stored). Turning it on when
+    /// iOS was never asked, after "Not now" in onboarding, asks now; then
+    /// today's pushes follow the switch. Off clears every pending Pace Off
+    /// notice, the plan-retune one included.
+    public func pushesSwitched(on: Bool) async {
+        if on {
+            if await permission() == .notAsked { await requestAuthorization() }
+            await rescheduleToday()
+        } else {
+            cancelDailyPushes()
+            center.removePendingNotificationRequests(withIdentifiers: [Self.planRetunedId])
+        }
+    }
+
+    /// Whether iOS lets Pace Off notify.
+    public enum Permission: Sendable {
+        case notAsked, allowed, denied
+    }
+
+    public func permission() async -> Permission {
+        switch await center.notificationSettings().authorizationStatus {
+        case .notDetermined: return .notAsked
+        case .denied:        return .denied
+        default:             return .allowed
+        }
+    }
+
     /// One-shot notice that the background sync retuned the active plan's
     /// paces to the runner's current fitness. Fired at most once per retune
-    /// (the caller gates on the drift threshold).
+    /// (the caller gates on the drift threshold), and not with the pushes off.
     public func notifyPlanRetuned(fromVDOT old: Double, toVDOT new: Double) {
+        guard DailyPushPlanner.pushesEnabled(in: AppGroup.sharedDefaults) else { return }
         let content = UNMutableNotificationContent()
         content.title = "Training plan retuned"
         let direction = new > old ? "up" : "down"

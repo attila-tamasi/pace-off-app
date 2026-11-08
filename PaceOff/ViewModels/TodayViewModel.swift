@@ -86,7 +86,7 @@ public final class TodayViewModel {
         // No run in Health yet: no target, so no voice line, widget day or
         // pushes. Clear any pushes left from an earlier day.
         guard let target else {
-            NotificationScheduler.shared.cancelDailyPushes()
+            NotificationScheduler.shared.clearToday()
             return
         }
 

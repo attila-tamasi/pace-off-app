@@ -92,8 +92,17 @@ struct OnboardingFlow: View {
                             )
         case .notifications: NotificationsStep(
                                 isRequesting: $isRequestingPermission,
-                                onAllow: { await requestNotifications(); advance() },
-                                onSkip: advance,
+                                onAllow: {
+                                    AppGroup.sharedDefaults?.set(true, forKey: AppGroup.Keys.notificationsEnabled)
+                                    await requestNotifications()
+                                    advance()
+                                },
+                                onSkip: {
+                                    // "Not now" leaves the Profile switch off, so
+                                    // turning it on later is what asks iOS.
+                                    AppGroup.sharedDefaults?.set(false, forKey: AppGroup.Keys.notificationsEnabled)
+                                    advance()
+                                },
                                 onBack: back
                             )
         case .done:         DoneStep(name: draft.displayName,

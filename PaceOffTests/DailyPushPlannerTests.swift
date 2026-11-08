@@ -115,6 +115,35 @@ final class DailyPushPlannerTests: XCTestCase {
         ])
     }
 
+    func test_settingsTime_isTheTimeThePushFiresAt() {
+        // The settings screen reads Schedule.time(of:): the afternoon push
+        // goes at half past its hour, so it must say :30, not :00.
+        let schedule = DailyPushPlanner.Schedule(morningHour: 7, afternoonHour: 16, eveningHour: 20)
+        XCTAssertEqual(schedule.time(of: .morning).hour, 7)
+        XCTAssertEqual(schedule.time(of: .morning).minute, 0)
+        XCTAssertEqual(schedule.time(of: .afternoon).hour, 16)
+        XCTAssertEqual(schedule.time(of: .afternoon).minute, 30)
+        XCTAssertEqual(schedule.time(of: .evening).minute, 0)
+        let cal = Calendar.current
+        for push in allPushes(now: date(day: 7, hour: 6), runs: [run(day: 5)], schedule: schedule) {
+            let shown = schedule.time(of: push.slot)
+            XCTAssertEqual(cal.component(.hour, from: push.fireDate), shown.hour, "\(push.slot)")
+            XCTAssertEqual(cal.component(.minute, from: push.fireDate), shown.minute, "\(push.slot)")
+        }
+    }
+
+    func test_pushesSwitch_isOnUntilTurnedOff() throws {
+        let suite = "PaceOffTests.pushesSwitch.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        XCTAssertTrue(DailyPushPlanner.pushesEnabled(in: defaults), "never set: on")
+        defaults.set(false, forKey: AppGroup.Keys.notificationsEnabled)
+        XCTAssertFalse(DailyPushPlanner.pushesEnabled(in: defaults))
+        defaults.set(true, forKey: AppGroup.Keys.notificationsEnabled)
+        XCTAssertTrue(DailyPushPlanner.pushesEnabled(in: defaults))
+        XCTAssertTrue(DailyPushPlanner.pushesEnabled(in: nil), "no App Group: on")
+    }
+
     func test_unsetHours_fallBackToDefaults() {
         XCTAssertEqual(DailyPushPlanner.Schedule(morningHour: 0, afternoonHour: 0, eveningHour: 0), .standard)
         XCTAssertEqual(DailyPushPlanner.Schedule(morningHour: 24, afternoonHour: -1, eveningHour: 99), .standard)
