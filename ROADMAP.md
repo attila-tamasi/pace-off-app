@@ -34,7 +34,7 @@ The items come from the full code review of 2026-10-18, re-checked against the s
 ## Now · Owner's request (2026-11-08)
 
 Requests the owner put ahead of the waves, in their order:
-0. **First, every remaining fix** (owner, 2026-11-08, later the same day: "csináld meg az összes javítást loop-ban, nem kell approval"). Wave 1's R-05, R-07b and R-05b, then Wave 2's Q-02 to Q-11, come before F-10: the loop takes them in that order before anything below. The two blocked calls are Claude's to make; each item records the decision and the owner can reverse it.
+0. **First, every remaining fix** (owner, 2026-11-08, later the same day: "csináld meg az összes javítást loop-ban, nem kell approval"). Wave 1's R-05 and R-07b, Wave 2's Q-02, Wave 1's R-05b, then Wave 2's Q-03 to Q-11, come before F-10: the loop takes them in that order before anything below. (Q-02 goes before R-05b only because it was ready.) The two blocked calls are Claude's to make; each item records the decision and the owner can reverse it.
 1. The app in TestFlight (T-01).
 2. Every card on Today opens a detail screen (F-09).
 3. A morning weather check that says what to run and when (F-10).
@@ -320,7 +320,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 - **Done when:** "Not now" moves on without requesting authorization, and the app still works without it.
 
 ### Q-02 · Sign in asks for an email it never uses
-- **Status:** todo
+- **Status:** done (PR #36)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** Sign in with Apple requests the email scope, but nothing uses it.
 - **Where:** `PaceOff/Views/AuthGateView.swift` (`requestedScopes = [.fullName, .email]`).
@@ -562,6 +562,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · Q-02: Sign in with Apple asks only for the name, never the email (PR #36)
 - 2026-11-08 · R-07b: a race further out than the plan starts the plan later, so it ends on race day; the Plan tab says when it starts (PR #35)
 - 2026-11-08 · R-05: the long run takes at most 45 / 35 / 30% of a week with three / four / five runs, the cut going to the easy runs; week 1 starts from the runner's longest recent run (PR #34)
 - 2026-11-08 · T-01: every push to main builds Release for a device and, once the App Store Connect key's secrets exist, uploads to TestFlight; every item is now auto-merged (PR #33)

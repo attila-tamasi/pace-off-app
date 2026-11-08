@@ -8,7 +8,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 
 ### 1. Splash + auth gate
 - Native launch screen → animated splash (`SplashView`) → routes to onboarding on first run, `AuthGateView` if the user chose to sign in, otherwise `RootView`
-- Sign in with Apple is optional (`AppleSignInService`)
+- Sign in with Apple is optional (`AppleSignInService`). It asks only for the name (`.fullName`), never the email, and stores Apple's app-scoped user ID and the name on the device
 
 ### 2. Onboarding
 - Short flow: value prop → HealthKit permission → weekly cadence + goal setup
