@@ -41,6 +41,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 - `HistoryView` — list of past runs from Health
 - `TrendsView` — weekly mileage + pace charts
 - `VO2MaxDetailView` — 12-month VO₂ max chart
+- `HeartTrendDetailView` — HRV and resting heart rate, opened from their Today cards: the latest reading against the baseline the readiness card uses (30-day HRV, 14-day resting HR), a Week / Month / 3 Months chart with the baseline marked, the readiness thresholds, and what the number means (`HeartTrend` in `PaceOffShared`)
 
 ### 7. Watch app
 - `WatchTodayView` mirrors today's push target

@@ -134,6 +134,12 @@
 		0D2910C2885566C680A654A0 /* WidgetCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31F4C4C1D283B639C221294 /* WidgetCache.swift */; };
 		87EA318E72F6AB0F1B2E394A /* WidgetCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31F4C4C1D283B639C221294 /* WidgetCache.swift */; };
 		C30D6F77AC6A83393CF969F4 /* WidgetCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AA3FF3F869DFA3EF8E332F9 /* WidgetCacheTests.swift */; };
+		B5D4AE33FDB698C83FDA37F0 /* HeartTrend.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99A0550C6980C0A93297332 /* HeartTrend.swift */; };
+		027A4AD2729712E0954A0183 /* HeartTrend.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99A0550C6980C0A93297332 /* HeartTrend.swift */; };
+		8569D8D132A04040657A51F8 /* HeartTrend.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99A0550C6980C0A93297332 /* HeartTrend.swift */; };
+		3A1368584A91874E8C2AFE31 /* HeartTrend.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99A0550C6980C0A93297332 /* HeartTrend.swift */; };
+		BFA1ACA618B8A87E65CF6B1E /* HeartTrendDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E03C110B5FE6439BB64C92 /* HeartTrendDetailView.swift */; };
+		F0094AB371E88EFC0B8C8FC5 /* HeartTrendTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9783C9526CA5739ABF593E /* HeartTrendTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -267,6 +273,9 @@
 		6FDC02D91475E85C98373026 /* VoiceCopyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCopyTests.swift; sourceTree = "<group>"; };
 		E31F4C4C1D283B639C221294 /* WidgetCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetCache.swift; sourceTree = "<group>"; };
 		8AA3FF3F869DFA3EF8E332F9 /* WidgetCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetCacheTests.swift; sourceTree = "<group>"; };
+		D99A0550C6980C0A93297332 /* HeartTrend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartTrend.swift; sourceTree = "<group>"; };
+		D5E03C110B5FE6439BB64C92 /* HeartTrendDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartTrendDetailView.swift; sourceTree = "<group>"; };
+		5C9783C9526CA5739ABF593E /* HeartTrendTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartTrendTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -298,6 +307,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				D99A0550C6980C0A93297332 /* HeartTrend.swift */,
 				E31F4C4C1D283B639C221294 /* WidgetCache.swift */,
 				BC831434D44606757BE1FC6B /* RunStreak.swift */,
 				72853AFD80FB3B4ACB466064 /* DailyPushPlanner.swift */,
@@ -323,6 +333,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				5C9783C9526CA5739ABF593E /* HeartTrendTests.swift */,
 				8AA3FF3F869DFA3EF8E332F9 /* WidgetCacheTests.swift */,
 				6FDC02D91475E85C98373026 /* VoiceCopyTests.swift */,
 				FE657A7094CB8DF7521D46EC /* DailyPushPlannerTests.swift */,
@@ -440,6 +451,7 @@
 		7EEACE0D6218931943423686 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				D5E03C110B5FE6439BB64C92 /* HeartTrendDetailView.swift */,
 				ABA65778295BD1DDD6652D74 /* Design */,
 				22CB6B947F1CF60F198071D6 /* Legal */,
 				D404DE211A8FCE6BA08377E7 /* Onboarding */,
@@ -682,6 +694,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F0094AB371E88EFC0B8C8FC5 /* HeartTrendTests.swift in Sources */,
+				8569D8D132A04040657A51F8 /* HeartTrend.swift in Sources */,
 				C30D6F77AC6A83393CF969F4 /* WidgetCacheTests.swift in Sources */,
 				0D2910C2885566C680A654A0 /* WidgetCache.swift in Sources */,
 				07455490BE465040C85348FF /* VoiceCopyTests.swift in Sources */,
@@ -717,6 +731,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				027A4AD2729712E0954A0183 /* HeartTrend.swift in Sources */,
 				EF7E1603426957668C17D08B /* WidgetCache.swift in Sources */,
 				4DA78FDD28D107BF625BE9CE /* RunStreak.swift in Sources */,
 				2A89267F7FBF07FFC264D17C /* DailyPushPlanner.swift in Sources */,
@@ -744,6 +759,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3A1368584A91874E8C2AFE31 /* HeartTrend.swift in Sources */,
 				87EA318E72F6AB0F1B2E394A /* WidgetCache.swift in Sources */,
 				A92528AD716046FE7909DAA6 /* RunStreak.swift in Sources */,
 				7D197907E968F6CC6690EC6D /* DailyPushPlanner.swift in Sources */,
@@ -774,6 +790,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BFA1ACA618B8A87E65CF6B1E /* HeartTrendDetailView.swift in Sources */,
+				B5D4AE33FDB698C83FDA37F0 /* HeartTrend.swift in Sources */,
 				F532321BF6582CAAD35EC801 /* WidgetCache.swift in Sources */,
 				5F7E38FDE9F0CE9D51A7EE05 /* RunStreak.swift in Sources */,
 				727F4F30D537C3257FD5926A /* DailyPushPlanner.swift in Sources */,
