@@ -149,7 +149,7 @@ struct VO2MaxDetailView: View {
             Text("The number tends to climb when you run consistently — especially mixing easy distance with the occasional hard effort — and tends to drift down when you skip weeks. Day-to-day jitter is normal; what matters is the slope over weeks.")
                 .font(.system(.body, design: .rounded))
 
-            Text("Pace Off uses the slope of your VO₂ max over the last 6 weeks to decide today's push. A rising line means you're absorbing the work — expect bigger asks. A falling line means recovery — expect a softer day.")
+            Text("Pace Off reads the trend of your last 4 weeks, once there are at least 3 readings over 2 weeks. Readings wobble by a few tenths, so only a change beyond that counts. Falling means fitness is slipping, so today's target asks for more, up to 15% over your usual distance. Flat means it has stalled, so a little more, about 10%. Rising means the work is landing, so the target holds at your usual distance.")
                 .font(.system(.body, design: .rounded))
                 .foregroundStyle(.primary)
         }
@@ -190,19 +190,18 @@ struct VO2MaxDetailView: View {
         return String(format: "%.1f", v)
     }
 
+    /// The trend as the push engine reads it, so this screen and today's
+    /// target never disagree. Nil until there's enough for a trend.
     private var trendLabel: (text: String, icon: String, color: Color)? {
-        guard snapshots.count >= 4 else { return nil }
-        // Simple linear regression slope per week over the last 6 weeks
-        let cutoff = Calendar.current.date(byAdding: .day, value: -42, to: Date()) ?? Date()
-        let recent = snapshots.filter { $0.date >= cutoff }
-        guard recent.count >= 3 else { return nil }
-        let slope = weeklySlope(recent)
-        if slope > 0.05 {
-            return ("Up \(String(format: "%.2f", slope)) ml/kg·min per week", "arrow.up.right", .green)
-        } else if slope < -0.05 {
-            return ("Down \(String(format: "%.2f", abs(slope))) ml/kg·min per week", "arrow.down.right", .orange)
-        } else {
-            return ("Stable over the last 6 weeks", "arrow.right", .secondary)
+        switch PushTargetEngine().vo2MaxTrend(snapshots, asOf: Date()) {
+        case .declining(let slope):
+            return ("Falling \(String(format: "%.2f", abs(slope))) a week: today asks for more", "arrow.down.right", .orange)
+        case .plateau:
+            return ("Flat over the last 4 weeks: today asks a little more", "arrow.right", .secondary)
+        case .improving(let slope):
+            return ("Rising \(String(format: "%.2f", slope)) a week: today holds steady", "arrow.up.right", .green)
+        case nil:
+            return ("Not enough readings yet for a trend", "ellipsis", .secondary)
         }
     }
 
@@ -216,20 +215,6 @@ struct VO2MaxDetailView: View {
     private var ageBand: AgeBand? {
         guard let age = userAge else { return AgeBand(age: 35) } // generic fallback band so the card still teaches something
         return AgeBand(age: age)
-    }
-
-    private func weeklySlope(_ data: [VO2MaxSnapshot]) -> Double {
-        guard let first = data.first?.date else { return 0 }
-        let xs = data.map { $0.date.timeIntervalSince(first) / (7 * 24 * 3600) } // weeks
-        let ys = data.map(\.value)
-        let n = Double(xs.count)
-        let sumX = xs.reduce(0, +)
-        let sumY = ys.reduce(0, +)
-        let sumXY = zip(xs, ys).map(*).reduce(0, +)
-        let sumX2 = xs.map { $0 * $0 }.reduce(0, +)
-        let denom = (n * sumX2) - (sumX * sumX)
-        guard denom != 0 else { return 0 }
-        return ((n * sumXY) - (sumX * sumY)) / denom
     }
 
     // MARK: - Loading
