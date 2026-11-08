@@ -147,7 +147,14 @@ public final class BackgroundRefreshService {
             restingHeartRate: rhr,
             readiness: readiness?.level
         )
-        let target = PushTargetEngine().compute(inputs)
+        // No run in Health yet: nothing to target or push. Clear any pushes
+        // left from an earlier day; Today shows how to log a first run.
+        guard let target = PushTargetEngine().target(inputs) else {
+            NotificationScheduler.shared.cancelDailyPushes()
+            _ = reconcileTrainingPlan(runs: runs, vo2Max: vo2, now: now)
+            log.info("Background refresh completed — no runs yet, no target")
+            return true
+        }
 
         let yesterday = mostRecentRunBefore(today: now, in: runs)
         let todayRun = mostRecentRunOn(day: now, in: runs)

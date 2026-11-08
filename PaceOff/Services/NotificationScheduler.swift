@@ -110,6 +110,12 @@ public final class NotificationScheduler {
         center.add(request)
     }
 
+    /// Removes today's scheduled pushes and leaves everything else. Called
+    /// when there's no target to push for: no runs in Health yet.
+    public func cancelDailyPushes() {
+        center.removePendingNotificationRequests(withIdentifiers: Self.dailyIds)
+    }
+
     /// Removes every scheduled and delivered Pace Off notification. Called
     /// on sign-out.
     public func cancelAll() {

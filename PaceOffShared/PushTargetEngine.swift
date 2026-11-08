@@ -50,6 +50,20 @@ public struct PushTargetEngine: Sendable {
 
     public init() {}
 
+    /// Whether `runs` hold a run on or before `today`. Without one there's
+    /// nothing to base a target on: no baseline, no skip count.
+    public static func hasRunHistory(_ runs: [RunRecord], today: Date) -> Bool {
+        runs.contains { $0.startDate <= today }
+    }
+
+    /// Today's target, or nil while there's no run to base it on (a new
+    /// runner, or Health access denied). Then there's no target and no
+    /// pushes: Today shows how to log a first run instead.
+    public func target(_ inputs: Inputs) -> RunTarget? {
+        guard Self.hasRunHistory(inputs.runs, today: inputs.today) else { return nil }
+        return compute(inputs)
+    }
+
     public func compute(_ inputs: Inputs) -> RunTarget {
         let cal = Calendar.current
         let startOfToday = cal.startOfDay(for: inputs.today)
