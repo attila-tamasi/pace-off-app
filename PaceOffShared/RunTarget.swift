@@ -10,7 +10,9 @@ public struct RunTarget: Codable, Sendable, Equatable {
     public let tone: Tone
     /// Days since last run as observed at compute time.
     public let daysSinceLastRun: Int
-    /// VO2Max slope (ml/kg/min per week) over the last 28 days.
+    /// VO2Max slope (ml/kg/min per week) over the last 28 days, when the
+    /// trend is beyond noise (`PushTargetEngine.vo2MaxTrend`); nil when
+    /// there's too little data or the change is within noise.
     public let vo2MaxSlope: Double?
     /// The 14-day median that the algorithm anchored on.
     public let baselineMeters: Double

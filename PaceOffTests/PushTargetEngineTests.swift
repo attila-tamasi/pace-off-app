@@ -80,29 +80,111 @@ final class PushTargetEngineTests: XCTestCase {
 
     // Note the index direction: larger `i` means further back in time, so a
     // DECLINING trend needs older samples to be HIGHER than today's.
-    func test_vo2MaxSlope_declining() {
+    func test_vo2Trend_declining() {
         let today = Date()
         let samples = (0..<14).map { i in
             vo2(daysAgo: i * 2, value: 50.0 + Double(i) * 0.2, today: today)
         }
-        let slope = engine.vo2MaxSlopePerWeek(samples, asOf: today)
-        XCTAssertNotNil(slope)
-        XCTAssertLessThan(slope!, 0)
+        guard case .declining(let slope)? = engine.vo2MaxTrend(samples, asOf: today) else {
+            return XCTFail("expected a decline")
+        }
+        XCTAssertLessThan(slope, 0)
     }
 
-    func test_vo2MaxSlope_improving() {
+    func test_vo2Trend_improving() {
         let today = Date()
         let samples = (0..<14).map { i in
             vo2(daysAgo: i * 2, value: 50.0 - Double(i) * 0.2, today: today)
         }
-        let slope = engine.vo2MaxSlopePerWeek(samples, asOf: today)
-        XCTAssertNotNil(slope)
-        XCTAssertGreaterThan(slope!, 0)
+        guard case .improving(let slope)? = engine.vo2MaxTrend(samples, asOf: today) else {
+            return XCTFail("expected a rise")
+        }
+        XCTAssertGreaterThan(slope, 0)
     }
 
-    func test_vo2MaxSlope_insufficientSamples() {
+    func test_vo2Trend_insufficientSamples() {
         let today = Date()
-        XCTAssertNil(engine.vo2MaxSlopePerWeek([vo2(daysAgo: 5, value: 50, today: today)], asOf: today))
+        XCTAssertNil(engine.vo2MaxTrend([vo2(daysAgo: 5, value: 50, today: today)], asOf: today))
+    }
+
+    // MARK: - VO₂ max trend: enough data, beyond noise
+
+    /// Five km a day for the last 11 days, today included: baseline 5 km,
+    /// no skip, so only the VO₂ max trend can move the target.
+    private func steadyRuns(_ today: Date) -> [RunRecord] {
+        (0...10).map { run(daysAgo: $0, km: 5, today: today) }
+    }
+
+    func test_vo2Trend_twoReadings_haveNoSay() {
+        // A 0.3 wobble between two readings used to be a decline and an
+        // aggressive day.
+        let today = Date()
+        let readings = [vo2(daysAgo: 10, value: 50.3, today: today), vo2(daysAgo: 0, value: 50.0, today: today)]
+        XCTAssertNil(engine.vo2MaxTrend(readings, asOf: today))
+        let target = engine.compute(PushTargetEngine.Inputs(today: today, runs: steadyRuns(today),
+                                                            vo2Max: readings, restingHeartRate: []))
+        XCTAssertEqual(target.tone, .neutral)
+        XCTAssertEqual(target.distanceMeters, 5_000, accuracy: 0.1)
+        XCTAssertNil(target.vo2MaxSlope)
+    }
+
+    func test_vo2Trend_readingsUnderTwoWeeks_haveNoSay() {
+        let today = Date()
+        let readings = (0..<5).map { vo2(daysAgo: $0 * 2, value: 49.0 + Double($0) * 0.25, today: today) }
+        XCTAssertNil(engine.vo2MaxTrend(readings, asOf: today))
+    }
+
+    func test_vo2Trend_aWobble_isAPlateau_notADecline() {
+        // 50.0, 50.3, 49.8, 50.1 a week apart: no trend the wobble can't explain.
+        let today = Date()
+        let readings = [50.0, 50.3, 49.8, 50.1].enumerated().map { i, value in
+            vo2(daysAgo: 21 - i * 7, value: value, today: today)
+        }
+        XCTAssertEqual(engine.vo2MaxTrend(readings, asOf: today), .plateau)
+        let target = engine.compute(PushTargetEngine.Inputs(today: today, runs: steadyRuns(today),
+                                                            vo2Max: readings, restingHeartRate: []))
+        XCTAssertEqual(target.tone, .firm)
+        XCTAssertNil(target.vo2MaxSlope)
+    }
+
+    func test_vo2Trend_threeReadingsOnALine_underTheWatchsJitter_isAPlateau() {
+        // 50.30, 50.15, 50.00 a week apart fall on a perfect line, but a
+        // 0.3 drop over three readings is within what the watch wobbles.
+        let today = Date()
+        let readings = [vo2(daysAgo: 14, value: 50.30, today: today),
+                        vo2(daysAgo: 7, value: 50.15, today: today),
+                        vo2(daysAgo: 0, value: 50.00, today: today)]
+        XCTAssertEqual(engine.vo2MaxTrend(readings, asOf: today), .plateau)
+    }
+
+    func test_vo2Trend_widelyScatteredReadings_haveNoSay() {
+        // 47, 50, 48.5, 51, 49: no direction the scatter can't explain,
+        // and too scattered to call flat, so no +10% either.
+        let today = Date()
+        let readings = [47.0, 50.0, 48.5, 51.0, 49.0].enumerated().map { i, value in
+            vo2(daysAgo: 24 - i * 6, value: value, today: today)
+        }
+        XCTAssertNil(engine.vo2MaxTrend(readings, asOf: today))
+    }
+
+    func test_vo2Trend_aSteadyFall_isADecline() {
+        // PRD §7.3: down 0.4 over 28 days, fourteen readings.
+        let today = Date()
+        let readings = (0..<14).map { i in
+            vo2(daysAgo: i * 2, value: 50.0 - (Double(28 - i * 2) * 0.4 / 28), today: today)
+        }
+        guard case .declining(let slope)? = engine.vo2MaxTrend(readings, asOf: today) else {
+            return XCTFail("expected a decline")
+        }
+        XCTAssertEqual(slope, -0.1, accuracy: 0.01)
+    }
+
+    func test_vo2Trend_aRealRise_isImproving() {
+        let today = Date()
+        let readings = (0..<5).map { vo2(daysAgo: 24 - $0 * 6, value: 48.0 + Double($0) * 0.4, today: today) }
+        guard case .improving? = engine.vo2MaxTrend(readings, asOf: today) else {
+            return XCTFail("expected a rise")
+        }
     }
 
     // MARK: - Days since last run

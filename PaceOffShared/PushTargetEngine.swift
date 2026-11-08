@@ -44,9 +44,33 @@ public struct PushTargetEngine: Sendable {
     /// reduction a post-long-run recovery day gets.
     static let redReadinessCapFactor = 0.6
 
-    // VO2Max slope thresholds (ml/kg/min per WEEK)
-    static let vo2MaxDecliningSlope = -0.05
-    private static let vo2MaxPlateauAbsSlope = 0.10
+    // When a VO₂ max trend counts. Apple Watch estimates wobble by a few
+    // tenths from one reading to the next, so a trend needs enough
+    // readings, over long enough, and a change the wobble can't explain.
+    static let vo2MinReadings = 3
+    static let vo2MinSpanDays = 14.0
+    /// The least change over the window (ml/kg/min) that counts as a trend.
+    static let vo2MinChange = 0.25
+    /// The fitted slope must be this many standard errors from flat.
+    static let vo2MinSignificance = 2.0
+    /// How much one reading wobbles at the least (ml/kg/min). The standard
+    /// error is never taken below what this gives, so three readings that
+    /// happen to fall on a line still have to beat the watch's own jitter.
+    static let vo2ReadingNoise = 0.2
+    /// Readings scattered more than this around their line (ml/kg/min)
+    /// are too noisy to call flat: then the trend has no say at all.
+    static let vo2MaxScatter = 0.5
+
+    /// What the last 28 days of VO₂ max say.
+    public enum VO2Trend: Equatable, Sendable {
+        /// Falling beyond noise: push harder (+15%, aggressive).
+        case declining(slopePerWeek: Double)
+        /// Flat, or moving less than the noise: stagnation, ask a little
+        /// more (+10%, firm).
+        case plateau
+        /// Rising beyond noise: the work is landing, hold the baseline.
+        case improving(slopePerWeek: Double)
+    }
 
     public init() {}
 
@@ -89,17 +113,21 @@ public struct PushTargetEngine: Sendable {
         let ceiling = baseline * Self.hardCeilingMultiplier
         var cap = ceiling
 
-        // 2. VO2Max trend
-        let vo2Slope = vo2MaxSlopePerWeek(inputs.vo2Max, asOf: inputs.today)
-        if let slope = vo2Slope {
-            if slope < Self.vo2MaxDecliningSlope {
-                target *= 1.15
-                tone = .aggressive
-            } else if abs(slope) < Self.vo2MaxPlateauAbsSlope {
-                target *= 1.10
-                tone = .firm
-            }
-            // else: improving — hold baseline
+        // 2. VO2Max trend — only once there's enough of it to trust.
+        let vo2Trend = vo2MaxTrend(inputs.vo2Max, asOf: inputs.today)
+        var vo2Slope: Double?
+        switch vo2Trend {
+        case .declining(let slope):
+            target *= 1.15
+            tone = .aggressive
+            vo2Slope = slope
+        case .plateau:
+            target *= 1.10
+            tone = .firm
+        case .improving(let slope):
+            vo2Slope = slope  // hold baseline
+        case nil:
+            break             // too little data: no say in the target
         }
 
         // 3. Skip count
@@ -203,31 +231,47 @@ public struct PushTargetEngine: Sendable {
         return sorted[mid]
     }
 
-    /// Linear regression slope of VO2Max over the last 28 days, expressed as ml/kg/min per WEEK.
-    func vo2MaxSlopePerWeek(_ samples: [VO2MaxSnapshot], asOf today: Date) -> Double? {
+    /// The VO₂ max trend over the last 28 days, or nil while there are fewer
+    /// than 3 readings or they span under 14 days, or when they scatter too
+    /// much to read. A linear fit counts as rising or falling only when its
+    /// change over the window is at least `vo2MinChange` and its slope is
+    /// `vo2MinSignificance` standard errors from flat, the error never
+    /// below what `vo2ReadingNoise` gives; anything less is a plateau. A
+    /// 0.3 wobble between readings is noise, never a decline.
+    public func vo2MaxTrend(_ samples: [VO2MaxSnapshot], asOf today: Date) -> VO2Trend? {
         let cal = Calendar.current
         let cutoff = cal.date(byAdding: .day, value: -Self.vo2MaxTrendWindowDays, to: today) ?? today
-        let window = samples.filter { $0.date >= cutoff && $0.date <= today }
-        guard window.count >= 2 else { return nil }
+        let window = samples.filter { $0.date >= cutoff && $0.date <= today }.sorted { $0.date < $1.date }
+        guard window.count >= Self.vo2MinReadings,
+              let first = window.first?.date, let last = window.last?.date
+        else { return nil }
+        let spanDays = last.timeIntervalSince(first) / 86_400
+        guard spanDays >= Self.vo2MinSpanDays else { return nil }
 
-        // x = days from window start, y = VO2Max value
-        let firstDate = window.first!.date
-        let xs = window.map { $0.date.timeIntervalSince(firstDate) / 86_400.0 }
+        let xs = window.map { $0.date.timeIntervalSince(first) / 86_400 }
         let ys = window.map(\.value)
         let n = Double(window.count)
-
         let xMean = xs.reduce(0, +) / n
         let yMean = ys.reduce(0, +) / n
-
-        var num = 0.0
-        var den = 0.0
-        for i in 0..<window.count {
-            num += (xs[i] - xMean) * (ys[i] - yMean)
-            den += (xs[i] - xMean) * (xs[i] - xMean)
+        let sxx = xs.reduce(0.0) { $0 + ($1 - xMean) * ($1 - xMean) }
+        guard sxx > 0 else { return nil }
+        let sxy = zip(xs, ys).reduce(0.0) { $0 + ($1.0 - xMean) * ($1.1 - yMean) }
+        let slopePerDay = sxy / sxx
+        let intercept = yMean - slopePerDay * xMean
+        let residuals = zip(xs, ys).reduce(0.0) { sum, point in
+            let r = point.1 - (intercept + slopePerDay * point.0)
+            return sum + r * r
         }
-        guard den != 0 else { return nil }
-        let slopePerDay = num / den
-        return slopePerDay * 7.0 // convert to per-week
+        let scatter = (residuals / (n - 2)).squareRoot()
+        let standardError = max(scatter, Self.vo2ReadingNoise) / sxx.squareRoot()
+
+        let change = slopePerDay * spanDays
+        let significant = abs(slopePerDay) >= Self.vo2MinSignificance * standardError
+        guard abs(change) >= Self.vo2MinChange, significant else {
+            return scatter > Self.vo2MaxScatter ? nil : .plateau
+        }
+        let perWeek = slopePerDay * 7
+        return perWeek < 0 ? .declining(slopePerWeek: perWeek) : .improving(slopePerWeek: perWeek)
     }
 
     func daysSinceLastRun(_ runs: [RunRecord], today: Date) -> Int {

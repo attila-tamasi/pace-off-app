@@ -9,6 +9,9 @@ struct VO2MaxDetailView: View {
 
     @State private var snapshots: [VO2MaxSnapshot] = []
     @State private var isLoading = true
+    /// The engine's reading of the last 4 weeks, worked out when the
+    /// readings arrive rather than on every render.
+    @State private var trend: PushTargetEngine.VO2Trend?
     @State private var userAge: Int?
 
     var body: some View {
@@ -149,7 +152,7 @@ struct VO2MaxDetailView: View {
             Text("The number tends to climb when you run consistently — especially mixing easy distance with the occasional hard effort — and tends to drift down when you skip weeks. Day-to-day jitter is normal; what matters is the slope over weeks.")
                 .font(.system(.body, design: .rounded))
 
-            Text("Pace Off uses the slope of your VO₂ max over the last 6 weeks to decide today's push. A rising line means you're absorbing the work — expect bigger asks. A falling line means recovery — expect a softer day.")
+            Text("Pace Off reads the trend of your last 4 weeks, once there are at least 3 readings over 2 weeks. Readings wobble by a few tenths, so only a change beyond that counts, and readings scattered too widely don't count at all. On its own, a falling trend adds 15% to today's target, since fitness is slipping; a flat one adds 10%; a rising one adds nothing, since the work is landing. Skipped days, recovery and readiness still apply on top.")
                 .font(.system(.body, design: .rounded))
                 .foregroundStyle(.primary)
         }
@@ -190,19 +193,19 @@ struct VO2MaxDetailView: View {
         return String(format: "%.1f", v)
     }
 
+    /// The trend as the push engine reads it. Nil while loading or with no
+    /// readings, where the screen already says so.
     private var trendLabel: (text: String, icon: String, color: Color)? {
-        guard snapshots.count >= 4 else { return nil }
-        // Simple linear regression slope per week over the last 6 weeks
-        let cutoff = Calendar.current.date(byAdding: .day, value: -42, to: Date()) ?? Date()
-        let recent = snapshots.filter { $0.date >= cutoff }
-        guard recent.count >= 3 else { return nil }
-        let slope = weeklySlope(recent)
-        if slope > 0.05 {
-            return ("Up \(String(format: "%.2f", slope)) ml/kg·min per week", "arrow.up.right", .green)
-        } else if slope < -0.05 {
-            return ("Down \(String(format: "%.2f", abs(slope))) ml/kg·min per week", "arrow.down.right", .orange)
-        } else {
-            return ("Stable over the last 6 weeks", "arrow.right", .secondary)
+        guard !isLoading, !snapshots.isEmpty else { return nil }
+        switch trend {
+        case .declining(let slope):
+            return ("Falling \(String(format: "%.2f", abs(slope))) a week over 4 weeks", "arrow.down.right", .orange)
+        case .plateau:
+            return ("Flat over the last 4 weeks", "arrow.right", .secondary)
+        case .improving(let slope):
+            return ("Rising \(String(format: "%.2f", slope)) a week over 4 weeks", "arrow.up.right", .green)
+        case nil:
+            return ("No clear trend yet: too few readings, or too scattered", "ellipsis", .secondary)
         }
     }
 
@@ -218,20 +221,6 @@ struct VO2MaxDetailView: View {
         return AgeBand(age: age)
     }
 
-    private func weeklySlope(_ data: [VO2MaxSnapshot]) -> Double {
-        guard let first = data.first?.date else { return 0 }
-        let xs = data.map { $0.date.timeIntervalSince(first) / (7 * 24 * 3600) } // weeks
-        let ys = data.map(\.value)
-        let n = Double(xs.count)
-        let sumX = xs.reduce(0, +)
-        let sumY = ys.reduce(0, +)
-        let sumXY = zip(xs, ys).map(*).reduce(0, +)
-        let sumX2 = xs.map { $0 * $0 }.reduce(0, +)
-        let denom = (n * sumX2) - (sumX * sumX)
-        guard denom != 0 else { return 0 }
-        return ((n * sumXY) - (sumX * sumY)) / denom
-    }
-
     // MARK: - Loading
 
     private func load() async {
@@ -239,9 +228,11 @@ struct VO2MaxDetailView: View {
         // First paint from cache if available so the chart is never empty.
         if let cached = await HealthDataCache.shared.load(), !cached.vo2Max.isEmpty {
             snapshots = cached.vo2Max
+            trend = PushTargetEngine().vo2MaxTrend(snapshots, asOf: Date())
             userAge = cached.userAge ?? HealthKitService.shared.userAge()
         }
         snapshots = await HealthKitService.shared.fetchVO2Max(daysBack: 365)
+        trend = PushTargetEngine().vo2MaxTrend(snapshots, asOf: Date())
         userAge = HealthKitService.shared.userAge()
         isLoading = false
     }
