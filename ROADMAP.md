@@ -34,7 +34,7 @@ The items come from the full code review of 2026-10-18, re-checked against the s
 ## Now · Owner's request (2026-11-08)
 
 Requests the owner put ahead of the waves, in their order:
-0. **First, every remaining fix** (owner, 2026-11-08, later the same day: "csináld meg az összes javítást loop-ban, nem kell approval"). Wave 1's R-05 and R-07b, Wave 2's Q-02 to Q-11, then R-05b, come before F-10: the loop takes them in that order before anything below. R-05b went last once its first rule proved to cut the marathon plans too far (see the item). The two blocked calls are Claude's to make; each item records the decision and the owner can reverse it.
+0. **First, every remaining fix** (owner, 2026-11-08, later the same day: "csináld meg az összes javítást loop-ban, nem kell approval"). Wave 1's R-05 and R-07b, Wave 2's Q-02 to Q-11, then R-05b and Q-12 (found in R-05b), come before F-10: the loop takes them in that order before anything below. R-05b went last once its first rule proved to cut the marathon plans too far (see the item). The two blocked calls are Claude's to make; each item records the decision and the owner can reverse it.
 1. The app in TestFlight (T-01).
 2. Every card on Today opens a detail screen (F-09).
 3. A morning weather check that says what to run and when (F-10).
@@ -278,7 +278,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - If the plan starts later, the Plan tab says when.
 
 ### R-05b · The run before the long run is nearly as long as it
-- **Status:** todo
+- **Status:** done (PR #46)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** R-05 moved the long run's cut into the two easy runs, so the Medium and Aggressive marathon's easy runs peak at 16.7 and 20.3 km against long runs of 22.3 and 25.5 km. One of them is the day before the long run: a 20 km Saturday, then 25.5 km on Sunday. The weekend is still lighter than before R-05 (45.8 km against 51.5), so it waits behind Wave 2. Found in R-05's review.
 - **Why not just cap the easy runs:** with the quality sessions at today's fixed 8–10 km, capping the day-before run at 60% and the other at 80% of the long run, while the long run keeps its share, forces the long run down to about 20 km for the Aggressive marathon and 17.5 km for the Medium, and the peak week from 85 to 68 km. The quality sessions are what's short: marathoners run longer threshold and interval sessions.
@@ -289,6 +289,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - R-05's share cap still holds; 5K and 10K plans, already within these limits, don't change.
   - Tests cover every goal × tier, and long-run days other than Sunday.
   - Also: a plan too short to build from a low week 1 toward race distance (a beginner's marathon eight weeks out peaks near 12 km) says so on the plan's detail screen.
+- **Decision (Claude, 2026-11-08; the owner can reverse it):** "5K and 10K plans, already within these limits" was wrong: their easy runs are 74–100% of the long run (a 10 km Saturday before a 10 km Sunday in the Aggressive 5K). Their long runs are 8–16 km, where an easy run near that length the day before is no load problem, so the 60/80 rule applies to the half and the marathon only and 5K/10K plans don't change. To reverse it, drop the goal check in `TrainingPlanGenerator.peakRuns`: the 5K/10K weeks then lose up to 6 km.
 
 ### R-08 · Slow runners get paces that are too fast
 - **Status:** done (PR #26)
@@ -429,6 +430,16 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Day-relative values from a snapshot synced on an earlier calendar day aren't shown as yesterday's. Either hide them, or label them with their day.
   - A pure check with tests decides it.
 
+### Q-12 · Session notes describe the peak session in every week
+- **Status:** todo
+- **Size:** S   ·   **Merge:** auto
+- **Problem:** A quality session's distance follows the week's volume (70% in week 1, 30% in race week), but its notes always describe the peak session: week 1's 9.8 km marathon threshold says "WU 3 km · 5 × 1.6 km @ T w/ 250 m jog · CD 2 km", which is 14 km. Found in R-05b.
+- **Where:** `TrainingPlanGenerator` (`thresholdNotes`, `intervalNotes`, `materialise`).
+- **Done when:**
+  - Each week's session is the peak session cut to its distance: fewer reps, never a larger share of the session than at the peak, with the warm-up and cool-down taking the rest. Its notes add up to its distance (to the tenth of a km they show) in every week, 5K and 10K included.
+  - A session's distance comes from its parts, so the two can't drift apart; 5K and 10K sessions keep their distances.
+  - Tests over every goal × tier × week, full-length, low-start and race-date plans.
+
 ---
 
 ## Wave 3 · New features
@@ -549,6 +560,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #46: the plan detail's orange "too few weeks" line (preview "Plan detail — beginner's marathon, 8 weeks"); half and marathon plans' longer threshold and interval sessions with their notes, and the shorter Saturday easy run before a Sunday long run
 - [ ] PR #45: Today's HRV and Resting HR cards: "Yesterday" / "Avg yesterday 58 bpm" after a sync today; after a cold launch on a cache from an earlier day, the weekday ("Thursday", "Avg Thursday 58 bpm"); a week-old cache shows no yesterday values
 - [ ] PR #44: at the largest accessibility text size: Today's hero, Plan, Week, VO₂ max, Heart trend and Run detail heroes, Profile's goal card, onboarding; onboarding with Reduce Motion; VoiceOver on the profile-photo picker
 - [ ] PR #43: Profile's hero without the chips and the goal card (PB row, race countdown with and without a prediction); Trends with no data
@@ -573,6 +585,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · R-05b: half and marathon quality sessions are longer, the easy run before the long run keeps to 60% of it and the other to 80%, and a plan that can't build far says so (PR #46)
 - 2026-11-08 · Q-11: yesterday's HRV and average heart rate name their own day when the cached snapshot was synced on an earlier day, and hide from a week back (PR #45)
 - 2026-11-08 · Q-10: the big custom font sizes follow Dynamic Type (scaledFont), the photo picker has a VoiceOver label, and repeating or sliding animations respect Reduce Motion (PR #44)
 - 2026-11-08 · Q-09: Profile shows the goal, PB and race day once and refreshes its prediction after a Health sync; Trends cards have empty states (PR #43)

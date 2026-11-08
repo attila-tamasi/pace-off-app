@@ -377,8 +377,7 @@ public struct TrainingPlanGenerator: Sendable {
 
         // The template assumes long-run on Sunday (slot index 6). Rotate so
         // the long run actually lands on `longRunDay`.
-        let canonicalLongRunSlot = 6 // Sunday in 0-Mon..6-Sun ordering
-        let shift = longRunDay.rawValue - canonicalLongRunSlot
+        let shift = longRunDay.rawValue - Self.templateLongRunSlot
         let rotated: [WorkoutKind] = (0..<7).map { dayIdx in
             // Find which template slot lands on this weekday after rotation.
             let srcSlot = ((dayIdx - shift) % 7 + 7) % 7
@@ -390,11 +389,15 @@ public struct TrainingPlanGenerator: Sendable {
         // the long run; if so, swap with the nearest easy slot.
         let smoothed = enforceQualitySpacing(rotated, longRunDay: longRunDay)
 
-        // Concrete distances + paces per workout, in current week.
+        // Concrete distances + paces per workout, in current week. The
+        // rotation keeps the template's order, so the slot before the long
+        // run's is the day before it.
+        let dayBeforeLongRun = (longRunDay.rawValue + 6) % 7
         let days: [TrainingDay] = Weekday.allCases.map { wd in
             let kind = smoothed[wd.rawValue]
             let workout = materialise(
                 kind: kind,
+                beforeLongRun: wd.rawValue == dayBeforeLongRun,
                 fraction: fraction,
                 peaks: peaks,
                 goal: goal,
@@ -405,6 +408,9 @@ public struct TrainingPlanGenerator: Sendable {
         }
         return TrainingWeek(index: index, days: days)
     }
+
+    /// The template's long-run slot: Sunday, in 0-Mon..6-Sun order.
+    private static let templateLongRunSlot = 6
 
     /// Choose what kind of workout happens on each Mon..Sun slot for this
     /// week. Long run always lives at slot 6 (Sunday) pre-rotation.
@@ -500,12 +506,14 @@ public struct TrainingPlanGenerator: Sendable {
     // MARK: Concrete distance + pace
 
     private func materialise(kind: WorkoutKind,
+                             beforeLongRun: Bool,
                              fraction: Double,
                              peaks: PeakRuns,
                              goal: RunningGoal,
                              tier: PlanTier,
                              vdot: Double) -> Workout {
 
+        let easyKm = beforeLongRun ? peaks.dayBeforeLongKm : peaks.easyKm
         switch kind {
         case .rest:
             return .rest
@@ -514,7 +522,7 @@ public struct TrainingPlanGenerator: Sendable {
             // 4–6 × 20s strides woven into that week's easy run, so a
             // strides week weighs the same as any other.
             return easyWorkout(
-                distance: peaks.easyKm * 1000 * fraction,
+                distance: easyKm * 1000 * fraction,
                 vdot: vdot,
                 kind: .strides,
                 notes: "Easy run + 4–6 × 20 s strides on the flats."
@@ -522,7 +530,7 @@ public struct TrainingPlanGenerator: Sendable {
 
         case .easy:
             return easyWorkout(
-                distance: peaks.easyKm * 1000 * fraction,
+                distance: easyKm * 1000 * fraction,
                 vdot: vdot,
                 kind: .easy
             )
@@ -553,11 +561,11 @@ public struct TrainingPlanGenerator: Sendable {
             let tol = TrainingIntensity.threshold.paceToleranceSec
             return Workout(
                 kind: .threshold,
-                distanceMeters: thresholdMeters(tier: tier) * fraction,
+                distanceMeters: thresholdMeters(tier: tier, goal: goal) * fraction,
                 paceMinSecPerKm: pace - tol,
                 paceMaxSecPerKm: pace + tol,
                 notes: kind == .threshold
-                    ? "WU 2 km · 4 × 1 km @ T w/ 60 s jog · CD 2 km"
+                    ? thresholdNotes(tier: tier, goal: goal)
                     : "WU 2 km · 20 min @ T continuous · CD 2 km"
             )
 
@@ -567,10 +575,10 @@ public struct TrainingPlanGenerator: Sendable {
             let tol = TrainingIntensity.interval.paceToleranceSec
             return Workout(
                 kind: .interval,
-                distanceMeters: intervalMeters(tier: tier) * fraction,
+                distanceMeters: intervalMeters(tier: tier, goal: goal) * fraction,
                 paceMinSecPerKm: pace - tol,
                 paceMaxSecPerKm: pace + tol,
-                notes: "WU 2 km · 5 × 800 m @ I w/ equal-time jog · CD 2 km"
+                notes: intervalNotes(tier: tier, goal: goal)
             )
 
         case .race:
@@ -628,7 +636,8 @@ public struct TrainingPlanGenerator: Sendable {
             days[week][slot] = TrainingDay(weekday: day.weekday,
                                            workout: change(day.workout, week + 1))
         }
-        // A session turned into an easy run, never longer than it was.
+        // A session turned into an easy run, never longer than it was, nor
+        // than the week's usual easy run.
         func easy(_ workout: Workout, week: Int) -> Workout {
             let distance = min(workout.distanceMeters, peaks.easyKm * 1000 * curve[week - 1])
             return easyWorkout(distance: distance, vdot: vdot, kind: .easy)
@@ -665,8 +674,10 @@ public struct TrainingPlanGenerator: Sendable {
 
     /// Sizes the easy runs: this, less the long-run benchmark, shared over
     /// the week's other runs as if each were easy. Quality sessions keep
-    /// their own distances, so a week that has them comes out under this
-    /// figure (the aggressive marathon's peak week is 85 km, not 95).
+    /// their own distances, so a week with sessions shorter than those easy
+    /// runs comes out under this figure (the aggressive marathon's peak
+    /// week is 92 km, not 95) and one with longer sessions over it (the
+    /// medium marathon's is 67.7 km, not 65).
     private func peakWeeklyKm(goal: RunningGoal, tier: PlanTier) -> Double {
         switch (goal, tier) {
         case (.fiveK,        .easy):        return 22
@@ -714,8 +725,18 @@ public struct TrainingPlanGenerator: Sendable {
     /// The peak week's long and easy runs, in km.
     struct PeakRuns {
         let longKm: Double
+        /// An easy run on the day before the long run.
+        let dayBeforeLongKm: Double
+        /// Every other easy run (a strides run counts as one).
         let easyKm: Double
     }
+
+    /// For the half and the marathon, the most of the week's long run the
+    /// easy run on the day before it may be, and the most any other easy
+    /// run may be. A 5K or 10K long run is 8–16 km, short enough that an
+    /// easy run near its length the day before is no load problem.
+    static let dayBeforeLongRunShare = 0.60
+    static let otherEasyRunShare = 0.80
 
     /// The peak week's long and easy runs. The week as the tier's template
     /// lays it out holds the long run, its quality sessions at their own
@@ -723,6 +744,11 @@ public struct TrainingPlanGenerator: Sendable {
     /// run is the goal's benchmark, cut to the tier's share of that week;
     /// the distance it gives up goes to the easy runs, so the week's total
     /// is what it was with the full benchmark.
+    ///
+    /// For the half and the marathon, the easy run on the day before the
+    /// long run keeps to 60% of it, and the other easy run takes what that
+    /// gives up, up to 80% of the long run. Whatever still doesn't fit is
+    /// dropped: no week grows. With today's figures nothing is.
     func peakRuns(goal: RunningGoal, tier: PlanTier) -> PeakRuns {
         let benchmark = longRunBenchmarkKm(goal: goal, tier: tier)
         let peakWeek = peakWeeklyKm(goal: goal, tier: tier)
@@ -731,18 +757,27 @@ public struct TrainingPlanGenerator: Sendable {
         // distance (the medium tier's alternating sessions are equally
         // long), so any week's template stands for the peak week.
         let layout = workoutTemplate(tier: tier, week: 1, of: 1, goal: goal)
-        let easyRuns = Double(max(layout.filter { $0 == .easy || $0 == .strides }.count, 1))
+        let isEasyRun: (WorkoutKind) -> Bool = { $0 == .easy || $0 == .strides }
+        let easyRuns = Double(max(layout.filter(isEasyRun).count, 1))
         let quality = layout.reduce(0) { $0 + qualityMeters($1, tier: tier, goal: goal) } / 1000
         let week = benchmark + quality + easyRuns * easy
         let long = min(benchmark, Self.longRunShareCap(runsPerWeek: tier.runsPerWeek) * week)
-        return PeakRuns(longKm: long, easyKm: easy + (benchmark - long) / easyRuns)
+        // The easy runs share their own distance and what the long run gave up.
+        let shared = easyRuns * easy + (benchmark - long)
+        let even = shared / easyRuns
+        guard goal == .halfMarathon || goal == .marathon,
+              isEasyRun(layout[Self.templateLongRunSlot - 1]), easyRuns > 1
+        else { return PeakRuns(longKm: long, dayBeforeLongKm: even, easyKm: even) }
+        let dayBefore = min(even, Self.dayBeforeLongRunShare * long)
+        let other = min((shared - dayBefore) / (easyRuns - 1), Self.otherEasyRunShare * long)
+        return PeakRuns(longKm: long, dayBeforeLongKm: dayBefore, easyKm: other)
     }
 
     /// A quality session's distance at the peak; 0 for any other kind.
     private func qualityMeters(_ kind: WorkoutKind, tier: PlanTier, goal: RunningGoal) -> Double {
         switch kind {
-        case .tempo, .threshold: return thresholdMeters(tier: tier)
-        case .interval:          return intervalMeters(tier: tier)
+        case .tempo, .threshold: return thresholdMeters(tier: tier, goal: goal)
+        case .interval:          return intervalMeters(tier: tier, goal: goal)
         case .marathonPace:      return marathonPaceMeters(goal: goal)
         default:                 return 0
         }
@@ -833,16 +868,57 @@ public struct TrainingPlanGenerator: Sendable {
     }
 
     /// The threshold session at the peak: warm-up, main set and cool-down.
-    private func thresholdMeters(tier: PlanTier) -> Double {
-        tier == .aggressive ? 10_000 : 8_000
+    /// Longer for the half and the marathon, whose weeks are longer: the
+    /// aggressive marathon's 8 km at threshold stays under Daniels' 10% of
+    /// the week. `thresholdNotes` add up to it.
+    private func thresholdMeters(tier: PlanTier, goal: RunningGoal) -> Double {
+        switch (goal, tier) {
+        case (.marathon, .aggressive):     return 14_000
+        case (.marathon, _):               return 12_000
+        case (.halfMarathon, .aggressive): return 11_000
+        case (.halfMarathon, _):           return 9_000
+        case (_, .aggressive):             return 10_000
+        default:                           return 8_000
+        }
     }
 
     /// The interval session at the peak: warm-up, reps, jogs and cool-down.
     /// Below the aggressive tier it matches the threshold session, since
     /// the medium tier alternates the two: weeks then differ only by the
-    /// volume fraction.
-    private func intervalMeters(tier: PlanTier) -> Double {
-        tier == .aggressive ? 9_000 : 8_000
+    /// volume fraction. `intervalNotes` add up to it.
+    private func intervalMeters(tier: PlanTier, goal: RunningGoal) -> Double {
+        switch (goal, tier) {
+        case (.marathon, _):               return 12_000
+        case (.halfMarathon, .aggressive): return 10_000
+        case (.halfMarathon, _):           return 9_000
+        case (_, .aggressive):             return 9_000
+        default:                           return 8_000
+        }
+    }
+
+    /// The threshold session at the peak, cruise intervals between a
+    /// warm-up and a cool-down. For the half and the marathon the parts,
+    /// jogs included, add up to `thresholdMeters`.
+    private func thresholdNotes(tier: PlanTier, goal: RunningGoal) -> String {
+        switch (goal, tier) {
+        case (.marathon, .aggressive):     return "WU 3 km · 5 × 1.6 km @ T w/ 250 m jog · CD 2 km"
+        case (.marathon, _):               return "WU 3 km · 4 × 1.6 km @ T w/ 200 m jog · CD 2 km"
+        case (.halfMarathon, .aggressive): return "WU 2 km · 6 × 1 km @ T w/ 200 m jog · CD 2 km"
+        case (.halfMarathon, _):           return "WU 2 km · 3 × 1.5 km @ T w/ 250 m jog · CD 2 km"
+        default:                           return "WU 2 km · 4 × 1 km @ T w/ 60 s jog · CD 2 km"
+        }
+    }
+
+    /// The interval session at the peak. The jogs take about as long as
+    /// the reps; for the half and the marathon the parts add up to
+    /// `intervalMeters`.
+    private func intervalNotes(tier: PlanTier, goal: RunningGoal) -> String {
+        switch (goal, tier) {
+        case (.marathon, _):               return "WU 3 km · 5 × 1 km @ I w/ 500 m jog · CD 2 km"
+        case (.halfMarathon, .aggressive): return "WU 2 km · 5 × 800 m @ I w/ 500 m jog · CD 2 km"
+        case (.halfMarathon, _):           return "WU 2 km · 4 × 800 m @ I w/ 600 m jog · CD 2 km"
+        default:                           return "WU 2 km · 5 × 800 m @ I w/ equal-time jog · CD 2 km"
+        }
     }
 
     /// A marathon-pace session at the peak. Only marathon plans really use
@@ -854,5 +930,58 @@ public struct TrainingPlanGenerator: Sendable {
         case .halfMarathon: return 10_000
         default:            return 6_000
         }
+    }
+}
+
+// MARK: - How far a plan builds
+
+extension TrainingPlan {
+
+    /// The longest long run the plan prescribes, in meters.
+    public var longestLongRunMeters: Double {
+        weeks.flatMap(\.days).map(\.workout)
+            .filter { $0.kind == .long }
+            .map(\.distanceMeters)
+            .max() ?? 0
+    }
+
+    /// The long run a full build reaches for this goal and tier, in meters.
+    public var fullBuildLongRunMeters: Double {
+        TrainingPlanGenerator().peakRuns(goal: goal, tier: tier).longKm * 1000
+    }
+
+    /// How far short of a full build the plan stays, or nil when it
+    /// builds far enough.
+    public struct BuildShortfall: Sendable, Equatable {
+        /// The plan's longest long run, in meters.
+        public let longestLongRunMeters: Double
+        /// The long run a full build reaches, in meters.
+        public let fullBuildLongRunMeters: Double
+        /// True when a later race date would let it build fully: the plan
+        /// is shorter than the goal's full plan, which from the same week 1
+        /// would get there. A beginner's full 8-week 5K doesn't, so a later
+        /// race date wouldn't help it.
+        public let laterRaceDateHelps: Bool
+    }
+
+    /// Nil unless the plan can't build far: started low, from a runner's
+    /// short recent runs, with too few weeks to climb at 10% a week, its
+    /// longest run stays under where a full plan's week 1 starts (70% of
+    /// the full build's long run). A beginner's marathon eight weeks out
+    /// peaks near 12 km.
+    public var buildShortfall: BuildShortfall? {
+        let full = fullBuildLongRunMeters
+        let line = full * TrainingPlanGenerator.defaultStartFraction - 1
+        let longest = longestLongRunMeters
+        guard full > 0, longest < line else { return nil }
+        let generator = TrainingPlanGenerator()
+        let fullWeeks = generator.planWeeks(for: goal)
+        // Week 1's share of the full build, and how far the goal's full
+        // plan would climb from it.
+        let weekOne = weeks.first?.days.map(\.workout).first(where: { $0.kind == .long })?.distanceMeters ?? 0
+        let fullLengthPeak = generator.volumeCurve(weeks: fullWeeks, start: weekOne / full).max() ?? 0
+        return BuildShortfall(longestLongRunMeters: longest,
+                              fullBuildLongRunMeters: full,
+                              laterRaceDateHelps: weekCount < fullWeeks && fullLengthPeak * full >= line)
     }
 }
