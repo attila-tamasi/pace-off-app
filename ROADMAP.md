@@ -378,7 +378,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
-- [ ] PR #28: onboarding's notifications step: "Not now" goes straight to the last step with no system prompt; "Allow Notifications" still shows it
+- [ ] PR #28: onboarding's notifications step: "Not now" goes straight to the last step with no system prompt (and hides while the prompt is up); "Allow Notifications" still shows it; the new footnote; Profile → Notifications → "Allow notifications" shows the prompt after a "Not now"
 - [ ] PR #27: the widget (all four families) right after a run logged in the app, and after midnight before opening the app: "—", "Open Pace Off" and a grey dot; the stale entry in the systemSmall preview
 - [ ] PR #25: the Plan tab on race day (hero "Race day", the race row marked in the week), the plan detail week with the race, and Today's plan line "… plan · Race day"; a new race plan's week 1 can show a few days already past
 - [ ] PR #20: Today's "N-day streak" label now shows before today's run, and the hero card's voice line follows the new states (streak, recovery, ran today)
