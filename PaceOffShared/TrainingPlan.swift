@@ -252,9 +252,10 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
     public let createdAt: Date
     /// The day week 1 begins, when it isn't `createdAt`. A plan built for a
     /// race counts its weeks back from race day, so the race is the last
-    /// day of the last week, and week 1 can begin a few days before the
-    /// plan was generated. Optional so plans saved before this field
-    /// existed still decode.
+    /// day of the last week: week 1 can begin a few days before the plan
+    /// was generated, or, for a race further out than the plan's length,
+    /// weeks after it. Optional so plans saved before this field existed
+    /// still decode.
     public let startDate: Date?
 
     public init(id: UUID = UUID(),
@@ -283,11 +284,41 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
         "\(tier.displayName) \(goal.displayName) Plan"
     }
 
+    /// The day week 1 begins.
+    public var firstDay: Date {
+        Calendar.current.startOfDay(for: startDate ?? createdAt)
+    }
+
+    /// The plan's last day: race day, for a plan built for one.
+    public var lastDay: Date {
+        Calendar.current.date(byAdding: .day, value: weeks.count * 7 - 1, to: firstDay) ?? firstDay
+    }
+
+    /// The first day for display: "3 Mar", or "Tuesday, 3 March" with
+    /// `long`. The year is added when it isn't `today`'s, so a start more
+    /// than a year out can't pass for a nearer one.
+    public func firstDayText(long: Bool = false, today: Date = Date()) -> String {
+        let cal = Calendar.current
+        var style = long
+            ? Date.FormatStyle().weekday(.wide).day().month(.wide)
+            : Date.FormatStyle().day().month(.abbreviated)
+        if cal.component(.year, from: firstDay) != cal.component(.year, from: today) {
+            style = style.year()
+        }
+        return firstDay.formatted(style)
+    }
+
+    /// True while the plan hasn't begun: it was built for a race further
+    /// out than its length, so week 1 starts on a later day.
+    public func startsLater(today: Date = Date()) -> Bool {
+        firstDay > Calendar.current.startOfDay(for: today)
+    }
+
     /// Which week index (0-based into `weeks`) does `today` fall into?
     /// Returns nil when `today` is before the plan starts or after it ends.
     public func currentWeekIndex(today: Date = Date()) -> Int? {
         let cal = Calendar.current
-        let startOfPlan = cal.startOfDay(for: startDate ?? createdAt)
+        let startOfPlan = firstDay
         let startOfToday = cal.startOfDay(for: today)
         guard let days = cal.dateComponents([.day], from: startOfPlan, to: startOfToday).day,
               days >= 0
@@ -296,8 +327,10 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
         return weekIndex < weeks.count ? weekIndex : nil
     }
 
-    /// Number of weeks remaining (counts the current week as remaining).
+    /// Number of weeks remaining (counts the current week as remaining):
+    /// all of them before the plan starts, none after it ends.
     public func weeksRemaining(today: Date = Date()) -> Int {
+        if startsLater(today: today) { return weeks.count }
         guard let idx = currentWeekIndex(today: today) else { return 0 }
         return weeks.count - idx
     }

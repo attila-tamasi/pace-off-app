@@ -1,6 +1,8 @@
 // PlanTabView.swift
 // The Plan tab. With an active plan: today's workout on the brand hero,
-// this week's days with today marked, and the whole plan one tap away.
+// this week's days with today marked, and the whole plan one tap away. A
+// plan built for a far-off race that hasn't started yet says when it
+// starts and previews its first week instead.
 // Without one: the plan picker, which flips this tab to the active plan
 // as soon as a plan is selected.
 
@@ -25,8 +27,12 @@ private struct ActivePlanView: View {
 
     @State private var settingsPresented = false
 
-    private var weekIndex: Int? { plan.currentWeekIndex() }
-    private var today: Weekday { Weekday(date: Date()) }
+    /// One clock read per render, so every part of the screen agrees on
+    /// the day, even across midnight.
+    let now = Date()
+    private var weekIndex: Int? { plan.currentWeekIndex(today: now) }
+    private var startsLater: Bool { plan.startsLater(today: now) }
+    private var today: Weekday { Weekday(date: now) }
 
     var body: some View {
         ScrollView {
@@ -41,7 +47,10 @@ private struct ActivePlanView: View {
 
                 if let weekIndex {
                     MetricSectionHeader(title: "This week")
-                    weekCard(plan.weeks[weekIndex])
+                    weekCard(plan.weeks[weekIndex], marksToday: true)
+                } else if startsLater, let first = plan.weeks.first {
+                    MetricSectionHeader(title: "First week")
+                    weekCard(first, marksToday: false)
                 }
 
                 MetricSectionHeader(title: "Plan")
@@ -65,8 +74,12 @@ private struct ActivePlanView: View {
         }
     }
 
-    /// "Medium Half Marathon Plan · Week 3 of 12".
+    /// "Medium Half Marathon Plan · Week 3 of 12", or "· Starts 3 Mar"
+    /// before it begins.
     private var subtitle: String {
+        if startsLater {
+            return "\(plan.displayName) · Starts \(plan.firstDayText(today: now))"
+        }
         guard let weekIndex else { return plan.displayName }
         return "\(plan.displayName) · Week \(weekIndex + 1) of \(plan.weekCount)"
     }
@@ -74,7 +87,7 @@ private struct ActivePlanView: View {
     // MARK: - Today
 
     private var todayHero: some View {
-        let workout = plan.todayWorkout()
+        let workout = plan.todayWorkout(today: now)
 
         return VStack(alignment: .leading, spacing: 8) {
             Text("TODAY")
@@ -117,11 +130,15 @@ private struct ActivePlanView: View {
     }
 
     private func heroTitle(_ workout: Workout?) -> String {
+        if startsLater { return "Starts \(plan.firstDayText(today: now))" }
         guard let workout else { return "No session" }
         return workout.kind == .rest ? "Rest day" : workout.kind.displayName
     }
 
     private func heroDetail(_ workout: Workout?) -> String {
+        if startsLater {
+            return "Week 1 of \(plan.weekCount) begins on \(plan.firstDayText(long: true, today: now)), so the plan ends on race day. Until then, Today's target keeps you running."
+        }
         guard let workout else {
             return weekIndex == nil
                 ? "This plan isn't running this week."
@@ -132,10 +149,10 @@ private struct ActivePlanView: View {
 
     // MARK: - This week
 
-    private func weekCard(_ week: TrainingWeek) -> some View {
+    private func weekCard(_ week: TrainingWeek, marksToday: Bool) -> some View {
         VStack(spacing: 0) {
             ForEach(week.days) { day in
-                dayRow(day)
+                dayRow(day, marksToday: marksToday)
                 if day.id != week.days.last?.id {
                     Divider().padding(.leading, 64)
                 }
@@ -147,8 +164,8 @@ private struct ActivePlanView: View {
         )
     }
 
-    private func dayRow(_ day: TrainingDay) -> some View {
-        let isToday = day.weekday == today
+    private func dayRow(_ day: TrainingDay, marksToday: Bool) -> some View {
+        let isToday = marksToday && day.weekday == today
         let isRest = day.workout.kind == .rest
 
         return HStack(spacing: 12) {
@@ -199,7 +216,11 @@ private struct ActivePlanView: View {
             }
             .buttonStyle(.plain)
             Divider().padding(.leading, 16)
-            planRow("Weeks left", value: "\(plan.weeksRemaining())")
+            if startsLater {
+                planRow("Starts", value: plan.firstDayText(today: now))
+            } else {
+                planRow("Weeks left", value: "\(plan.weeksRemaining(today: now))")
+            }
             Divider().padding(.leading, 16)
             planRow("Runs per week", value: "\(plan.tier.runsPerWeek)")
             Divider().padding(.leading, 16)
@@ -241,6 +262,25 @@ private struct ActivePlanView: View {
                 tier: .medium,
                 longRunDay: .sunday,
                 vo2Max: 49.2
+            )
+        )
+    )
+    return NavigationStack { PlanTabView() }
+        .environment(store)
+        .environment(PreviewProfileStore.populated)
+        .environment(HealthKitService.shared)
+}
+
+#Preview("Plan tab — starts later") {
+    let store = TrainingPlanStore.shared
+    store.setActive(
+        TrainingPlanGenerator().generate(
+            TrainingPlanInputs(
+                goal: .marathon,
+                tier: .medium,
+                longRunDay: .sunday,
+                vo2Max: 49.2,
+                goalDate: Date().addingTimeInterval(26 * 7 * 86_400)
             )
         )
     )

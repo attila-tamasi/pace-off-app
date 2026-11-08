@@ -23,8 +23,8 @@ struct TrainingPlanSettingsView: View {
                         LabeledContent("Long-run day", value: plan.longRunDay.displayName)
                         LabeledContent("VDOT", value: String(format: "%.0f", plan.vdot))
                         LabeledContent(
-                            "Started",
-                            value: plan.createdAt.formatted(.dateTime.month().day().year())
+                            plan.startsLater() ? "Starts" : "Started",
+                            value: plan.firstDay.formatted(.dateTime.month().day().year())
                         )
                     }
 

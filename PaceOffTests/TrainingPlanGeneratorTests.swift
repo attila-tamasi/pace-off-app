@@ -636,13 +636,47 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         XCTAssertEqual(p.todayWorkout(today: rampToday)?.kind, .race)
     }
 
-    func test_race_furtherOutThanThePlan_isLeftOut() {
-        // A marathon 26 weeks out gets the 16-week plan, which ends first.
+    func test_race_furtherOutThanThePlan_startsThePlanLater() {
+        // A marathon 26 weeks out keeps the 16-week plan, which starts
+        // later so it ends on race day.
         let (p, raceDay) = racePlan(.marathon, .medium, daysOut: 26 * 7)
         XCTAssertEqual(p.weekCount, 16)
-        XCTAssertNil(p.startDate)
-        XCTAssertNil(p.todayWorkout(today: raceDay))
-        XCTAssertFalse(p.weeks.flatMap(\.days).contains { $0.workout.kind == .race })
+        XCTAssertEqual(p.todayWorkout(today: raceDay)?.kind, .race)
+        XCTAssertNil(p.todayWorkout(today: day(1, from: raceDay)), "the plan ends with the race")
+        let first = Calendar.current.startOfDay(for: day(-(16 * 7 - 1), from: raceDay))
+        XCTAssertEqual(p.startDate, first)
+        XCTAssertEqual(p.firstDay, first)
+        // Until then it isn't running.
+        XCTAssertTrue(p.startsLater(today: rampToday))
+        XCTAssertNil(p.currentWeekIndex(today: rampToday))
+        XCTAssertNil(p.todayWorkout(today: rampToday))
+        XCTAssertEqual(p.weeksRemaining(today: rampToday), 16)
+        XCTAssertNil(p.todayWorkout(today: day(-1, from: first)))
+        // From its first day it is.
+        XCTAssertFalse(p.startsLater(today: first))
+        XCTAssertEqual(p.currentWeekIndex(today: first), 0)
+        XCTAssertNotNil(p.todayWorkout(today: first))
+    }
+
+    func test_race_isOnItsDate_however_farOut() {
+        for goal in RunningGoal.allCases {
+            for daysOut in [0, 10, 45, 90, 120, 26 * 7, 400] {
+                let (p, raceDay) = racePlan(goal, .medium, daysOut: daysOut)
+                let label = "\(goal), race \(daysOut) days out"
+                XCTAssertEqual(p.todayWorkout(today: raceDay)?.kind, .race, label)
+                XCTAssertEqual(p.weeks.flatMap(\.days).filter { $0.workout.kind == .race }.count, 1, label)
+                XCTAssertNil(p.todayWorkout(today: day(1, from: raceDay)), "\(label): ends with the race")
+                // The plan starts later only when its weeks can't reach today.
+                let reaches = daysOut < p.weekCount * 7
+                XCTAssertEqual(p.startsLater(today: rampToday), !reaches, label)
+            }
+        }
+    }
+
+    func test_plan_withoutARace_startsWhenItsMade() {
+        let p = plan(.tenK, .medium)
+        XCTAssertFalse(p.startsLater(today: p.createdAt))
+        XCTAssertEqual(p.firstDay, Calendar.current.startOfDay(for: p.createdAt))
     }
 
     func test_planSavedWithoutAStartDate_stillDecodes() throws {

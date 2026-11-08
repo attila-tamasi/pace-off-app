@@ -217,14 +217,16 @@ public struct TrainingPlanGenerator: Sendable {
         let weekCount = planWeeks(for: inputs.goal,
                                   goalDate: inputs.goalDate,
                                   today: inputs.today)
-        // A race the plan's weeks can reach is its last day: count the
-        // weeks back from it. Week 1 then begins up to six days before
-        // today (more when the 4-week minimum applies), so the taper weeks
-        // line up with the race whatever its weekday.
+        // A race is the plan's last day: count the weeks back from it, so
+        // the taper weeks line up with the race whatever its weekday. When
+        // the plan's weeks reach it, week 1 begins up to six days before
+        // today (more when the 4-week minimum applies). A race further out
+        // than the plan's length moves week 1 later: the plan starts on the
+        // day that makes it end on race day, and until then it isn't
+        // running (`TrainingPlan.startsLater`).
         let cal = Calendar.current
         let raceDay = inputs.goalDate.flatMap { goalDate -> Date? in
-            guard let days = daysUntilRace(goalDate, today: inputs.today),
-                  days < weekCount * 7 else { return nil }
+            guard daysUntilRace(goalDate, today: inputs.today) != nil else { return nil }
             return cal.startOfDay(for: goalDate)
         }
         let start = raceDay.flatMap {
@@ -298,8 +300,8 @@ public struct TrainingPlanGenerator: Sendable {
 
     /// How many weeks the plan should run. When `goalDate` is in the future,
     /// the plan is condensed to fit (never extended beyond the default — a
-    /// race 6 months out doesn't need a 26-week 5K plan). 4-week minimum so
-    /// the structure (build + taper) survives.
+    /// race 6 months out doesn't need a 26-week 5K plan; it starts later
+    /// instead). 4-week minimum so the structure (build + taper) survives.
     ///
     /// The count covers today through race day: a race exactly six weeks
     /// out, on today's weekday, needs seven weeks, the plan ending on it.

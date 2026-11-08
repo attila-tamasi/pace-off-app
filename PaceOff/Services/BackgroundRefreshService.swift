@@ -206,7 +206,8 @@ public final class BackgroundRefreshService {
     /// generation time. When the runner's current VDOT (fresh VO₂ max, or
     /// their PB) has drifted past the reconciler's threshold, the remaining
     /// weeks are re-paced and the user gets a one-shot notification. The
-    /// beginner-default fallback VDOT never overwrites a real anchor. Only
+    /// beginner-default fallback VDOT never overwrites a real anchor. A plan
+    /// that hasn't started yet is rebuilt instead, without a push. Only
     /// called with a fresh Health read, so a locked-phone read never retunes.
     private func reconcileTrainingPlan(runs: [RunRecord], vo2Max: [VO2MaxSnapshot], now: Date) -> PlanDayStatus? {
         let store = TrainingPlanStore.shared
@@ -220,6 +221,23 @@ public final class BackgroundRefreshService {
         // The profile's PB only applies when it's for the plan's distance.
         let profile = ProfileStore.shared.profile
         let pb = (profile?.goal == plan.goal) ? profile?.personalBest : nil
+
+        // A plan that hasn't started is rebuilt from today's data, quietly:
+        // there's nothing the runner has to change yet.
+        if plan.startsLater(today: now) {
+            if let rebuilt = reconciler.rebuiltBeforeStart(
+                plan,
+                vo2Max: vo2Max.last?.value,
+                personalBest: pb,
+                recentLongestRunMeters: TrainingPlanGenerator.longestRecentRunMeters(in: runs, today: now),
+                today: now
+            ) {
+                store.setActive(rebuilt)
+                log.info("Rebuilt the training plan before its start")
+            }
+            return status
+        }
+
         let inputs = TrainingPlanInputs(
             goal: plan.goal,
             tier: plan.tier,
