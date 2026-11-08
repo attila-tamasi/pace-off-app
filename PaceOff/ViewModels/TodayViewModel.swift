@@ -48,6 +48,7 @@ public final class TodayViewModel {
     /// The snapshot's runs, for the screens Today's cards open.
     public private(set) var recentRuns: [RunRecord] = []
 
+
     public var weekTotalKm: Double { weekDistances.reduce(0) { $0 + $1.value } }
 
     @ObservationIgnored private let engine = PushTargetEngine()

@@ -154,6 +154,7 @@ public final class HealthKitService {
         // who deleted their data while this read was running.
         if decision == .accept, AppGroup.isRunnerSetUp {
             await HealthDataCache.shared.save(fresh)
+            lastSyncedAt = fresh.lastSyncedAt
         }
         return HealthSyncResult(fresh: fresh, cached: cached, decision: decision)
     }
@@ -676,6 +677,11 @@ public final class HealthKitService {
     }
 
     // MARK: - Observers (background delivery)
+
+    /// When the Health cache last took a fresh read, from any sync: the
+    /// foreground refresh, the background task or an observer delivery.
+    /// Screens that read the cache (Profile's prediction) watch it.
+    public private(set) var lastSyncedAt: Date?
 
     @ObservationIgnored private var observersStarted = false
     @ObservationIgnored private var observerQueries: [HKObserverQuery] = []

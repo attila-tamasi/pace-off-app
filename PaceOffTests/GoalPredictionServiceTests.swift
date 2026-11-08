@@ -244,6 +244,22 @@ final class GoalPredictionServiceTests: XCTestCase {
         XCTAssertEqual(p?.gapToPersonalBestSeconds ?? 99, 0, accuracy: 1)
     }
 
+    func test_countdown_toRaceDay_withOrWithoutAPrediction() {
+        // Calendar days: an 08:00 race seen at 20:00 the evening before is
+        // tomorrow, and on race day, after its hour, it's today.
+        let cal = Calendar.current
+        let evening = cal.date(from: DateComponents(year: 2026, month: 11, day: 8, hour: 20))!
+        func race(inDays n: Int) -> Date {
+            cal.date(byAdding: .day, value: n, to: cal.date(from: DateComponents(year: 2026, month: 11, day: 8, hour: 8))!)!
+        }
+        XCTAssertEqual(GoalPrediction.countdown(to: race(inDays: 1), today: evening), "1 day")
+        XCTAssertEqual(GoalPrediction.countdown(to: race(inDays: 9), today: evening), "9 days")
+        XCTAssertEqual(GoalPrediction.countdown(to: race(inDays: 42), today: evening), "6 weeks")
+        XCTAssertEqual(GoalPrediction.countdown(to: race(inDays: 0), today: evening), "today")
+        XCTAssertNil(GoalPrediction.countdown(to: race(inDays: -3), today: evening))
+        XCTAssertNil(GoalPrediction.countdown(to: nil, today: evening))
+    }
+
     func test_predict_pickedFastestRunWhenMultiple() {
         let today = Date()
         let slow = run(daysAgo: 30, km: 5, paceSecPerKm: 360, today: today) // 30:00 5K

@@ -419,10 +419,21 @@ public extension GoalPrediction {
     /// Whole-week countdown to the goal date — "3 weeks", "1 day", or nil if
     /// no goal date or it's already past.
     func formattedCountdown(today: Date = Date()) -> String? {
-        guard let goalDate, goalDate > today else { return nil }
+        Self.countdown(to: goalDate, today: today)
+    }
+
+    /// "today", "1 day", "9 days" or "6 weeks" to race day, counted in
+    /// calendar days whatever the time of day stored with it; nil without
+    /// a race day today or ahead. Shared with Profile, which shows it with
+    /// or without a prediction.
+    static func countdown(to goalDate: Date?, today: Date = Date()) -> String? {
+        guard let goalDate else { return nil }
         let cal = Calendar.current
-        let days = cal.dateComponents([.day], from: today, to: goalDate).day ?? 0
-        if days <= 0 { return nil }
+        guard let days = cal.dateComponents([.day], from: cal.startOfDay(for: today),
+                                            to: cal.startOfDay(for: goalDate)).day,
+              days >= 0
+        else { return nil }
+        if days == 0 { return "today" }
         if days < 14 { return "\(days) day\(days == 1 ? "" : "s")" }
         let weeks = days / 7
         return "\(weeks) week\(weeks == 1 ? "" : "s")"

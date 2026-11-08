@@ -48,8 +48,7 @@ struct ProfileView: View {
             }
             .padding(20)
         }
-        .task(id: profileStore.profile?.goal) { await refreshPrediction() }
-        .task(id: profileStore.profile?.goalDate) { await refreshPrediction() }
+        .task(id: predictionKey) { await refreshPrediction() }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Profile")
         .navigationBarTitleDisplayMode(.inline)
@@ -104,7 +103,6 @@ struct ProfileView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            statChipRow
             if case .signedIn = appleSignIn.state {
                 signedInBadge
             }
@@ -153,68 +151,28 @@ struct ProfileView: View {
         return name.isEmpty ? "Runner" : name
     }
 
+    /// Age only: the goal, PB and race day each have their one place, in
+    /// the goal card below.
     private var identitySubtitle: String? {
-        var parts: [String] = []
-        if let age = profileStore.profile?.age() {
-            parts.append("\(age) yrs")
-        }
-        if let goal = profileStore.profile?.goal {
-            parts.append(goal.displayName)
-        }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        profileStore.profile?.age().map { "\($0) yrs" }
     }
 
-    private var statChipRow: some View {
-        HStack(spacing: 10) {
-            statChip(label: "GOAL",
-                     value: profileStore.profile?.goal.shortName ?? "—",
-                     systemImage: "target")
-            statChip(label: profileStore.profile?.personalBest?.distance.map { "\($0.shortName.uppercased()) PB" } ?? "PB",
-                     value: profileStore.profile?.personalBest?.formattedTime ?? "—",
-                     systemImage: "trophy.fill")
-            if let countdown = goalCountdownChipText {
-                statChip(label: "RACE DAY",
-                         value: countdown,
-                         systemImage: "flag.checkered")
-            }
-        }
+    /// Everything the prediction depends on. When any of it changes,
+    /// including a fresh Health read, the prediction is worked out again.
+    private struct PredictionKey: Equatable {
+        let goal: RunningGoal?
+        let goalDate: Date?
+        let personalBest: PersonalBest?
+        let birthday: Date?
+        let healthSyncedAt: Date?
     }
 
-    private var goalCountdownChipText: String? {
-        guard let goalDate = profileStore.profile?.goalDate, goalDate > Date() else { return nil }
-        // Render in the same vocabulary GoalPrediction uses elsewhere.
-        let cal = Calendar.current
-        let days = cal.dateComponents([.day], from: Date(), to: goalDate).day ?? 0
-        if days <= 0 { return nil }
-        if days < 14 { return "\(days)d" }
-        return "\(days / 7)w"
-    }
-
-    private func statChip(label: String, value: String, systemImage: String) -> some View {
-        VStack(spacing: 4) {
-            HStack(spacing: 4) {
-                Image(systemName: systemImage)
-                    .font(.system(.caption2, weight: .semibold))
-                Text(label)
-                    .font(.system(.caption2, design: .rounded, weight: .semibold))
-                    .kerning(0.8)
-            }
-            .foregroundStyle(.secondary)
-            Text(value)
-                .font(.system(.subheadline, design: .rounded, weight: .bold))
-                .foregroundStyle(.primary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
-        .padding(.horizontal, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(.systemBackground).opacity(0.7))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .strokeBorder(Color.secondary.opacity(0.12), lineWidth: 1)
-                )
-        )
+    private var predictionKey: PredictionKey {
+        PredictionKey(goal: profileStore.profile?.goal,
+                      goalDate: profileStore.profile?.goalDate,
+                      personalBest: profileStore.profile?.personalBest,
+                      birthday: profileStore.profile?.birthday,
+                      healthSyncedAt: health.lastSyncedAt)
     }
 
     private var signedInBadge: some View {
@@ -244,8 +202,8 @@ struct ProfileView: View {
                 HStack {
                     cardLabel("GOAL", systemImage: "target")
                     Spacer()
-                    if let countdown = prediction?.formattedCountdown() {
-                        Text("RACE IN \(countdown.uppercased())")
+                    if let countdown = GoalPrediction.countdown(to: profileStore.profile?.goalDate) {
+                        Text(countdown == "today" ? "RACE TODAY" : "RACE IN \(countdown.uppercased())")
                             .font(.system(.caption2, design: .rounded, weight: .bold))
                             .kerning(0.8)
                             .padding(.horizontal, 8)

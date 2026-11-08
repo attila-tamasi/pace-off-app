@@ -395,7 +395,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - SPEC § E matches.
 
 ### Q-09 · Profile repeats itself; Trends has no empty states
-- **Status:** todo
+- **Status:** done (PR #43)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:**
   - Profile shows the goal three times and the PB twice, and its prediction goes stale.
@@ -549,6 +549,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #43: Profile's hero without the chips and the goal card (PB row, race countdown with and without a prediction); Trends with no data
 - [ ] PR #42: Profile's Delete My Data button and confirmation, the reworded Sign Out confirmation; on a device, onboarding starts fresh afterwards and the widget shows "Open Pace Off"
 - [ ] PR #41: on a device, a run finished on Apple Watch with the phone locked stops the afternoon reminder and shows on the widget without opening the app
 - [ ] PR #40: Profile → Notifications: the Daily pushes switch, the afternoon at :30, steppers greyed out when off; on a device, the permission prompt when switching on after "Not now"
@@ -570,6 +571,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · Q-09: Profile shows the goal, PB and race day once and refreshes its prediction after a Health sync; Trends cards have empty states (PR #43)
 - 2026-11-08 · Q-08: Profile has Delete My Data; it and sign-out erase every App Group key and file, cancel every push and reset the widget (PR #42)
 - 2026-11-08 · Q-07: Health observers on workouts and VO₂ max wake the app for a new run; an expiring background task completes from its handler (PR #41)
 - 2026-11-08 · Q-06: notification settings show the times pushes fire at, get an on/off switch, and reschedule at once (PR #40)
