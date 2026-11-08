@@ -52,7 +52,7 @@ Each is split into one PR per sub-item.
   - Empty and short-history states read sensibly.
 
 ### F-09b · Last run opens the whole workout
-- **Status:** todo
+- **Status:** done (PR #30)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** The Last run card has no detail. Today's run opens `RunDetailView`, but that shows only part of what Health records for a workout.
 - **Where:** `TodayView` (Last run card); `RunDetailView`; `HealthKitService` (`toRunRecord`, `fetchRunLocations`, `fetchHeartRateSamples`); `RunRecord`.
@@ -462,6 +462,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #30: Today's Last run card (chevron) and the run detail: start–end time, the summary tiles, the heart rate chart, the elevation profile, the splits table; a treadmill run shows "Indoor" and no elevation
 - [ ] PR #29: Today's HRV and Resting HR cards (chevron) and their detail screens: the summary line's colour, the Week / Month / 3 Months picker, the dashed baseline, the "baseline appears after N more days" line with short history, and the empty state
 - [ ] PR #28: onboarding's notifications step: "Not now" goes straight to the last step with no system prompt (and hides while the prompt is up); "Allow Notifications" still shows it; the new footnote; Profile → Notifications → "Allow notifications" shows the prompt after a "Not now"
 - [ ] PR #27: the widget (all four families) right after a run logged in the app, and after midnight before opening the app: "—", "Open Pace Off" and a grey dot; the stale entry in the systemSmall preview
@@ -473,6 +474,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · F-09b: Last run opens the run's detail, which now shows every figure Health recorded, heart rate over time, the elevation profile and a splits table (PR #30)
 - 2026-11-08 · F-09a: the HRV and Resting HR cards open detail screens with their baseline, a Week / Month / 3 Months chart and how readiness grades them (PR #29)
 - 2026-11-08 · Q-01: "Not now" on onboarding's notifications step moves on without asking iOS for permission (PR #28)
 - 2026-11-07 · R-09: the app reloads the widget after each refresh; its timeline turns at noon and midnight, and a day cached earlier shows "Open Pace Off", never as today's (PR #27)
