@@ -75,8 +75,31 @@ struct TrainingPlanDetailView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            if plan.isUnderBuilt {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(.caption, weight: .semibold))
+                        .foregroundStyle(.orange)
+                    Text(underBuiltText)
+                        .font(.system(.caption, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Why the plan's longest run is short, and, when a race date cut its
+    /// weeks, what would help.
+    private var underBuiltText: String {
+        let longest = String(format: "%.0f km", plan.longestLongRunMeters / 1000)
+        let full = String(format: "%.0f km", plan.fullBuildLongRunMeters / 1000)
+        if plan.isShortened {
+            return "Too few weeks to build up from your recent runs: the longest run here is \(longest), "
+                + "where a full plan reaches \(full). A later race date gives it room."
+        }
+        return "Built up from your recent runs, 10% a week, the longest run here is \(longest), "
+            + "where a full build reaches \(full)."
     }
 
     private func chip(_ text: String, icon: String) -> some View {
@@ -185,6 +208,17 @@ private extension TrainingPlan {
 #Preview("Plan detail — Medium half") {
     NavigationStack {
         TrainingPlanDetailView(plan: .preview)
+    }
+    .environment(TrainingPlanStore.shared)
+}
+
+#Preview("Plan detail — beginner's marathon, 8 weeks") {
+    NavigationStack {
+        TrainingPlanDetailView(plan: TrainingPlanGenerator().generate(TrainingPlanInputs(
+            goal: .marathon, tier: .easy,
+            goalDate: Calendar.current.date(byAdding: .day, value: 49, to: Date()),
+            recentLongestRunMeters: 0
+        )))
     }
     .environment(TrainingPlanStore.shared)
 }

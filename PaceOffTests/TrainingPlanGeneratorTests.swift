@@ -184,8 +184,8 @@ final class TrainingPlanGeneratorTests: XCTestCase {
     func test_generate_marathonLongRunPeaks_fitTheirShareOfTheWeek() {
         // The 37 km benchmark is cut to 45 / 35 / 30% of the peak week.
         XCTAssertEqual(longestLongRunKm(plan(.marathon, .easy)), 20.25, accuracy: 0.05)
-        XCTAssertEqual(longestLongRunKm(plan(.marathon, .medium)), 22.28, accuracy: 0.05)
-        XCTAssertEqual(longestLongRunKm(plan(.marathon, .aggressive)), 25.5, accuracy: 0.05)
+        XCTAssertEqual(longestLongRunKm(plan(.marathon, .medium)), 23.68, accuracy: 0.05)
+        XCTAssertEqual(longestLongRunKm(plan(.marathon, .aggressive)), 27.6, accuracy: 0.05)
     }
 
     func test_generate_marathonLongRunBuildIsMonotonicUpToPeak() {
@@ -208,7 +208,7 @@ final class TrainingPlanGeneratorTests: XCTestCase {
     func test_generate_shorterGoals_keepTheirBenchmarkWhereItFits() {
         // The half's 24 km is over 30% of an aggressive week, so it's cut;
         // the 10K's 16 km fits and stays.
-        XCTAssertEqual(longestLongRunKm(plan(.halfMarathon, .aggressive)), 21.3, accuracy: 0.05)
+        XCTAssertEqual(longestLongRunKm(plan(.halfMarathon, .aggressive)), 21.9, accuracy: 0.05)
         XCTAssertEqual(longestLongRunKm(plan(.tenK, .aggressive)), 16.0, accuracy: 0.05)
         XCTAssertEqual(longestLongRunKm(plan(.fiveK, .easy)), 8.0, accuracy: 0.05)
     }
@@ -247,6 +247,49 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         }
     }
 
+    // MARK: - How far a plan builds
+
+    func test_aBeginnersMarathon_eightWeeksOut_isUnderBuilt() {
+        // Seven weeks to race day is an eight-week plan. From the 40%
+        // floor it climbs 10% a week to 59% of the 20.25 km full build.
+        let p = generator.generate(TrainingPlanInputs(
+            goal: .marathon, tier: .easy, vo2Max: 49.2,
+            goalDate: rampToday.addingTimeInterval(7 * 7 * 86_400),
+            recentLongestRunMeters: 0, today: rampToday
+        ))
+        XCTAssertEqual(p.weekCount, 8)
+        XCTAssertEqual(p.longestLongRunMeters / 1000, 11.86, accuracy: 0.05)
+        XCTAssertEqual(p.fullBuildLongRunMeters / 1000, 20.25, accuracy: 0.01)
+        XCTAssertTrue(p.isUnderBuilt)
+        XCTAssertTrue(p.isShortened)
+    }
+
+    func test_aBeginners5K_atFullLength_isUnderBuilt_butNotShortened() {
+        // 4.7 km at most, against the full build's 8 km.
+        let p = generator.generate(TrainingPlanInputs(
+            goal: .fiveK, tier: .easy, vo2Max: 49.2, recentLongestRunMeters: 0
+        ))
+        XCTAssertTrue(p.isUnderBuilt)
+        XCTAssertFalse(p.isShortened)
+    }
+
+    func test_fullPlans_andShortPlansFromTheUsualStart_areNotUnderBuilt() {
+        for goal in RunningGoal.allCases {
+            for tier in PlanTier.allCases {
+                let full = plan(goal, tier)
+                XCTAssertFalse(full.isUnderBuilt, "\(goal) \(tier)")
+                XCTAssertFalse(full.isShortened, "\(goal) \(tier)")
+                // Race three weeks out: four weeks, the first at the usual
+                // 70%, the most it builds to, which is where a full plan
+                // starts.
+                let short = racePlan(goal, tier, weeksOut: 3)
+                XCTAssertEqual(short.weekCount, 4, "\(goal) \(tier)")
+                XCTAssertFalse(short.isUnderBuilt, "\(goal) \(tier), race three weeks out")
+                XCTAssertTrue(short.isShortened, "\(goal) \(tier), race three weeks out")
+            }
+        }
+    }
+
     func test_longRunShareCap_loosensAsRunsGoDown() {
         XCTAssertEqual(TrainingPlanGenerator.longRunShareCap(runsPerWeek: 3), 0.45)
         XCTAssertEqual(TrainingPlanGenerator.longRunShareCap(runsPerWeek: 4), 0.35)
@@ -264,7 +307,145 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         for run in easy {
             XCTAssertEqual(run.distanceKm, 12.375, accuracy: 0.05)
         }
-        XCTAssertEqual(trainingKm(plan(.marathon, .aggressive).weeks[12]), 85.0, accuracy: 0.05)
+        XCTAssertEqual(trainingKm(plan(.marathon, .aggressive).weeks[12]), 92.0, accuracy: 0.05)
+    }
+
+    // MARK: - The easy runs around the long run
+
+    /// A week's workouts by weekday, Monday first, and its long run's slot.
+    private func layout(_ week: TrainingWeek) -> (workouts: [Workout], long: Int)? {
+        let workouts = week.days.sorted { $0.weekday.rawValue < $1.weekday.rawValue }.map(\.workout)
+        guard let long = workouts.firstIndex(where: { $0.kind == .long }) else { return nil }
+        return (workouts, long)
+    }
+
+    private func isEasyRun(_ w: Workout) -> Bool { w.kind == .easy || w.kind == .strides }
+
+    func test_halfAndMarathon_runBeforeTheLongRun_isAtMost60Percent_theOtherAtMost80() {
+        for goal in [RunningGoal.halfMarathon, .marathon] {
+            for tier in PlanTier.allCases {
+                for day in [Weekday.sunday, .saturday, .wednesday, .monday] {
+                    let p = plan(goal, tier, longDay: day)
+                    for week in p.weeks {
+                        guard let l = layout(week) else { continue }
+                        let workouts = l.workouts, long = l.long
+                        let label = "\(goal) \(tier), long run \(day), week \(week.index)"
+                        let longKm = workouts[long].distanceKm
+                        let before = (long + 6) % 7
+                        for (slot, w) in workouts.enumerated() where isEasyRun(w) {
+                            let share = slot == before ? 0.60 : 0.80
+                            XCTAssertLessThanOrEqual(w.distanceKm, share * longKm + 1e-6,
+                                                     "\(label): easy run on slot \(slot)")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    func test_halfAndMarathon_peakWeeks_dropNothing() {
+        // The longer quality sessions leave the easy runs within their
+        // limits, so each peak week is still its long run, sessions and
+        // easy-run share in full: the 60% run's cut goes to the other run.
+        let expected: [(RunningGoal, PlanTier, week: Double, long: Double, dayBefore: Double, other: Double)] = [
+            (.marathon, .aggressive, 92.0, 27.6, 16.56, 21.84),
+            (.marathon, .medium, 67.67, 23.68, 14.21, 17.77),
+            (.halfMarathon, .aggressive, 73.0, 21.9, 13.14, 16.96),
+            (.halfMarathon, .medium, 52.33, 18.32, 10.99, 14.03),
+        ]
+        for (goal, tier, weekKm, longKm, dayBeforeKm, otherKm) in expected {
+            let p = plan(goal, tier)
+            let peak = p.weeks[p.weekCount - 4]
+            let label = "\(goal) \(tier)"
+            XCTAssertEqual(trainingKm(peak), weekKm, accuracy: 0.05, label)
+            guard let l = layout(peak) else { XCTFail(label); continue }
+            let workouts = l.workouts, long = l.long
+            XCTAssertEqual(workouts[long].distanceKm, longKm, accuracy: 0.05, label)
+            XCTAssertEqual(workouts[(long + 6) % 7].distanceKm, dayBeforeKm, accuracy: 0.05, "\(label): day before")
+            let others = workouts.enumerated()
+                .filter { $0.offset != (long + 6) % 7 && isEasyRun($0.element) }
+                .map(\.element.distanceKm)
+            XCTAssertEqual(others.count, 1, label)
+            XCTAssertEqual(others.first ?? 0, otherKm, accuracy: 0.05, label)
+        }
+    }
+
+    func test_easyTier_hasNoRunBeforeTheLongRun_andKeepsItsEvenEasyRuns() {
+        for goal in RunningGoal.allCases {
+            let p = plan(goal, .easy, longDay: .saturday)
+            for week in p.weeks {
+                guard let l = layout(week) else { continue }
+                let workouts = l.workouts, long = l.long
+                XCTAssertEqual(workouts[(long + 6) % 7].kind, .rest, "\(goal) week \(week.index)")
+                let easy = workouts.filter(isEasyRun).map(\.distanceKm)
+                XCTAssertEqual((easy.max() ?? 0) - (easy.min() ?? 0), 0, accuracy: 1e-9, "\(goal) week \(week.index)")
+            }
+        }
+    }
+
+    func test_fiveKAndTenK_keepTheirWeeks() {
+        // Their 8–16 km long runs leave the easy runs as they were: even,
+        // with the same sessions and peak weeks.
+        let expected: [(RunningGoal, PlanTier, week: Double, easy: Double)] = [
+            (.fiveK, .medium, 32.0, 8.0), (.fiveK, .aggressive, 49.0, 10.0),
+            (.tenK, .medium, 42.67, 10.33), (.tenK, .aggressive, 59.5, 12.25),
+        ]
+        for (goal, tier, weekKm, easyKm) in expected {
+            let p = plan(goal, tier)
+            let peak = p.weeks[p.weekCount - 4]
+            XCTAssertEqual(trainingKm(peak), weekKm, accuracy: 0.05, "\(goal) \(tier)")
+            for run in peak.days.map(\.workout) where isEasyRun(run) {
+                XCTAssertEqual(run.distanceKm, easyKm, accuracy: 0.05, "\(goal) \(tier)")
+            }
+        }
+    }
+
+    // MARK: - Quality sessions
+
+    /// The km a session's notes add up to, for notes shaped
+    /// "WU 2 km · 5 × 800 m @ I w/ 500 m jog · CD 2 km"; nil for others.
+    private func notesKm(_ notes: String) -> Double? {
+        let pattern = #"^WU ([\d.]+) km · (\d+) × ([\d.]+) (km|m) @ [TI] w/ (\d+) m jog · CD ([\d.]+) km$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: notes, range: NSRange(notes.startIndex..., in: notes))
+        else { return nil }
+        let parts = (1...6).map { i in
+            Range(match.range(at: i), in: notes).map { String(notes[$0]) } ?? ""
+        }
+        guard let warmUp = Double(parts[0]), let reps = Double(parts[1]), let rep = Double(parts[2]),
+              let jog = Double(parts[4]), let coolDown = Double(parts[5])
+        else { return nil }
+        let repKm = parts[3] == "m" ? rep / 1000 : rep
+        return warmUp + reps * repKm + (reps - 1) * jog / 1000 + coolDown
+    }
+
+    func test_halfAndMarathon_qualitySessions_areLonger_andTheirNotesAddUp() {
+        // At the peak, km: threshold and intervals per goal and tier.
+        let expected: [(RunningGoal, PlanTier, threshold: Double, interval: Double)] = [
+            (.marathon, .aggressive, 14, 12), (.marathon, .medium, 12, 12),
+            (.halfMarathon, .aggressive, 11, 10), (.halfMarathon, .medium, 9, 9),
+        ]
+        for (goal, tier, thresholdKm, intervalKm) in expected {
+            let p = plan(goal, tier)
+            // The build's last week is the peak (fraction 1).
+            let peak = p.weeks[p.weekCount - 4].days.map(\.workout)
+            // The medium tier alternates its one session: look at the
+            // weeks around the peak for both.
+            let sessions = p.weeks[(p.weekCount - 6)...(p.weekCount - 4)]
+                .flatMap(\.days).map(\.workout)
+                .filter { $0.kind == .threshold || $0.kind == .interval }
+            for kind in [WorkoutKind.threshold, .interval] {
+                let label = "\(goal) \(tier) \(kind)"
+                let peakKm = kind == .threshold ? thresholdKm : intervalKm
+                guard let session = sessions.first(where: { $0.kind == kind }) else {
+                    XCTFail("\(label): none near the peak"); continue
+                }
+                XCTAssertEqual(notesKm(session.notes ?? "") ?? 0, peakKm, accuracy: 0.001, "\(label): notes")
+                if let atPeak = peak.first(where: { $0.kind == kind }) {
+                    XCTAssertEqual(atPeak.distanceKm, peakKm, accuracy: 0.05, "\(label): distance")
+                }
+            }
+        }
     }
 
     private func weekOneLongRunKm(_ goal: RunningGoal, _ tier: PlanTier, longest: Double?) -> Double {
