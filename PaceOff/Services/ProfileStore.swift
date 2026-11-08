@@ -8,6 +8,7 @@ import Foundation
 import SwiftUI
 import UIKit
 import Observation
+import WidgetKit
 
 @MainActor
 @Observable
@@ -115,21 +116,26 @@ public final class ProfileStore {
 
     // MARK: - Sign out
 
-    /// Clear the on-device profile and signal the app shell to return the
-    /// user to the auth gate. Apple Health data is untouched.
+    /// Signs out by deleting everything, the same as "Delete my data": the
+    /// app keeps nothing of a runner it no longer knows.
     public func signOut() {
-        Self.deletePhotoFromDisk()
+        deleteAllData()
+    }
+
+    /// "Delete my data": every App Group key and container file (profile,
+    /// photo, plan, Health snapshot, settings, the widget's day), every
+    /// scheduled and delivered push, then the widget redraws empty and the
+    /// app returns to the start. Apple Health itself isn't touched.
+    public func deleteAllData() {
         photo = nil
         profile = nil
-        defaults?.removeObject(forKey: AppGroup.Keys.userProfile)
-        defaults?.set(false, forKey: AppGroup.Keys.authComplete)
-        defaults?.set(false, forKey: AppGroup.Keys.onboardingComplete)
-        // Drop the on-disk Health snapshot too — it's keyed to this user.
-        Task { await HealthDataCache.shared.clear() }
-        // And the active training plan.
+        HealthKitService.shared.stopObservingHealthUpdates()
+        // Erasing first clears the setup flag, so a refresh still running
+        // writes nothing back (it checks AppGroup.isRunnerSetUp).
+        AppGroup.eraseAll(defaults: defaults, containerURL: AppGroup.containerURL)
         TrainingPlanStore.shared.clear()
-        // Pending pushes carry this user's targets; delivered ones too.
         NotificationScheduler.shared.cancelAll()
+        WidgetCenter.shared.reloadAllTimelines()
         NotificationCenter.default.post(name: .paceOffSignOut, object: nil)
     }
 

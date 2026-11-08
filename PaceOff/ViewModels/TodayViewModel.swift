@@ -74,7 +74,8 @@ public final class TodayViewModel {
         // the fresh read, or the kept cache when the read couldn't be used.
         // Nil means neither is trustworthy; leave the screen as it is.
         let sync = await HealthKitService.shared.syncAll()
-        guard let snapshot = sync.snapshot else { return }
+        // Deleted or signed out while the read ran: show and keep nothing.
+        guard AppGroup.isRunnerSetUp, let snapshot = sync.snapshot else { return }
         applySnapshot(snapshot)
 
         // Today's GPS route — kept out of the cache because it's bulky and

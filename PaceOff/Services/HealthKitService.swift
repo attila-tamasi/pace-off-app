@@ -150,7 +150,9 @@ public final class HealthKitService {
             protectedDataAvailable: unlockedAtStart && UIApplication.shared.isProtectedDataAvailable,
             readFailed: log.failed
         )
-        if decision == .accept {
+        // Never cache Health data for a runner who isn't set up, such as one
+        // who deleted their data while this read was running.
+        if decision == .accept, AppGroup.isRunnerSetUp {
             await HealthDataCache.shared.save(fresh)
         }
         return HealthSyncResult(fresh: fresh, cached: cached, decision: decision)
@@ -676,6 +678,7 @@ public final class HealthKitService {
     // MARK: - Observers (background delivery)
 
     @ObservationIgnored private var observersStarted = false
+    @ObservationIgnored private var observerQueries: [HKObserverQuery] = []
 
     /// Watches for new workouts and VO₂ max readings, with background
     /// delivery, so a finished run reaches Pace Off without the app being
@@ -706,6 +709,7 @@ public final class HealthKitService {
                 onUpdate(done)
             }
             store.execute(query)
+            observerQueries.append(query)
             store.enableBackgroundDelivery(for: type, frequency: frequency) { success, error in
                 guard !success else { return }
                 // Typically Health access not granted yet: let a later
@@ -716,6 +720,16 @@ public final class HealthKitService {
                 }
             }
         }
+    }
+
+    /// Stops the observers and background delivery, for "Delete my data"
+    /// and sign-out: iOS no longer wakes the app for a runner it doesn't
+    /// know. Onboarding starts them again.
+    public func stopObservingHealthUpdates() {
+        observerQueries.forEach { store.stop($0) }
+        observerQueries = []
+        observersStarted = false
+        store.disableAllBackgroundDelivery { _, _ in }
     }
 }
 

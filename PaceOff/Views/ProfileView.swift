@@ -33,6 +33,7 @@ struct ProfileView: View {
     @State private var isEditing = false
     @State private var legalDocument: LegalDocument?
     @State private var confirmingSignOut = false
+    @State private var confirmingDelete = false
     @State private var prediction: GoalPrediction?
 
     var body: some View {
@@ -43,6 +44,7 @@ struct ProfileView: View {
                 preferencesList
                 signOutButton
                     .padding(.top, 4)
+                deleteDataButton
             }
             .padding(20)
         }
@@ -74,7 +76,17 @@ struct ProfileView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This clears your on-device profile and returns you to the sign-in screen. Apple Health data is not touched.")
+            Text("Signing out deletes everything Pace Off keeps on this iPhone: your profile, plan, settings and cached Health data, and any scheduled pushes. Apple Health data is not touched.")
+        }
+        .confirmationDialog("Delete all your Pace Off data?",
+                            isPresented: $confirmingDelete,
+                            titleVisibility: .visible) {
+            Button("Delete My Data", role: .destructive) {
+                profileStore.deleteAllData()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This deletes your profile, photo, training plan, settings and cached Health data from this iPhone and its widget, cancels every push, and returns you to the start. It can't be undone. Your runs stay in Apple Health.")
         }
     }
 
@@ -575,7 +587,20 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: - Sign out
+    // MARK: - Sign out and delete
+
+    private var deleteDataButton: some View {
+        Button(role: .destructive) {
+            confirmingDelete = true
+        } label: {
+            Text("Delete My Data")
+                .font(.system(.subheadline, design: .rounded, weight: .medium))
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderless)
+        .tint(.red)
+        .padding(.bottom, 8)
+    }
 
     private var signOutButton: some View {
         Button(role: .destructive) {

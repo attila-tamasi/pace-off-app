@@ -189,7 +189,7 @@ public final class BackgroundRefreshService {
     @discardableResult
     public func refreshHealthData() async -> Bool {
         // Signed out or not yet set up: nothing to compute, push or show.
-        guard AppGroup.sharedDefaults?.bool(forKey: AppGroup.Keys.onboardingComplete) == true else {
+        guard AppGroup.isRunnerSetUp else {
             lastReadWasLocked = false
             return true
         }
@@ -199,6 +199,8 @@ public final class BackgroundRefreshService {
         let sync = await HealthKitService.shared.syncAll()
         lastReadWasLocked = sync.decision == .keepCache(.protectedDataUnavailable)
         if Task.isCancelled { return false }
+        // Deleted or signed out while the read ran.
+        guard AppGroup.isRunnerSetUp else { return true }
 
         // On a locked phone, or when the read failed or came back empty,
         // the cache was kept and this run learned nothing new. Change

@@ -26,6 +26,11 @@ public final class AppleSignInService {
 
     public private(set) var state: State = .unknown
 
+    /// Forget the signed-in state, after "Delete my data" or sign-out.
+    public func reset() {
+        state = .notSignedIn
+    }
+
     private init() {}
 
     /// Process the result handed back by SwiftUI's `SignInWithAppleButton`.

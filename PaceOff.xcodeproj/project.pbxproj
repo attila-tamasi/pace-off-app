@@ -158,6 +158,7 @@
 		CAC1BABB5A1AED53DF4E8CBE /* OnceFlag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518F932B08979B0859ABFBB2 /* OnceFlag.swift */; };
 		8C17229E371CB281CE8962D9 /* OnceFlag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518F932B08979B0859ABFBB2 /* OnceFlag.swift */; };
 		53288641CF6C3550FE8EB053 /* OnceFlagTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F6A692DEE744E4A792F2AA /* OnceFlagTests.swift */; };
+		70E2A5FE2AEAFB6FA502996E /* AppGroupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B3B4430415CDBABF6D4761F /* AppGroupTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -303,6 +304,7 @@
 		1D5862BD2A63DB31A7B892C6 /* UserProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileTests.swift; sourceTree = "<group>"; };
 		518F932B08979B0859ABFBB2 /* OnceFlag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFlag.swift; sourceTree = "<group>"; };
 		73F6A692DEE744E4A792F2AA /* OnceFlagTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFlagTests.swift; sourceTree = "<group>"; };
+		7B3B4430415CDBABF6D4761F /* AppGroupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -363,6 +365,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				7B3B4430415CDBABF6D4761F /* AppGroupTests.swift */,
 				73F6A692DEE744E4A792F2AA /* OnceFlagTests.swift */,
 				1D5862BD2A63DB31A7B892C6 /* UserProfileTests.swift */,
 				C38A19F87DCA31C7FFFCED0D /* WeekReviewTests.swift */,
@@ -730,6 +733,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				70E2A5FE2AEAFB6FA502996E /* AppGroupTests.swift in Sources */,
 				53288641CF6C3550FE8EB053 /* OnceFlagTests.swift in Sources */,
 				CAC1BABB5A1AED53DF4E8CBE /* OnceFlag.swift in Sources */,
 				FC00DD23C80EBB63AE7F84D6 /* UserProfileTests.swift in Sources */,

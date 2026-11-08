@@ -14,7 +14,7 @@ public final class TrainingPlanStore {
     public static let shared = TrainingPlanStore()
 
     /// Filename inside the App Group container.
-    public static let filename = "training-plan.json"
+    public static let filename = AppGroup.trainingPlanFilename
 
     public private(set) var activePlan: TrainingPlan?
 

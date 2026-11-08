@@ -137,10 +137,10 @@ struct PaceOffApp: App {
     }
 
     private func handleSignOut() {
-        // ProfileStore.signOut() already cleared persisted state; just reset
-        // the flow flags and snap back to the auth gate.
-        authComplete = false
-        onboardingComplete = false
+        // ProfileStore already erased everything on disk, the flow flags
+        // included. Drop what's held in memory too, then start over.
+        todayVM = TodayViewModel()
+        appleSignIn.reset()
         stage = .auth
     }
 }
