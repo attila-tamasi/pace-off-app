@@ -385,7 +385,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - The BG task cancels its work and completes in its expiration handler.
 
 ### Q-08 · Delete my data, and a complete sign-out
-- **Status:** todo
+- **Status:** done (PR #42)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** SPEC promises "delete my data", but it doesn't exist. Sign-out leaves the widget data, scheduled notifications and settings behind.
 - **Where:** `ProfileStore.signOut()`, `ProfileView`, `AppGroup`, `NotificationScheduler`, the widget.
@@ -549,6 +549,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #42: Profile's Delete My Data button and confirmation, the reworded Sign Out confirmation; on a device, onboarding starts fresh afterwards and the widget shows "Open Pace Off"
 - [ ] PR #41: on a device, a run finished on Apple Watch with the phone locked stops the afternoon reminder and shows on the widget without opening the app
 - [ ] PR #40: Profile → Notifications: the Daily pushes switch, the afternoon at :30, steppers greyed out when off; on a device, the permission prompt when switching on after "Not now"
 - [ ] PR #39: the VO₂ max screen's trend line (falling / flat / rising / not enough readings) and its What it means copy
@@ -569,6 +570,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · Q-08: Profile has Delete My Data; it and sign-out erase every App Group key and file, cancel every push and reset the widget (PR #42)
 - 2026-11-08 · Q-07: Health observers on workouts and VO₂ max wake the app for a new run; an expiring background task completes from its handler (PR #41)
 - 2026-11-08 · Q-06: notification settings show the times pushes fire at, get an on/off switch, and reschedule at once (PR #40)
 - 2026-11-08 · Q-05: the VO₂ max trend needs 3 readings over 14 days and a change beyond noise before it moves the target; the VO₂ max screen reads the same rule (PR #39)
