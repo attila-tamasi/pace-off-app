@@ -43,7 +43,7 @@ Requests the owner put ahead of the waves, in their order:
 Each is split into one PR per sub-item.
 
 ### T-01 · The app in TestFlight
-- **Status:** todo
+- **Status:** done (PR #33); uploads start once the owner's part below is done
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** The owner wants every merged change on their phone through TestFlight, without building it by hand.
 - **Where:** `.github/workflows/testflight.yml`, `ci/ExportOptions.plist`, `PaceOff/Info.plist` (export compliance), README "TestFlight".
@@ -547,6 +547,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · T-01: every push to main builds Release for a device and, once the App Store Connect key's secrets exist, uploads to TestFlight; every item is now auto-merged (PR #33)
 - 2026-11-08 · F-09d: Readiness opens a screen with each signal against its baseline, how the two combine and what each colour does to the target; every Today card now has a detail (PR #32)
 - 2026-11-08 · F-09c: Last 7 days opens a week screen: each day's runs and, with a plan, its workout marked done, to do, missed or rest, with a way to the Plan tab (PR #31)
 - 2026-11-08 · F-09b: Last run opens the run's detail, which now shows every figure Health recorded, heart rate over time, the elevation profile and a splits table (PR #30)
