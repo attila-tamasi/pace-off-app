@@ -428,6 +428,17 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         return warmUp + reps * repKm + (reps - 1) * jog / 1000 + coolDown
     }
 
+    /// The warm-up and cool-down in such notes, in km.
+    private func endsKm(_ notes: String) -> Double? {
+        let pattern = #"^WU ([\d.]+) km · .* · CD ([\d.]+) km$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(in: notes, range: NSRange(notes.startIndex..., in: notes)),
+              let wu = Range(match.range(at: 1), in: notes).flatMap({ Double(notes[$0]) }),
+              let cd = Range(match.range(at: 2), in: notes).flatMap({ Double(notes[$0]) })
+        else { return nil }
+        return wu + cd
+    }
+
     func test_halfAndMarathon_qualitySessions_areLonger_andTheirNotesAddUp() {
         // At the peak, km: threshold and intervals per goal and tier.
         let expected: [(RunningGoal, PlanTier, threshold: Double, interval: Double)] = [
@@ -465,8 +476,13 @@ final class TrainingPlanGeneratorTests: XCTestCase {
                         for w in week.days.map(\.workout) where w.kind == .threshold || w.kind == .interval {
                             let label = "\(goal) \(tier), \(p.weekCount) weeks, week \(week.index): \(w.notes ?? "no notes")"
                             guard let km = notesKm(w.notes ?? "") else { XCTFail(label); continue }
-                            // Warm-up and cool-down show to a tenth of a km.
-                            XCTAssertEqual(km, w.distanceKm, accuracy: 0.11, label)
+                            // Exactly the distance as shown, to a tenth of a km.
+                            let shown = (w.distanceKm * 10).rounded(.toNearestOrEven) / 10
+                            XCTAssertEqual(km, shown, accuracy: 1e-6, label)
+                            // At least 2 km of warm-up and cool-down whenever it fits.
+                            if shown >= 2.2, let notes = w.notes {
+                                XCTAssertGreaterThanOrEqual(endsKm(notes) ?? 0, 2 - 1e-6, label)
+                            }
                         }
                     }
                 }
@@ -479,26 +495,50 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         // Week 1, 70% of the 14 km session: three of its five reps.
         let first = p.weeks[0].days.map(\.workout).first { $0.kind == .threshold }
         XCTAssertEqual(first?.distanceKm ?? 0, 9.8, accuracy: 0.01)
-        XCTAssertEqual(first?.notes, "WU 2.7 km · 3 × 1.6 km @ T w/ 250 m jog · CD 1.8 km")
+        XCTAssertEqual(first?.notes, "WU 2.7 km · 3 × 1.6 km @ T w/ 200 m jog · CD 1.9 km")
         // Race week, 30%: one rep, so no jog.
         let last = p.weeks[p.weekCount - 1].days.map(\.workout).first { $0.kind == .threshold }
         XCTAssertEqual(last?.distanceKm ?? 0, 4.2, accuracy: 0.01)
-        XCTAssertEqual(last?.notes, "WU 1.6 km · 1 × 1.6 km @ T · CD 1 km")
+        XCTAssertEqual(last?.notes, "WU 1.5 km · 1 × 1.6 km @ T · CD 1.1 km")
         // The peak: the whole session.
         let peak = p.weeks[p.weekCount - 4].days.map(\.workout).first { $0.kind == .threshold }
-        XCTAssertEqual(peak?.notes, "WU 3 km · 5 × 1.6 km @ T w/ 250 m jog · CD 2 km")
+        XCTAssertEqual(peak?.notes, "WU 3 km · 5 × 1.6 km @ T w/ 200 m jog · CD 2.2 km")
     }
 
-    func test_aSessionTooShortForOneRep_cutsTheRep() {
-        // A 4-week plan from the 40% floor ends at 12% of the full week:
-        // under a km for an 8 km session, shorter than its 1.2 km rep.
-        let session = QualitySession(pace: "T", warmUpKm: 2, reps: 3, repKm: 1.2, jogKm: 0.2, coolDownKm: 2)
+    func test_aSessionTooShortForItsRep_keeps2KmOfWarmUpAndCoolDown_byCuttingTheRep() {
+        let session = QualitySession(.threshold, warmUpKm: 2, reps: 3, repKm: 1.2, jogKm: 0.2, coolDownKm: 2)
         XCTAssertEqual(session.km, 8, accuracy: 1e-9)
-        let cut = session.scaled(toKm: 0.96)
-        XCTAssertEqual(cut.km, 0.96, accuracy: 1e-9)
-        XCTAssertEqual(cut.reps, 1)
-        XCTAssertEqual(cut.notes, "WU 0.2 km · 1 × 480 m @ T · CD 0.2 km")
         XCTAssertEqual(session.scaled(toKm: 8), session)
+        // The 5K race week, 30%: 2.4 km, a 400 m rep between 1 km each.
+        XCTAssertEqual(session.scaled(toKm: 2.4).notes, "WU 1 km · 1 × 400 m @ T · CD 1 km")
+        // A 4-week plan from the 40% floor ends at 12%: under a km, shown
+        // as 1.0 km. Too short for 2 km either side: a fifth is the rep.
+        let cut = session.scaled(toKm: 0.96)
+        XCTAssertEqual(cut.km, 1.0, accuracy: 1e-9)
+        XCTAssertEqual(cut.notes, "WU 0.4 km · 1 × 200 m @ T · CD 0.4 km")
+    }
+
+    func test_aPlanSavedWithPeakNotesInEveryWeek_getsNotesThatAddUp() {
+        // Before the notes followed the week, week 1 carried the peak's.
+        let fresh = plan(.marathon, .aggressive)
+        XCTAssertEqual(generator.withSessionNotes(fresh), fresh, "a plan made now comes back as it was")
+        let peakNotes = "WU 3 km · 5 × 1.6 km @ T w/ 250 m jog · CD 2 km"
+        let old = TrainingPlan(
+            id: fresh.id, goal: fresh.goal, tier: fresh.tier, longRunDay: fresh.longRunDay,
+            weeks: fresh.weeks.map { week in
+                TrainingWeek(index: week.index, days: week.days.map { (day: TrainingDay) -> TrainingDay in
+                    let w = day.workout
+                    guard w.kind == .threshold else { return day }
+                    return TrainingDay(weekday: day.weekday, workout: Workout(
+                        kind: w.kind, distanceMeters: w.distanceMeters, paceMinSecPerKm: w.paceMinSecPerKm,
+                        paceMaxSecPerKm: w.paceMaxSecPerKm, notes: peakNotes))
+                })
+            },
+            vdot: fresh.vdot, usedBeginnerDefault: fresh.usedBeginnerDefault,
+            createdAt: fresh.createdAt, startDate: fresh.startDate
+        )
+        XCTAssertNotEqual(old, fresh)
+        XCTAssertEqual(generator.withSessionNotes(old), fresh)
     }
 
     private func weekOneLongRunKm(_ goal: RunningGoal, _ tier: PlanTier, longest: Double?) -> Double {
