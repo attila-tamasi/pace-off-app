@@ -106,21 +106,35 @@ public struct HeartTrend: Equatable, Sendable {
 
     /// The share of the baseline at which this signal alone turns the day
     /// yellow, then red: a drop for HRV, a rise for resting heart rate.
-    public var yellowThreshold: Double {
-        metric == .hrv ? ReadinessEngine.hrvYellowDrop : ReadinessEngine.rhrYellowRise
-    }
-    public var redThreshold: Double {
-        metric == .hrv ? ReadinessEngine.hrvRedDrop : ReadinessEngine.rhrRedRise
-    }
+    public var yellowThreshold: Double { Self.yellowThreshold(for: metric) }
+    public var redThreshold: Double { Self.redThreshold(for: metric) }
 
     /// What this signal alone says about today, by the readiness card's
     /// thresholds. Nil without a latest reading or a baseline.
     public var level: ReadinessLevel? {
-        guard let change else { return nil }
+        guard let latest, let baseline else { return nil }
+        return Self.level(for: metric, value: latest.value, baseline: baseline)
+    }
+
+    // MARK: - Readiness's rule for one signal
+
+    public static func yellowThreshold(for metric: Metric) -> Double {
+        metric == .hrv ? ReadinessEngine.hrvYellowDrop : ReadinessEngine.rhrYellowRise
+    }
+
+    public static func redThreshold(for metric: Metric) -> Double {
+        metric == .hrv ? ReadinessEngine.hrvRedDrop : ReadinessEngine.rhrRedRise
+    }
+
+    /// What one signal says on its own about `value` against `baseline`,
+    /// by `ReadinessEngine`'s thresholds. Nil for a baseline of zero.
+    public static func level(for metric: Metric, value: Double, baseline: Double) -> ReadinessLevel? {
+        guard baseline > 0 else { return nil }
         // HRV going down and resting HR going up are the bad directions.
+        let change = value / baseline - 1
         let offBy = metric == .hrv ? -change : change
-        if offBy >= redThreshold { return .red }
-        if offBy >= yellowThreshold { return .yellow }
+        if offBy >= redThreshold(for: metric) { return .red }
+        if offBy >= yellowThreshold(for: metric) { return .yellow }
         return .green
     }
 }
