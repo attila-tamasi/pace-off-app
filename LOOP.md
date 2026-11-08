@@ -19,9 +19,9 @@ The owner can change these here.
 | Setting | Value | Meaning |
 |---|---|---|
 | Items per run | 1 | After merging one item, stop and report. |
-| Auto-merge | on | Merge a `Merge: auto` item's PR once CI is green and the self-review is clean. Off means every PR waits for the owner. |
+| Auto-merge | on, every item | Merge an item's PR once CI is green and the self-review is clean. Since 2026-11-08 every item is `auto`; the owner doesn't approve PRs. Off means every PR waits for the owner. |
 | Fix attempts | 3 | CI fix pushes on one PR before the item is marked `blocked`. |
-| Open review PRs | 2 | At most this many `Merge: review` PRs waiting for the owner. At the limit, only `auto` items are started. |
+| Open review PRs | 2 | Unused while every item is `auto`. If `Merge: review` comes back: at most this many such PRs waiting for the owner. |
 | Report language | Hungarian | The end-of-run report is for the owner. |
 
 ## One iteration
@@ -134,7 +134,7 @@ End every run with a short report to the owner, in the report language:
 
 - Start a `decision` item, or work around one.
 - Add a dependency, CloudKit, SwiftData, a server, a paywall or analytics.
-- Change bundle IDs, signing, entitlements or `Info.plist` privacy strings in an `auto` PR. Those are `review`.
+- Change bundle IDs, signing, entitlements or `Info.plist` privacy strings without saying so in the PR title and the run's report.
 - Push to `main` directly, force-push a branch someone else uses, or rewrite merged history.
 - Merge with red or pending CI, or with an open review thread from the owner.
 - Skip, disable or weaken a test to get green.
