@@ -74,6 +74,8 @@ xcodebuild build -scheme PaceOff -destination 'generic/platform=iOS Simulator'
 
 Regenerate the project after editing `project.yml`: `xcodegen generate` (the generated `.xcodeproj` is committed).
 
+Every push to `main` also runs `.github/workflows/testflight.yml`: a Release device build, then, once the App Store Connect key's secrets exist, an archive uploaded to TestFlight (README: TestFlight).
+
 **Cloud sessions have no Xcode, XcodeGen or Swift toolchain.** GitHub Actions CI (`.github/workflows/ci.yml`: build + `PaceOffTests` on a macOS runner) is the compiler there, so re-read a diff for build errors before pushing; `LOOP.md` § 4 has the checklist. Add a new Swift file to the project with `python3 scripts/pbxproj.py add <path> <target>…`, which makes the same edits XcodeGen would.
 
 Do not run `xcodebuild test` in ad-hoc automation — it hangs on host device discovery in some environments. Run tests from Xcode (the `PaceOff` scheme's test action runs `PaceOffTests`). Test files compile `PaceOffShared` sources directly, so engine tests need no simulator-hosted app state.
@@ -87,7 +89,7 @@ Anything that would require **CloudKit, a server, a paywall, Android, or a chat 
 `ROADMAP.md` is the single queue of work, in priority order; `LOOP.md` is the procedure that takes its top item to a merged PR without the owner present. When running the loop:
 - One roadmap item per PR, titled `[roadmap <ID>] …`, with the item's status updated in `ROADMAP.md` in the same PR.
 - Never start an item with status `decision` or `blocked`; anything needing the owner's call becomes `blocked: <question>` rather than a guess.
-- Only `Merge: auto` items are merged by the loop, and only with green CI and a clean self-review. `Merge: review` items wait for the owner.
+- Items are merged by the loop only with green CI and a clean self-review. Since 2026-11-08 every item is `Merge: auto`: the owner doesn't approve PRs. A PR that touches entitlements, signing, privacy strings, legal or App Store copy, or removes a feature, says so in its title and the report.
 - UI changes can't be seen from the cloud: list them in the roadmap's **Visual check queue**.
 - A direct request from the owner always wins over the roadmap.
 

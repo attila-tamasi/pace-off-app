@@ -25,7 +25,7 @@ The items come from the full code review of 2026-10-18, re-checked against the s
 | `blocked: <reason>` | Tried and stuck | skips it until a person edits the reason away |
 | `decision` | Needs the owner's call | never touches it |
 
-**Merge:** `auto` items are merged by the loop once CI is green and its own review is clean. `review` items get a PR and wait for the owner: legal text, entitlements, App Store-facing copy, or anything that removes a feature.
+**Merge:** `auto` items are merged by the loop once CI is green and its own review is clean. Since 2026-11-08 every item is `auto`: the owner asked that nothing wait for their approval. A PR that changes entitlements, signing, `Info.plist` privacy strings, legal text or App Store-facing copy, or removes a feature, still merges, but says so in its title and in the run's report.
 
 **Size:** S is a few lines to one file, M is one feature across a few files, L is several PRs. The loop splits an L item into sub-items (`R-05a`, `R-05b`…) in this file before starting it.
 
@@ -33,12 +33,25 @@ The items come from the full code review of 2026-10-18, re-checked against the s
 
 ## Now · Owner's request (2026-11-08)
 
-Three requests the owner put ahead of the waves, in their order:
-1. Every card on Today opens a detail screen (F-09).
-2. A morning weather check that says what to run and when (F-10).
-3. Kettlebell or free-weight cross training in the plan (F-11).
+Requests the owner put ahead of the waves, in their order:
+1. The app in TestFlight (T-01).
+2. Every card on Today opens a detail screen (F-09).
+3. A morning weather check that says what to run and when (F-10).
+4. Kettlebell or free-weight cross training in the plan (F-11).
+5. From Claude's suggestions, picked by the owner: plan workouts on Apple Watch (F-12), sleep in readiness (F-13), best efforts and automatic PBs (F-14), easy runs that weren't easy (F-15), Siri and Control Center (F-16).
 
 Each is split into one PR per sub-item.
+
+### T-01 · The app in TestFlight
+- **Status:** todo
+- **Size:** S   ·   **Merge:** auto
+- **Problem:** The owner wants every merged change on their phone through TestFlight, without building it by hand.
+- **Where:** `.github/workflows/testflight.yml`, `ci/ExportOptions.plist`, `PaceOff/Info.plist` (export compliance), README "TestFlight".
+- **Done when:**
+  - Every push to `main`, and a manual run, archives the app with automatic cloud signing through an App Store Connect API key and uploads it to TestFlight. The build number is the workflow's run number.
+  - Without the key the job still builds Release for a device, so a Release-only compile error shows on `main`, and skips the upload with a notice.
+  - The README lists the owner's part: the App ID and App Store Connect app record, the API key with the Admin role, and the three repository secrets.
+- **Owner's part:** see README "TestFlight". Until it's done, uploads are skipped.
 
 ### F-09a · HRV and Resting HR detail screens
 - **Status:** done (PR #29)
@@ -92,7 +105,7 @@ Each is split into one PR per sub-item.
   - Heat over 25 °C adds "go by effort, not pace" to the plan workout's pace band.
 - **Sub-items:**
   - **F-10a · Run-window planner** (M, `auto`): a pure function in `PaceOffShared` that takes an hourly forecast (temperature, feels-like, precipitation chance and amount, wind, daylight) plus the day's run (plan workout or target; none on a rest day) and returns the window and a one-line reason ("Dry and 12 °C 07:00–09:00; rain from 16:00"). Tests: rain all afternoon, a hot midday, strong wind, rain all day, a rest day.
-  - **F-10b · Forecast in the morning push** (M, `review`: WeatherKit entitlement and a location privacy string): the Profile switch and location request, WeatherKit in `BackgroundRefreshService` and the foreground refresh, the forecast cached in the App Group, and `DailyPushPlanner`'s morning body leading with the window. Done when the morning push names the window whenever a fresh forecast exists, and reads exactly as today without location or forecast.
+  - **F-10b · Forecast in the morning push** (M, `auto`; it adds the WeatherKit entitlement and a location privacy string, so its PR says so): the Profile switch and location request, WeatherKit in `BackgroundRefreshService` and the foreground refresh, the forecast cached in the App Group, and `DailyPushPlanner`'s morning body leading with the window. Done when the morning push names the window whenever a fresh forecast exists, and reads exactly as today without location or forecast.
 
 ### F-11 · Cross training: kettlebell or free weights in the plan
 - **Status:** todo
@@ -112,6 +125,64 @@ Each is split into one PR per sub-item.
   - **F-11a · Plan model and generator** (M, `auto`): `WorkoutKind.strength`, the cross-training choice on `TrainingPlanInputs` and `TrainingPlan`, placement, session templates and the taper, all in `TrainingPlanGenerator` with tests.
   - **F-11b · Showing it** (M, `auto`): the picker option, the Plan tab and plan detail rows, Today's plan line, the push text and the widget.
   - **F-11c · Done from Health** (M, `auto`): `HealthKitService` reads strength workouts (traditional and functional strength training; workouts are already readable, so no new permission) and `TrainingPlanReconciler` ticks the session off.
+
+### F-12 · Plan workouts on Apple Watch
+- **Status:** todo
+- **Size:** L   ·   **Merge:** auto
+- **Problem:** The plan's paces only live on the phone. During the run nothing tells the runner they're too fast or too slow.
+- **Approach:** WorkoutKit (Apple's framework, iOS 17+) schedules custom workouts into the Watch's own Workout app, with pace alerts. No watch app of ours is involved. If this works well, D-01 can be settled by hiding our watch app.
+- **Defaults (the owner can change them here):** a Plan tab switch "Send workouts to Apple Watch", off until turned on. When on, the next 7 days' run workouts are scheduled, and rescheduled whenever the plan changes or retunes. Rest days, races and (after F-11) strength sessions aren't sent. Ending the plan removes them.
+- **Sub-items:**
+  - **F-12a · Workout to blocks** (M): a pure function in `PaceOffShared`, with no WorkoutKit import. It turns a plan `Workout` into warm-up, work and recovery blocks and cool-down, each with its distance and pace band. Interval sessions repeat their work block; easy, long, tempo and marathon-pace runs are one work block with the pace alert. Tested.
+  - **F-12b · Scheduling** (M): `WorkoutScheduler` authorization, building `CustomWorkout`s from the blocks, scheduling and removing them, and the Plan tab switch.
+
+### F-13 · Sleep in readiness
+- **Status:** todo
+- **Size:** M   ·   **Merge:** auto
+- **Problem:** Readiness reads HRV and resting heart rate, not sleep, the most common reason a runner isn't ready.
+- **Defaults (the owner can change them here):**
+  - Last night's time asleep (Health's sleep analysis, asleep stages only) against the runner's 14-night average.
+  - 15% or more short is yellow; 30% or more short is red.
+  - It joins HRV and resting HR in "the worst one sets the day", and in "two signals off is red".
+  - It needs 5 nights before it counts.
+  - Readiness works as today without sleep data.
+- **Done when:**
+  - `ReadinessEngine` takes sleep, with tests.
+  - `HealthKitService` reads sleep. The new read type is asked on the next authorization; the Health usage text already covers it.
+  - The readiness screen shows a third signal card, and the readiness sentence names sleep when it's the cause.
+
+### F-14 · Best efforts and automatic PBs
+- **Status:** todo
+- **Size:** M   ·   **Merge:** auto
+- **Problem:** A PB is only what the runner types in. Faster efforts inside ordinary runs never improve the race prediction or the plan's VDOT.
+- **Done when:**
+  - A pure, tested function finds a run's fastest 1 km, 5 km, 10 km and half marathon from its route, interpolating between points.
+  - The best of each over all runs read so far is kept in App Group defaults.
+  - A new best gets one notification. It becomes the PB for that distance when faster; this builds on Q-04, the PB tied to its distance.
+  - Profile and run detail show the bests.
+
+### F-15 · Easy runs that weren't easy
+- **Status:** todo
+- **Size:** M   ·   **Merge:** auto
+- **Problem:** The most common amateur mistake, running easy days too hard, goes unnoticed.
+- **Defaults (the owner can change them here):**
+  - Five heart-rate zones from max HR: the highest seen in the last 90 days of runs, else 208 − 0.7 × age.
+  - A plan easy or long run, or any run on a yellow or red readiness day, with more than 20% of its time above zone 2, gets a note on its run detail and in the week screen: "35% of this easy run was in zone 3 or above. Slow down to keep it easy."
+- **Done when:**
+  - A pure, tested function gives time in zones from heart-rate samples.
+  - Run detail shows a zone bar.
+  - The week screen shows the week's easy/hard balance.
+  - The notes above appear.
+
+### F-16 · Siri, Shortcuts and Control Center
+- **Status:** todo
+- **Size:** M   ·   **Merge:** auto
+- **Problem:** Today's target needs the app or the widget; there's no voice or one-tap way.
+- **Done when:**
+  - App Intents answer "What's my run today?" (the day's target and plan workout) and "How ready am I?" (readiness and its sentence) from the cached day (`WidgetCache`), without opening the app and without HealthKit in the intent.
+  - App Shortcuts phrases are listed.
+  - A Control Center control opens Today.
+  - A day cached on an earlier date answers "Open Pace Off to get today's target", as the widget does.
 
 ---
 
@@ -289,7 +360,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 ### Q-07 · Pace Off doesn't notice a finished run
 - **Status:** todo
-- **Size:** M   ·   **Merge:** review
+- **Size:** M   ·   **Merge:** auto
 - **Problem:** The Health observer is never started, so the afternoon reminder still fires after a run until the app is opened. The background task also doesn't end cleanly when it expires.
 - **Where:** `HealthKitService.startObservingVO2Max` is defined but never called; there's no workout observer; `BackgroundRefreshService` has no `expirationHandler`. The background-delivery entitlement is already in `PaceOff.entitlements`.
 - **Done when:**
@@ -299,7 +370,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 ### Q-08 · Delete my data, and a complete sign-out
 - **Status:** todo
-- **Size:** M   ·   **Merge:** review
+- **Size:** M   ·   **Merge:** auto
 - **Problem:** SPEC promises "delete my data", but it doesn't exist. Sign-out leaves the widget data, scheduled notifications and settings behind.
 - **Where:** `ProfileStore.signOut()`, `ProfileView`, `AppGroup`, `NotificationScheduler`, the widget.
 - **Done when:**
@@ -407,7 +478,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 ### F-08 · Hungarian localisation
 - **Status:** todo
-- **Size:** L   ·   **Merge:** review
+- **Size:** L   ·   **Merge:** auto
 - **Problem:** The app is English only. Hungarian is the first target language (PRD §15).
 - **Done when:**
   - A String Catalog covers every user-facing string, including notifications and `VoiceCopy`.

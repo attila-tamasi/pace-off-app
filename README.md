@@ -126,6 +126,31 @@ Delete the app and you lose nothing — your runs and VO₂ max stay in Health.
 
 ---
 
+## TestFlight
+
+Every push to `main` runs `.github/workflows/testflight.yml`. It builds the app in Release for a device, then archives it, signs it automatically with Apple's cloud-managed certificates and uploads it to App Store Connect. The build appears in TestFlight once Apple has processed it, which takes 10–30 minutes. You can also start it by hand: Actions → TestFlight → Run workflow. The build number is the workflow's run number.
+
+The upload needs a one-time setup by the account holder. Until it's done, the job only builds and skips the upload with a notice.
+
+1. **App ID:** developer.apple.com → Certificates, Identifiers & Profiles → Identifiers → **+** → App IDs → App.
+   - Bundle ID: `com.paceoff.app`.
+   - Capabilities: HealthKit, App Groups, Sign In with Apple.
+   - Xcode creates the widget's and the watch app's IDs, the `group.com.paceoff.app` group and the profiles on the first run.
+2. **App record:** App Store Connect → Apps → **+** → New App → iOS.
+   - Name: Pace Off, or the name you want on the store.
+   - Bundle ID: `com.paceoff.app`.
+   - SKU: anything, e.g. `paceoff`.
+3. **API key:** App Store Connect → Users and Access → Integrations → App Store Connect API → Team Keys → **+**.
+   - Access: **Admin**, so Xcode may create the distribution certificate and profiles.
+   - Download the `.p8` file (it can be downloaded only once).
+   - Note the Key ID and the Issuer ID.
+4. **Secrets:** GitHub → the repository → Settings → Secrets and variables → Actions → New repository secret, three times:
+   - `ASC_KEY_ID`: the Key ID.
+   - `ASC_ISSUER_ID`: the Issuer ID.
+   - `ASC_KEY_P8`: the whole contents of the `.p8` file.
+5. **First upload:** run the workflow (Actions → TestFlight → Run workflow).
+6. **Internal testing:** when the build shows in App Store Connect → TestFlight, add yourself as an internal tester. `ITSAppUsesNonExemptEncryption` is set to NO in `Info.plist`, so no export-compliance question blocks the build.
+
 ## Roadmap and the autonomous loop
 
 `ROADMAP.md` lists what's next, in priority order, each item with its acceptance criteria. `LOOP.md` is the procedure Claude follows to take the top item to a merged PR on its own, typically from a scheduled Claude Code task with the prompt "Run one iteration of LOOP.md in this repository". Steer it by editing `ROADMAP.md`: reorder items, add new ones, or mark one `decision` to keep the loop away from it.

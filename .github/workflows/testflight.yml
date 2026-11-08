@@ -1,0 +1,121 @@
+# TestFlight — every push to main (and a manual run from the Actions tab)
+# archives the app and uploads it to App Store Connect, where it appears in
+# TestFlight once Apple has processed it.
+#
+# Signing is automatic, with Apple's cloud-managed certificates and an App
+# Store Connect API key; no certificate or profile lives in the repo. The
+# key needs the Admin role, so Xcode may create the distribution
+# certificate and profiles it needs. Three repository secrets hold it
+# (Settings → Secrets and variables → Actions):
+#   ASC_KEY_ID      the key's ID
+#   ASC_ISSUER_ID   the issuer ID shown above the list of keys
+#   ASC_KEY_P8      the whole contents of AuthKey_<key ID>.p8
+#
+# Without them the job still builds the app in Release for a device,
+# unsigned, so a Release-only compile error shows up on main, and then
+# stops before archiving with a notice. The build number is this
+# workflow's run number, so every upload is higher than the last.
+
+name: TestFlight
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: testflight
+  cancel-in-progress: false
+
+jobs:
+  testflight:
+    name: Archive & upload to TestFlight
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest Xcode on the image
+        run: |
+          XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Selecting $XCODE"
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+
+      - name: Build for device in Release (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project PaceOff.xcodeproj \
+            -scheme PaceOff \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            | tail -n 200
+
+      - name: Check for the App Store Connect key
+        id: asc
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          if [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -n "$ASC_KEY_P8" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=TestFlight upload skipped::Add ASC_KEY_ID, ASC_ISSUER_ID and ASC_KEY_P8 to the repository's Actions secrets to upload builds (README: TestFlight)."
+          fi
+
+      - name: Write the API key
+        if: steps.asc.outputs.ready == 'true'
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          printf '%s\n' "$ASC_KEY_P8" > "$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8"
+          echo "ASC_KEY_PATH=$RUNNER_TEMP/asc/AuthKey_$ASC_KEY_ID.p8" >> "$GITHUB_ENV"
+
+      - name: Archive (signed)
+        if: steps.asc.outputs.ready == 'true'
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -o pipefail
+          xcodebuild archive \
+            -project PaceOff.xcodeproj \
+            -scheme PaceOff \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/PaceOff.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            CODE_SIGN_STYLE=Automatic \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            | tail -n 200
+
+      - name: Upload to App Store Connect
+        if: steps.asc.outputs.ready == 'true'
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -o pipefail
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/PaceOff.xcarchive" \
+            -exportOptionsPlist ci/ExportOptions.plist \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            | tail -n 200
+          echo "::notice title=Uploaded::Build ${{ github.run_number }} is on its way to TestFlight; Apple's processing takes 10–30 minutes."
+
+      - name: Remove the API key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc"
