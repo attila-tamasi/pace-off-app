@@ -153,6 +153,11 @@
 		134EF0EA559B03EAB9B2EED8 /* WeekReviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C38A19F87DCA31C7FFFCED0D /* WeekReviewTests.swift */; };
 		FAF17C2AD374A10B666B74AF /* ReadinessDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53401F72A247AB7C9A480E76 /* ReadinessDetailView.swift */; };
 		FC00DD23C80EBB63AE7F84D6 /* UserProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D5862BD2A63DB31A7B892C6 /* UserProfileTests.swift */; };
+		9C541E4BBF47AE57F6980955 /* OnceFlag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518F932B08979B0859ABFBB2 /* OnceFlag.swift */; };
+		1BEA66EEA89BF6EB89463AEC /* OnceFlag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518F932B08979B0859ABFBB2 /* OnceFlag.swift */; };
+		CAC1BABB5A1AED53DF4E8CBE /* OnceFlag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518F932B08979B0859ABFBB2 /* OnceFlag.swift */; };
+		8C17229E371CB281CE8962D9 /* OnceFlag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518F932B08979B0859ABFBB2 /* OnceFlag.swift */; };
+		53288641CF6C3550FE8EB053 /* OnceFlagTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F6A692DEE744E4A792F2AA /* OnceFlagTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -296,6 +301,8 @@
 		C38A19F87DCA31C7FFFCED0D /* WeekReviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekReviewTests.swift; sourceTree = "<group>"; };
 		53401F72A247AB7C9A480E76 /* ReadinessDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadinessDetailView.swift; sourceTree = "<group>"; };
 		1D5862BD2A63DB31A7B892C6 /* UserProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileTests.swift; sourceTree = "<group>"; };
+		518F932B08979B0859ABFBB2 /* OnceFlag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFlag.swift; sourceTree = "<group>"; };
+		73F6A692DEE744E4A792F2AA /* OnceFlagTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFlagTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -327,6 +334,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				518F932B08979B0859ABFBB2 /* OnceFlag.swift */,
 				79DEFC03881AF55665EB0AF2 /* WeekReview.swift */,
 				0FF8906F1FC3C24CB53B24D9 /* WorkoutProfile.swift */,
 				D99A0550C6980C0A93297332 /* HeartTrend.swift */,
@@ -355,6 +363,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				73F6A692DEE744E4A792F2AA /* OnceFlagTests.swift */,
 				1D5862BD2A63DB31A7B892C6 /* UserProfileTests.swift */,
 				C38A19F87DCA31C7FFFCED0D /* WeekReviewTests.swift */,
 				A9A016482D358502B6CAD1CE /* WorkoutProfileTests.swift */,
@@ -721,6 +730,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				53288641CF6C3550FE8EB053 /* OnceFlagTests.swift in Sources */,
+				CAC1BABB5A1AED53DF4E8CBE /* OnceFlag.swift in Sources */,
 				FC00DD23C80EBB63AE7F84D6 /* UserProfileTests.swift in Sources */,
 				134EF0EA559B03EAB9B2EED8 /* WeekReviewTests.swift in Sources */,
 				15528F5496188D4DF8EC0B86 /* WeekReview.swift in Sources */,
@@ -763,6 +774,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1BEA66EEA89BF6EB89463AEC /* OnceFlag.swift in Sources */,
 				6FEC638C6700E353F6FED950 /* WeekReview.swift in Sources */,
 				A1A7803CE54E4807C4CF2B21 /* WorkoutProfile.swift in Sources */,
 				027A4AD2729712E0954A0183 /* HeartTrend.swift in Sources */,
@@ -793,6 +805,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C17229E371CB281CE8962D9 /* OnceFlag.swift in Sources */,
 				A5534DD54512341037EFBC0C /* WeekReview.swift in Sources */,
 				0F5041E602BB56B8E3F50F13 /* WorkoutProfile.swift in Sources */,
 				3A1368584A91874E8C2AFE31 /* HeartTrend.swift in Sources */,
@@ -826,6 +839,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9C541E4BBF47AE57F6980955 /* OnceFlag.swift in Sources */,
 				FAF17C2AD374A10B666B74AF /* ReadinessDetailView.swift in Sources */,
 				FEC05ECF181FD31355C62CB7 /* WeekDetailView.swift in Sources */,
 				C45CB2AB60328CC7D378DEC5 /* WeekReview.swift in Sources */,

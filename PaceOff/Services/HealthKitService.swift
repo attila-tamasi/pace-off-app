@@ -673,15 +673,62 @@ public final class HealthKitService {
         return Calendar.current.dateComponents([.year], from: birthDate, to: referenceDate).year
     }
 
-    // MARK: - Observer (background VO2Max updates)
+    // MARK: - Observers (background delivery)
 
-    public func startObservingVO2Max(handler: @escaping @Sendable () -> Void) {
-        guard let type = HKQuantityType.quantityType(forIdentifier: .vo2Max) else { return }
-        let query = HKObserverQuery(sampleType: type, predicate: nil) { _, _, error in
-            guard error == nil else { return }
-            handler()
+    @ObservationIgnored private var observersStarted = false
+
+    /// Watches for new workouts and VO₂ max readings, with background
+    /// delivery, so a finished run reaches Pace Off without the app being
+    /// opened. `onUpdate` runs for each change and gets a completion to
+    /// call once the change is handled, as HealthKit requires. Started at
+    /// most once per launch; call it at launch (once onboarding has asked
+    /// for Health access) so iOS can wake the app for deliveries.
+    public func startObservingHealthUpdates(
+        onUpdate: @escaping @Sendable (_ done: HealthUpdateCompletion) -> Void
+    ) {
+        guard !observersStarted else { return }
+        observersStarted = true
+        // Runs only: other workouts, and the app's own writes, change
+        // nothing a refresh reads.
+        var types: [(HKSampleType, NSPredicate?, HKUpdateFrequency)] = [
+            (HKObjectType.workoutType(), HKQuery.predicateForWorkouts(with: .running), .immediate)
+        ]
+        if let vo2 = HKQuantityType.quantityType(forIdentifier: .vo2Max) {
+            types.append((vo2, nil, .hourly))
         }
-        store.execute(query)
-        store.enableBackgroundDelivery(for: type, frequency: .hourly) { _, _ in }
+        for (type, predicate, frequency) in types {
+            let query = HKObserverQuery(sampleType: type, predicate: predicate) { _, completion, error in
+                let done = HealthUpdateCompletion(completion)
+                guard error == nil else {
+                    done()
+                    return
+                }
+                onUpdate(done)
+            }
+            store.execute(query)
+            store.enableBackgroundDelivery(for: type, frequency: frequency) { success, error in
+                guard !success else { return }
+                // Typically Health access not granted yet: let a later
+                // launch, or the next call once it is, set them up again.
+                _ = error
+                Task { @MainActor in
+                    HealthKitService.shared.observersStarted = false
+                }
+            }
+        }
+    }
+}
+
+/// HealthKit's "handled" callback for one observer delivery, carried to
+/// wherever the delivery is handled and called once that's done.
+public final class HealthUpdateCompletion: @unchecked Sendable {
+    private let body: () -> Void
+
+    init(_ body: @escaping () -> Void) {
+        self.body = body
+    }
+
+    public func callAsFunction() {
+        body()
     }
 }

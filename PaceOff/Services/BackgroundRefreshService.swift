@@ -25,6 +25,7 @@
 import Foundation
 import BackgroundTasks
 import WidgetKit
+import UIKit
 import os
 
 @MainActor
@@ -97,23 +98,106 @@ public final class BackgroundRefreshService {
             await refreshHealthData()
         }
 
-        // iOS gives us a hard deadline; if we get cancelled mid-flight, kill
-        // the work cleanly and report failure so iOS can back off.
+        // iOS gives us a hard deadline. When it hits, cancel the work and
+        // report the task done right there, failed, so iOS can back off;
+        // the work may not notice the cancellation before the deadline.
+        // Whichever finishes first reports, once.
+        let report = TaskReport(task)
         task.expirationHandler = {
             work.cancel()
+            report.complete(success: false)
         }
 
         let success = await work.value
-        task.setTaskCompleted(success: success)
+        report.complete(success: success)
+    }
+
+    /// Reports a background task complete exactly once, from whichever of
+    /// the work and the expiration handler gets there first.
+    private final class TaskReport: @unchecked Sendable {
+        private let task: BGTask
+        private let once = OnceFlag()
+
+        init(_ task: BGTask) {
+            self.task = task
+        }
+
+        func complete(success: Bool) {
+            if once.claim() { task.setTaskCompleted(success: success) }
+        }
+    }
+
+    // MARK: - Health observers
+
+    private var observerRefresh: Task<Void, Never>?
+    /// Set when a delivery arrives during a refresh that may already have
+    /// read Health: the running refresh goes round once more.
+    private var refreshAgain = false
+    /// Whether the last refresh found Health locked (the phone was), so
+    /// it read nothing.
+    private var lastReadWasLocked = false
+
+    /// Starts the workout and VO₂ max observers. A new run or reading
+    /// re-syncs Health, recomputes the target, reschedules today's pushes
+    /// and reloads the widget, the same as a scheduled background refresh,
+    /// so a finished run stops the afternoon reminder without the app
+    /// being opened. Changes that arrive during a refresh share it.
+    public func startHealthObservers() {
+        HealthKitService.shared.startObservingHealthUpdates { done in
+            Task { @MainActor in
+                await BackgroundRefreshService.shared.handleDelivery(done)
+            }
+        }
+    }
+
+    /// One observer delivery. In the foreground there's nothing to do: the
+    /// app refreshes whenever it becomes active. In the background, run the
+    /// refresh under a background-time assertion. A delivery that found
+    /// the phone locked read nothing, so it isn't acknowledged: HealthKit
+    /// then delivers it again, with backoff, until a read gets through.
+    private func handleDelivery(_ done: HealthUpdateCompletion) async {
+        guard UIApplication.shared.applicationState == .background else {
+            done()
+            return
+        }
+        let assertion = UIApplication.shared.beginBackgroundTask(withName: "Health update")
+        await refreshForObserver()
+        if !lastReadWasLocked { done() }
+        if assertion != .invalid { UIApplication.shared.endBackgroundTask(assertion) }
+    }
+
+    private func refreshForObserver() async {
+        if let running = observerRefresh {
+            // The running refresh may have read Health before this change.
+            refreshAgain = true
+            await running.value
+            return
+        }
+        let refresh = Task { @MainActor in
+            repeat {
+                self.refreshAgain = false
+                _ = await self.refreshHealthData()
+            } while self.refreshAgain
+        }
+        observerRefresh = refresh
+        await refresh.value
+        observerRefresh = nil
     }
 
     /// The actual refresh. Returns true on success, false on cancellation/error.
     /// Reused by `runOnceNow()` for "manual" foreground refreshes.
     @discardableResult
     public func refreshHealthData() async -> Bool {
+        // Signed out or not yet set up: nothing to compute, push or show.
+        guard AppGroup.sharedDefaults?.bool(forKey: AppGroup.Keys.onboardingComplete) == true else {
+            lastReadWasLocked = false
+            return true
+        }
+
         // syncAll writes the snapshot to HealthDataCache as a side effect,
         // so the next foreground launch picks it up instantly.
         let sync = await HealthKitService.shared.syncAll()
+        lastReadWasLocked = sync.decision == .keepCache(.protectedDataUnavailable)
         if Task.isCancelled { return false }
 
         // On a locked phone, or when the read failed or came back empty,
@@ -166,6 +250,7 @@ public final class BackgroundRefreshService {
         // Training plan: reconcile today's workout and retune stale paces
         // against the data we just pulled. The voice line needs today's
         // status too.
+        if Task.isCancelled { return false }
         let planStatus = reconcileTrainingPlan(runs: runs, vo2Max: vo2, now: now)
 
         let state = VoiceState(target: target, yesterday: yesterday, currentStreak: streak, planStatus: planStatus)
@@ -182,6 +267,10 @@ public final class BackgroundRefreshService {
         if let aiNotif = await AppleIntelligenceCopy.shared.rewrite(notificationLine, kind: .notification) {
             notificationLine = aiNotif
         }
+
+        // Expired while rewriting: iOS has been told the task is over, so
+        // write nothing more.
+        if Task.isCancelled { return false }
 
         // Hand the day to the widget in one write, and have it redraw.
         let day = WidgetCache(target: target, voiceLine: voiceLine,
