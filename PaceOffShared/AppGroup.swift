@@ -37,6 +37,32 @@ public enum AppGroup {
     /// (not UserDefaults — binary blobs don't belong there).
     public static let profilePhotoFilename = "profile-photo.jpg"
 
+    /// Every App Group defaults key Pace Off writes starts with this.
+    public static let keyPrefix = "paceoff."
+
+    /// The files Pace Off writes in the container: the active plan, the
+    /// Health snapshot and the profile photo.
+    public static let containerFiles = ["training-plan.json", "health-cache.json", profilePhotoFilename]
+
+    /// Erases everything Pace Off keeps in the App Group, for "Delete my
+    /// data" and sign-out: every `keyPrefix` defaults key (profile, flags,
+    /// settings, the widget's day) and every file in `containerFiles`.
+    /// Apple Health keeps its data; only Pace Off's copy goes.
+    public static func eraseAll(defaults: UserDefaults?,
+                                containerURL: URL?,
+                                fileManager: FileManager = .default) {
+        if let defaults {
+            for key in defaults.dictionaryRepresentation().keys where key.hasPrefix(keyPrefix) {
+                defaults.removeObject(forKey: key)
+            }
+        }
+        if let containerURL {
+            for name in containerFiles {
+                try? fileManager.removeItem(at: containerURL.appendingPathComponent(name))
+            }
+        }
+    }
+
     /// URL of the shared App Group container directory, if available.
     public static var containerURL: URL? {
         FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)

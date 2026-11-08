@@ -71,7 +71,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 - Each push is a one-shot for today's date, scheduled only while its time is still ahead; the foreground refresh and the background task schedule each day afresh, so one day's text never repeats on the next. A next-morning push covers a night with no refresh: it names tomorrow's plan workout, or just says a new target is waiting, and the next refresh replaces it
 - Once today is done (the plan workout completed, or any run on a day without a plan workout), nothing more goes out today; a short run doesn't tick off a planned workout. On a planned rest day only the morning rest note goes out
 - Evening "last call" only fires when the user has skipped at least one day this week (Monday-based week; planned rest days aren't skips)
-- Nothing is scheduled before onboarding completes, and sign-out removes every pending and delivered push
+- Nothing is scheduled before onboarding completes, and sign-out or "Delete my data" removes every pending and delivered push
 
 ### 11. Daily readiness traffic light
 - Green / Yellow / Red readiness card on Today; it opens `ReadinessDetailView`, which shows each signal against its baseline with its own grade (each opening its `HeartTrendDetailView`), how the two combine, and what each colour does to the target — HRV (SDNN) + resting HR versus rolling personal baselines (30-day HRV, 14-day RHR), with one supporting sentence ("HRV below your baseline — easy day.")
@@ -112,8 +112,8 @@ Shipped as **§11** above (decision: augments the tone display). The follow-up q
 - **Cost:** streak state persists to App Group; buddy-side of the summary depends on **B**.
 
 ### E. Data-management + legal
-- "Delete my data" — CloudKit + local wipe (App Store requirement if we ship **B**)
-- Currently we only wipe local state on sign-out; a CloudKit-aware delete needs building.
+- "Delete my data" (Profile, below Sign Out, with a confirmation) — erases every App Group key (`AppGroup.keyPrefix`) and container file (`AppGroup.containerFiles`: plan, Health snapshot, photo), cancels every scheduled and delivered push, reloads the widget (it then shows "Open Pace Off") and returns to the start. Apple Health keeps its data. Sign-out does exactly the same.
+- With **B** (CloudKit) the delete would also have to reach the cloud copy; that part isn't built, since nothing leaves the device today.
 - **Cost:** part of the CloudKit adoption in **B**.
 
 ### F. Notes on scope
