@@ -154,7 +154,7 @@ public final class BackgroundRefreshService {
         guard let target = PushTargetEngine().target(
             inputs, hasRunBefore: defaults?.bool(forKey: AppGroup.Keys.hasSeenRun) ?? false
         ) else {
-            NotificationScheduler.shared.cancelDailyPushes()
+            NotificationScheduler.shared.clearToday()
             log.info("Background refresh completed — no runs yet, no target")
             return true
         }

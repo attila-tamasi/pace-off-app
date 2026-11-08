@@ -19,6 +19,9 @@ public final class NotificationScheduler {
     /// What the last scheduling call was given, so a settings change can
     /// reschedule today at once instead of waiting for the next refresh.
     private struct DayInputs {
+        /// The calendar day these inputs were for; they're never replayed
+        /// on another.
+        let day: Date
         let target: RunTarget
         let yesterday: RunRecord?
         let currentStreak: Int
@@ -60,7 +63,8 @@ public final class NotificationScheduler {
         planStatus: PlanDayStatus?,
         overrideBody: String? = nil
     ) {
-        lastDay = DayInputs(target: target, yesterday: yesterday, currentStreak: currentStreak,
+        lastDay = DayInputs(day: Calendar.current.startOfDay(for: Date()),
+                            target: target, yesterday: yesterday, currentStreak: currentStreak,
                             runs: runs, plan: plan, planStatus: planStatus, overrideBody: overrideBody)
         cancelDailyPushes()
 
@@ -89,28 +93,52 @@ public final class NotificationScheduler {
         }
     }
 
-    /// Reschedules today from the last scheduling call's inputs, after a
-    /// push time or the on/off switch changed. Without one this session,
-    /// the next refresh schedules with the new settings.
-    public func rescheduleToday() {
-        guard let day = lastDay else { return }
-        scheduleDailyPushes(target: day.target, yesterday: day.yesterday,
-                            currentStreak: day.currentStreak, runs: day.runs,
-                            plan: day.plan, planStatus: day.planStatus,
-                            overrideBody: day.overrideBody)
+    /// Reschedules today after a push time or the on/off switch changed:
+    /// from the last scheduling call's inputs when they're today's, or
+    /// else from a fresh refresh, so pushes are never rebuilt from another
+    /// day's target and are never left at the old times.
+    public func rescheduleToday() async {
+        if let day = lastDay, Calendar.current.isDateInToday(day.day) {
+            scheduleDailyPushes(target: day.target, yesterday: day.yesterday,
+                                currentStreak: day.currentStreak, runs: day.runs,
+                                plan: day.plan, planStatus: day.planStatus,
+                                overrideBody: day.overrideBody)
+        } else {
+            await BackgroundRefreshService.shared.refreshHealthData()
+        }
+    }
+
+    /// Today has no target (no run in Health yet): clear its pushes and
+    /// forget its inputs, so a settings change can't bring them back.
+    public func clearToday() {
+        lastDay = nil
+        cancelDailyPushes()
     }
 
     /// The Profile switch moved (it's already stored). Turning it on when
     /// iOS was never asked, after "Not now" in onboarding, asks now; then
-    /// today's pushes follow the switch.
+    /// today's pushes follow the switch. Off clears every pending Pace Off
+    /// notice, the plan-retune one included.
     public func pushesSwitched(on: Bool) async {
-        if on, await center.notificationSettings().authorizationStatus == .notDetermined {
-            await requestAuthorization()
-        }
         if on {
-            rescheduleToday()
+            if await permission() == .notAsked { await requestAuthorization() }
+            await rescheduleToday()
         } else {
             cancelDailyPushes()
+            center.removePendingNotificationRequests(withIdentifiers: [Self.planRetunedId])
+        }
+    }
+
+    /// Whether iOS lets Pace Off notify.
+    public enum Permission: Sendable {
+        case notAsked, allowed, denied
+    }
+
+    public func permission() async -> Permission {
+        switch await center.notificationSettings().authorizationStatus {
+        case .notDetermined: return .notAsked
+        case .denied:        return .denied
+        default:             return .allowed
         }
     }
 

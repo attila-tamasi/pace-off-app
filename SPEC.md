@@ -13,7 +13,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 ### 2. Onboarding
 - Short flow: value prop → HealthKit permission → weekly cadence + goal setup
 - HealthKit read access: workouts, VO₂ max, resting HR, running dynamics, date of birth
-- Notification permission requested at the end; "Not now" moves on without asking iOS. The app works the same without it (the pushes just don't show), and Profile → Notifications → "Allow notifications" asks later
+- Notification permission requested at the end; "Not now" moves on without asking iOS. The app works the same without it (the pushes just don't show), "Not now" leaves the Profile "Daily pushes" switch off, and turning it on asks iOS then
 
 ### 3. Today — daily push target
 - `TodayView` shows the day's prescribed run distance + tone (drill-sergeant / etc.), the reasoning behind it, and an "already ran" card when applicable, in Health-style cards with mini charts for HRV, resting HR, VO₂ max and the last seven days' distance
@@ -64,7 +64,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 ### 9. Profile + preferences
 - Identity hero, goal + PB + prediction card, active training-plan card, notification / voice / health preferences
 - Legal (T&C, Privacy, licenses), delete-my-data path, sign-out
-- Notifications: a "Daily pushes" switch (App Group `notificationsEnabled`, on until turned off) and the morning / afternoon / evening times, shown as they fire (the afternoon push at half past its hour, from `DailyPushPlanner.Schedule.time(of:)`). A change reschedules today's pushes at once; turning the switch on when iOS was never asked ("Not now" in onboarding) asks then. With the switch off, nothing is scheduled, the plan-retune notice included
+- Notifications: a "Daily pushes" switch (App Group `notificationsEnabled`, on until turned off) and the morning / afternoon / evening times, shown as they fire (the afternoon push at half past its hour, from `DailyPushPlanner.Schedule.time(of:)`). A change reschedules today's pushes at once, from the day's last scheduling inputs when they're today's, else from a fresh refresh. Turning the switch on when iOS was never asked ("Not now" in onboarding sets it off) asks then; when iOS was told no, Profile points to Settings. With the switch off, nothing is scheduled and pending notices go, the plan-retune one included
 
 ### 10. Notifications
 - `NotificationScheduler` uses `UNUserNotificationCenter`; up to three pushes / day per PRD §9.1. `DailyPushPlanner` (in `PaceOffShared`, unit-tested) decides which go out, when and with what text

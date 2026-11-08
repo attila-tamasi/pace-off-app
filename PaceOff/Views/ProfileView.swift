@@ -14,18 +14,21 @@ struct ProfileView: View {
 
     @AppStorage(AppGroup.Keys.notificationMorningHour, store: AppGroup.sharedDefaults)
 
-    private var morningHour: Int = 8
+    private var morningHour: Int = DailyPushPlanner.Schedule.defaultMorningHour
 
     @AppStorage(AppGroup.Keys.notificationAfternoonHour, store: AppGroup.sharedDefaults)
 
-    private var afternoonHour: Int = 17
+    private var afternoonHour: Int = DailyPushPlanner.Schedule.defaultAfternoonHour
 
     @AppStorage(AppGroup.Keys.notificationsEnabled, store: AppGroup.sharedDefaults)
     private var pushesEnabled: Bool = true
+    /// What iOS allows, read when the section appears and after each ask.
+    @State private var pushPermission: NotificationScheduler.Permission?
+    @Environment(\.openURL) private var openURL
 
     @AppStorage(AppGroup.Keys.notificationEveningHour, store: AppGroup.sharedDefaults)
 
-    private var eveningHour: Int = 21
+    private var eveningHour: Int = DailyPushPlanner.Schedule.defaultEveningHour
 
     @State private var isEditing = false
     @State private var legalDocument: LegalDocument?
@@ -423,23 +426,27 @@ struct ProfileView: View {
     private var notificationRow: some View {
         DisclosureGroup {
             VStack(spacing: 10) {
-                // iOS only asks once: after "Not now" in onboarding this
-                // shows the prompt; once answered it does nothing, and
-                // Settings → Notifications takes over.
-                Button {
-                    Task { await notifications.requestAuthorization() }
-                } label: {
-                    Label("Allow notifications", systemImage: "bell")
-                        .font(.system(.subheadline, design: .rounded, weight: .medium))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(Color.accentColor)
                 Toggle("Daily pushes", isOn: $pushesEnabled)
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .onChange(of: pushesEnabled) { _, on in
-                        Task { await notifications.pushesSwitched(on: on) }
+                        Task {
+                            await notifications.pushesSwitched(on: on)
+                            pushPermission = await notifications.permission()
+                        }
                     }
+                // iOS asks once: switching on asks if it never has. Once
+                // it's been told no, only Settings can change it.
+                if pushesEnabled, pushPermission == .denied {
+                    Button {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                    } label: {
+                        Label("Notifications are off for Pace Off in iOS. Open Settings", systemImage: "bell.slash")
+                            .font(.system(.footnote, design: .rounded, weight: .medium))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.accentColor)
+                }
                 Group {
                     Stepper("Morning push: \(formatTime(of: .morning))",
                             value: $morningHour, in: 5...11)
@@ -449,15 +456,16 @@ struct ProfileView: View {
                             value: $eveningHour, in: 19...23)
                 }
                 .disabled(!pushesEnabled)
-                .onChange(of: morningHour) { _, _ in notifications.rescheduleToday() }
-                .onChange(of: afternoonHour) { _, _ in notifications.rescheduleToday() }
-                .onChange(of: eveningHour) { _, _ in notifications.rescheduleToday() }
                 Text("Evening only fires if you've skipped at least one day this week.")
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.top, 8)
+            .onChange(of: morningHour) { _, _ in Task { await notifications.rescheduleToday() } }
+            .onChange(of: afternoonHour) { _, _ in Task { await notifications.rescheduleToday() } }
+            .onChange(of: eveningHour) { _, _ in Task { await notifications.rescheduleToday() } }
+            .task { pushPermission = await notifications.permission() }
         } label: {
             preferenceLabel(icon: "bell.badge.fill",
                             color: .red,
