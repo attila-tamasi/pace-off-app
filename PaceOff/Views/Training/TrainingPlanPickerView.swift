@@ -16,6 +16,7 @@ struct TrainingPlanPickerView: View {
     @State private var planForDetail: TrainingPlan?
     @State private var detailPresented: Bool = false
     @State private var vo2Max: Double?
+    @State private var recentLongestRunMeters: Double?
 
     private let generator = TrainingPlanGenerator()
 
@@ -34,7 +35,7 @@ struct TrainingPlanPickerView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Training Plan")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await loadVO2Max() }
+        .task { await loadHealth() }
         .navigationDestination(isPresented: $detailPresented) {
             if let plan = planForDetail {
                 TrainingPlanDetailView(plan: plan)
@@ -199,7 +200,8 @@ struct TrainingPlanPickerView: View {
             longRunDay: longRunDay,
             vo2Max: vo2Max,
             personalBest: personalBest,
-            goalDate: goalDate
+            goalDate: goalDate,
+            recentLongestRunMeters: recentLongestRunMeters
         )
     }
 
@@ -207,9 +209,12 @@ struct TrainingPlanPickerView: View {
         generator.planWeeks(for: goal, goalDate: goalDate)
     }
 
-    private func loadVO2Max() async {
+    /// VO₂ max sets the paces; the longest run of the last four weeks sets
+    /// where week 1 starts. Without a Health snapshot both stay unknown.
+    private func loadHealth() async {
         let cached = await HealthDataCache.shared.load()
         vo2Max = cached?.vo2Max.last?.value
+        recentLongestRunMeters = cached.map { TrainingPlanGenerator.longestRecentRunMeters(in: $0.runs) }
     }
 }
 
