@@ -21,6 +21,9 @@ public enum AppGroup {
         public static let notificationMorningHour = "paceoff.notif.morning"
         public static let notificationAfternoonHour = "paceoff.notif.afternoon"
         public static let notificationEveningHour = "paceoff.notif.evening"
+        /// The daily pushes' on/off switch. Unset reads as on
+        /// (`DailyPushPlanner.pushesEnabled`).
+        public static let notificationsEnabled = "paceoff.notif.enabled"
         public static let userProfile = "paceoff.userProfile"
         public static let lastPlanWorkoutSummary = "paceoff.lastPlanWorkoutSummary"
         public static let planWorkoutCompletedToday = "paceoff.planWorkoutCompletedToday"

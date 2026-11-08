@@ -64,7 +64,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 ### 9. Profile + preferences
 - Identity hero, goal + PB + prediction card, active training-plan card, notification / voice / health preferences
 - Legal (T&C, Privacy, licenses), delete-my-data path, sign-out
-- Notification hour tuning (morning / afternoon / evening)
+- Notifications: a "Daily pushes" switch (App Group `notificationsEnabled`, on until turned off) and the morning / afternoon / evening times, shown as they fire (the afternoon push at half past its hour, from `DailyPushPlanner.Schedule.time(of:)`). A change reschedules today's pushes at once; turning the switch on when iOS was never asked ("Not now" in onboarding) asks then. With the switch off, nothing is scheduled, the plan-retune notice included
 
 ### 10. Notifications
 - `NotificationScheduler` uses `UNUserNotificationCenter`; up to three pushes / day per PRD §9.1. `DailyPushPlanner` (in `PaceOffShared`, unit-tested) decides which go out, when and with what text

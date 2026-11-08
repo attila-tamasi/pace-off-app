@@ -20,6 +20,9 @@ struct ProfileView: View {
 
     private var afternoonHour: Int = 17
 
+    @AppStorage(AppGroup.Keys.notificationsEnabled, store: AppGroup.sharedDefaults)
+    private var pushesEnabled: Bool = true
+
     @AppStorage(AppGroup.Keys.notificationEveningHour, store: AppGroup.sharedDefaults)
 
     private var eveningHour: Int = 21
@@ -432,12 +435,23 @@ struct ProfileView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(Color.accentColor)
-                Stepper("Morning push: \(formatHour(morningHour))",
-                        value: $morningHour, in: 5...11)
-                Stepper("Afternoon: \(formatHour(afternoonHour))",
-                        value: $afternoonHour, in: 12...19)
-                Stepper("Evening last call: \(formatHour(eveningHour))",
-                        value: $eveningHour, in: 19...23)
+                Toggle("Daily pushes", isOn: $pushesEnabled)
+                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                    .onChange(of: pushesEnabled) { _, on in
+                        Task { await notifications.pushesSwitched(on: on) }
+                    }
+                Group {
+                    Stepper("Morning push: \(formatTime(of: .morning))",
+                            value: $morningHour, in: 5...11)
+                    Stepper("Afternoon: \(formatTime(of: .afternoon))",
+                            value: $afternoonHour, in: 12...19)
+                    Stepper("Evening last call: \(formatTime(of: .evening))",
+                            value: $eveningHour, in: 19...23)
+                }
+                .disabled(!pushesEnabled)
+                .onChange(of: morningHour) { _, _ in notifications.rescheduleToday() }
+                .onChange(of: afternoonHour) { _, _ in notifications.rescheduleToday() }
+                .onChange(of: eveningHour) { _, _ in notifications.rescheduleToday() }
                 Text("Evening only fires if you've skipped at least one day this week.")
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.secondary)
@@ -594,9 +608,16 @@ struct ProfileView: View {
         }
     }
 
-    private func formatHour(_ h: Int) -> String {
-        var components = DateComponents(); components.hour = h; components.minute = 0
-        return Calendar.current.date(from: components)?.formatted(.dateTime.hour().minute()) ?? "\(h):00"
+    /// The time a push really fires, from the planner's own schedule (the
+    /// afternoon push goes at half past its hour).
+    private func formatTime(of slot: DailyPush.Slot) -> String {
+        let schedule = DailyPushPlanner.Schedule(morningHour: morningHour,
+                                                 afternoonHour: afternoonHour,
+                                                 eveningHour: eveningHour)
+        let (hour, minute) = schedule.time(of: slot)
+        var components = DateComponents(); components.hour = hour; components.minute = minute
+        return Calendar.current.date(from: components)?.formatted(.dateTime.hour().minute())
+            ?? String(format: "%d:%02d", hour, minute)
     }
 
     private var appVersion: String {

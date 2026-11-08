@@ -59,6 +59,17 @@ public struct DailyPushPlanner: Sendable {
             self.eveningHour = (1...23).contains(eveningHour) ? eveningHour : Self.defaultEveningHour
         }
 
+        /// The local time a slot fires at, the one place the settings
+        /// screen and the planner both read: the afternoon push goes at
+        /// half past its hour, the others on the hour.
+        public func time(of slot: DailyPush.Slot) -> (hour: Int, minute: Int) {
+            switch slot {
+            case .morning, .nextMorning: return (morningHour, 0)
+            case .afternoon:             return (afternoonHour, Self.afternoonMinute)
+            case .evening:               return (eveningHour, 0)
+            }
+        }
+
         public static let standard = Schedule(
             morningHour: defaultMorningHour,
             afternoonHour: defaultAfternoonHour,
@@ -98,6 +109,12 @@ public struct DailyPushPlanner: Sendable {
         self.calendar = calendar
     }
 
+    /// Whether the daily pushes are on: the Profile switch, stored in App
+    /// Group defaults. Never set reads as on, the way onboarding leaves it.
+    public static func pushesEnabled(in defaults: UserDefaults?) -> Bool {
+        (defaults?.object(forKey: AppGroup.Keys.notificationsEnabled) as? Bool) ?? true
+    }
+
     /// Today's pushes, in firing order, leaving out slots that have passed,
     /// then the next-morning push.
     public func pushes(for inputs: Inputs) -> [DailyPush] {
@@ -120,7 +137,7 @@ public struct DailyPushPlanner: Sendable {
         if isPlanRestDay {
             pushes.append(DailyPush(
                 slot: .morning,
-                fireDate: time(inputs.schedule.morningHour, 0, on: inputs.now),
+                fireDate: time(of: .morning, in: inputs.schedule, on: inputs.now),
                 body: Self.restDayBody
             ))
         } else if let planWorkout, planWorkout.kind == .race {
@@ -129,25 +146,25 @@ public struct DailyPushPlanner: Sendable {
             if !doneToday {
                 pushes.append(DailyPush(
                     slot: .morning,
-                    fireDate: time(inputs.schedule.morningHour, 0, on: inputs.now),
+                    fireDate: time(of: .morning, in: inputs.schedule, on: inputs.now),
                     body: Self.raceDayBody(planWorkout)
                 ))
             }
         } else if !doneToday {
             pushes.append(DailyPush(
                 slot: .morning,
-                fireDate: time(inputs.schedule.morningHour, 0, on: inputs.now),
+                fireDate: time(of: .morning, in: inputs.schedule, on: inputs.now),
                 body: body
             ))
             pushes.append(DailyPush(
                 slot: .afternoon,
-                fireDate: time(inputs.schedule.afternoonHour, Schedule.afternoonMinute, on: inputs.now),
+                fireDate: time(of: .afternoon, in: inputs.schedule, on: inputs.now),
                 body: "Reminder: \(body)"
             ))
             if skippedDaysThisWeek(runs: inputs.runs, plan: inputs.plan, now: inputs.now) > 0 {
                 pushes.append(DailyPush(
                     slot: .evening,
-                    fireDate: time(inputs.schedule.eveningHour, 0, on: inputs.now),
+                    fireDate: time(of: .evening, in: inputs.schedule, on: inputs.now),
                     body: "Last call. \(body)"
                 ))
             }
@@ -158,7 +175,7 @@ public struct DailyPushPlanner: Sendable {
         if let tomorrow = calendar.date(byAdding: .day, value: 1, to: inputs.now) {
             pushes.append(DailyPush(
                 slot: .nextMorning,
-                fireDate: time(inputs.schedule.morningHour, 0, on: tomorrow),
+                fireDate: time(of: .nextMorning, in: inputs.schedule, on: tomorrow),
                 body: nextMorningBody(plan: inputs.plan, tomorrow: tomorrow)
             ))
         }
@@ -206,6 +223,11 @@ public struct DailyPushPlanner: Sendable {
             day = next
         }
         return skipped
+    }
+
+    private func time(of slot: DailyPush.Slot, in schedule: Schedule, on day: Date) -> Date {
+        let (hour, minute) = schedule.time(of: slot)
+        return time(hour, minute, on: day)
     }
 
     private func time(_ hour: Int, _ minute: Int, on day: Date) -> Date {
