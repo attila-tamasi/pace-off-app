@@ -75,15 +75,18 @@ struct TrainingPlanDetailView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            if plan.isUnderBuilt {
+            if let shortfall = plan.buildShortfall {
+                // A warning when a later race date would fix it; otherwise
+                // it's how the plan is built, so just information.
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Image(systemName: "exclamationmark.triangle.fill")
+                    Image(systemName: shortfall.laterRaceDateHelps ? "exclamationmark.triangle.fill" : "info.circle")
                         .font(.system(.caption, weight: .semibold))
-                        .foregroundStyle(.orange)
-                    Text(underBuiltText)
+                        .foregroundStyle(shortfall.laterRaceDateHelps ? Color.orange : Color.secondary)
+                    Text(Self.shortfallText(shortfall))
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
+                .accessibilityElement(children: .combine)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -91,10 +94,10 @@ struct TrainingPlanDetailView: View {
 
     /// Why the plan's longest run is short, and, when a race date cut its
     /// weeks, what would help.
-    private var underBuiltText: String {
-        let longest = String(format: "%.0f km", plan.longestLongRunMeters / 1000)
-        let full = String(format: "%.0f km", plan.fullBuildLongRunMeters / 1000)
-        if plan.isShortened {
+    private static func shortfallText(_ shortfall: TrainingPlan.BuildShortfall) -> String {
+        let longest = String(format: "%.0f km", shortfall.longestLongRunMeters / 1000)
+        let full = String(format: "%.0f km", shortfall.fullBuildLongRunMeters / 1000)
+        if shortfall.laterRaceDateHelps {
             return "Too few weeks to build up from your recent runs: the longest run here is \(longest), "
                 + "where a full plan reaches \(full). A later race date gives it room."
         }

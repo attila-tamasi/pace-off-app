@@ -258,34 +258,42 @@ final class TrainingPlanGeneratorTests: XCTestCase {
             recentLongestRunMeters: 0, today: rampToday
         ))
         XCTAssertEqual(p.weekCount, 8)
-        XCTAssertEqual(p.longestLongRunMeters / 1000, 11.86, accuracy: 0.05)
-        XCTAssertEqual(p.fullBuildLongRunMeters / 1000, 20.25, accuracy: 0.01)
-        XCTAssertTrue(p.isUnderBuilt)
-        XCTAssertTrue(p.isShortened)
+        let shortfall = p.buildShortfall
+        XCTAssertEqual(shortfall?.longestLongRunMeters ?? 0, 11_860, accuracy: 50)
+        XCTAssertEqual(shortfall?.fullBuildLongRunMeters ?? 0, 20_250, accuracy: 10)
+        // The 16-week plan would climb from the same week 1 to the full build.
+        XCTAssertEqual(shortfall?.laterRaceDateHelps, true)
     }
 
-    func test_aBeginners5K_atFullLength_isUnderBuilt_butNotShortened() {
-        // 4.7 km at most, against the full build's 8 km.
-        let p = generator.generate(TrainingPlanInputs(
+    func test_aBeginners5K_isUnderBuilt_andALaterRaceDateWouldntHelp() {
+        // 4.7 km at most, against the full build's 8 km: the full 8-week
+        // plan from the 40% floor peaks at 59%.
+        let full = generator.generate(TrainingPlanInputs(
             goal: .fiveK, tier: .easy, vo2Max: 49.2, recentLongestRunMeters: 0
         ))
-        XCTAssertTrue(p.isUnderBuilt)
-        XCTAssertFalse(p.isShortened)
+        XCTAssertEqual(full.buildShortfall?.longestLongRunMeters ?? 0, 4_685, accuracy: 50)
+        XCTAssertEqual(full.buildShortfall?.laterRaceDateHelps, false)
+        // Five weeks out it's shorter still, and the full plan would fall
+        // short as well.
+        let short = generator.generate(TrainingPlanInputs(
+            goal: .fiveK, tier: .easy, vo2Max: 49.2,
+            goalDate: rampToday.addingTimeInterval(5 * 7 * 86_400),
+            recentLongestRunMeters: 0, today: rampToday
+        ))
+        XCTAssertEqual(short.weekCount, 6)
+        XCTAssertEqual(short.buildShortfall?.laterRaceDateHelps, false)
     }
 
     func test_fullPlans_andShortPlansFromTheUsualStart_areNotUnderBuilt() {
         for goal in RunningGoal.allCases {
             for tier in PlanTier.allCases {
-                let full = plan(goal, tier)
-                XCTAssertFalse(full.isUnderBuilt, "\(goal) \(tier)")
-                XCTAssertFalse(full.isShortened, "\(goal) \(tier)")
+                XCTAssertNil(plan(goal, tier).buildShortfall, "\(goal) \(tier)")
                 // Race three weeks out: four weeks, the first at the usual
                 // 70%, the most it builds to, which is where a full plan
                 // starts.
                 let short = racePlan(goal, tier, weeksOut: 3)
                 XCTAssertEqual(short.weekCount, 4, "\(goal) \(tier)")
-                XCTAssertFalse(short.isUnderBuilt, "\(goal) \(tier), race three weeks out")
-                XCTAssertTrue(short.isShortened, "\(goal) \(tier), race three weeks out")
+                XCTAssertNil(short.buildShortfall, "\(goal) \(tier), race three weeks out")
             }
         }
     }

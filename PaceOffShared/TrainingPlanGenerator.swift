@@ -950,18 +950,38 @@ extension TrainingPlan {
         TrainingPlanGenerator().peakRuns(goal: goal, tier: tier).longKm * 1000
     }
 
-    /// True when the plan can't build far: started low, from a runner's
+    /// How far short of a full build the plan stays, or nil when it
+    /// builds far enough.
+    public struct BuildShortfall: Sendable, Equatable {
+        /// The plan's longest long run, in meters.
+        public let longestLongRunMeters: Double
+        /// The long run a full build reaches, in meters.
+        public let fullBuildLongRunMeters: Double
+        /// True when a later race date would let it build fully: the plan
+        /// is shorter than the goal's full plan, which from the same week 1
+        /// would get there. A beginner's full 8-week 5K doesn't, so a later
+        /// race date wouldn't help it.
+        public let laterRaceDateHelps: Bool
+    }
+
+    /// Nil unless the plan can't build far: started low, from a runner's
     /// short recent runs, with too few weeks to climb at 10% a week, its
     /// longest run stays under where a full plan's week 1 starts (70% of
     /// the full build's long run). A beginner's marathon eight weeks out
     /// peaks near 12 km.
-    public var isUnderBuilt: Bool {
-        longestLongRunMeters < fullBuildLongRunMeters * TrainingPlanGenerator.defaultStartFraction - 1
-    }
-
-    /// True when the plan is shorter than the goal's full plan, to end on
-    /// race day: a later race date would give it more weeks.
-    public var isShortened: Bool {
-        weekCount < TrainingPlanGenerator().planWeeks(for: goal)
+    public var buildShortfall: BuildShortfall? {
+        let full = fullBuildLongRunMeters
+        let line = full * TrainingPlanGenerator.defaultStartFraction - 1
+        let longest = longestLongRunMeters
+        guard full > 0, longest < line else { return nil }
+        let generator = TrainingPlanGenerator()
+        let fullWeeks = generator.planWeeks(for: goal)
+        // Week 1's share of the full build, and how far the goal's full
+        // plan would climb from it.
+        let weekOne = weeks.first?.days.map(\.workout).first(where: { $0.kind == .long })?.distanceMeters ?? 0
+        let fullLengthPeak = generator.volumeCurve(weeks: fullWeeks, start: weekOne / full).max() ?? 0
+        return BuildShortfall(longestLongRunMeters: longest,
+                              fullBuildLongRunMeters: full,
+                              laterRaceDateHelps: weekCount < fullWeeks && fullLengthPeak * full >= line)
     }
 }
