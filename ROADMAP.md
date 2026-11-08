@@ -329,7 +329,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 - **Done when:** only `.fullName` is requested, and nothing reads an email.
 
 ### Q-03 · No empty state for a new runner
-- **Status:** todo
+- **Status:** done (PR #37)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** With no runs, or with Health access denied, Today shows a 3 km restart target and a skip count, and the evening "Last call" fires.
 - **Where:** `TodayViewModel`, `TodayView`, `PushTargetEngine` with zero runs, `NotificationScheduler`.
@@ -549,6 +549,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #37: Today with no runs (preview "Today (first run)"): the Log your first run card, its glass Open Health button on the blue card, and that it opens Health
 - [ ] PR #35: Plan tab with a race further out than the plan (preview "Plan tab — starts later"): "Starts 3 Mar" subtitle and hero, the First week card with no day marked, the Starts row; the plan detail's start line and Settings → Starts
 - [ ] PR #32: Today's Readiness card (chevron) and its screen: the verdict, the two signal cards with their grades (each opening its HRV / Resting HR screen), the rules card, and the not-enough-history state
 - [ ] PR #31: Today's Last 7 days card (chevron) and the week screen, with and without a plan: the bars and dashed plan lines, the plan card and its "Open training plan" button switching tabs, the day cards and their marks, a run opening its detail
@@ -564,6 +565,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · Q-03: no target and no pushes until Health holds a run; Today shows how to log a first run instead (PR #37)
 - 2026-11-08 · Q-02: Sign in with Apple asks only for the name, never the email (PR #36)
 - 2026-11-08 · R-07b: a race further out than the plan starts the plan later, so it ends on race day; the Plan tab says when it starts (PR #35)
 - 2026-11-08 · R-05: the long run takes at most 45 / 35 / 30% of a week with three / four / five runs, the cut going to the easy runs; week 1 starts from the runner's longest recent run (PR #34)
