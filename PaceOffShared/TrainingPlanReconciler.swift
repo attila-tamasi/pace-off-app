@@ -87,7 +87,10 @@ public struct TrainingPlanReconciler: Sendable {
     public func retunedPlan(_ plan: TrainingPlan,
                             toVDOT newVDOT: Double,
                             today: Date = Date()) -> TrainingPlan? {
-        guard let currentWeek = plan.currentWeekIndex(today: today) else { return nil }
+        // Before the plan starts every week is still ahead.
+        guard let currentWeek = plan.currentWeekIndex(today: today)
+                ?? (plan.startsLater(today: today) ? 0 : nil)
+        else { return nil }
         let drift = abs(newVDOT - plan.vdot)
         guard plan.usedBeginnerDefault || drift >= Self.vdotDriftThreshold else { return nil }
 

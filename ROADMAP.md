@@ -268,7 +268,8 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Tests cover it.
 
 ### R-07b · A race further out than the plan
-- **Status:** blocked: needs the owner's call. A race further out than the goal's default plan length (16 weeks for a marathon, 12 half, 10 10K, 8 5K) falls after the plan ends: the plan starts today and finishes before the race, so the race isn't in it. Which should it be? (a) Start the plan later so it ends on race day, with the Plan tab saying when it starts. (b) Start today and add base-building weeks before the build. (c) Keep it as it is.
+- **Status:** todo
+- **Decision (Claude, 2026-11-08, on the owner's "nem kell approval"):** option (a), start the plan later so it ends on race day. It's how race plans usually work, it keeps the plan's length the one the goal needs, and the weeks before it aren't empty: Today's daily target keeps the runner going. (b) base-building weeks before the build would make a plan of any length, up to a year; the owner can switch to it here.
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** The goal date is the race only when the plan's weeks can reach it (R-07a). A closer race ends the plan; a farther one doesn't.
 - **Where:** `TrainingPlanGenerator.generate` (`raceDay`, `start`), `planWeeks(for:goalDate:today:)`; `PlanTabView` before a plan starts.

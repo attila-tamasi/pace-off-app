@@ -114,6 +114,23 @@ final class TrainingPlanReconcilerTests: XCTestCase {
         XCTAssertNil(reconciler.retunedPlan(plan, toVDOT: 55, today: afterEnd))
     }
 
+    func test_retune_beforeThePlanStarts_repacesEveryWeek() {
+        // A race further out than the plan starts it later; until then
+        // every week is ahead, so all of them take the new paces.
+        let race = day(26 * 7)
+        let plan = generator.generate(TrainingPlanInputs(
+            goal: .marathon, tier: .medium, vo2Max: 50, goalDate: race, today: monday
+        ))
+        XCTAssertTrue(plan.startsLater(today: monday))
+        let retuned = reconciler.retunedPlan(plan, toVDOT: 54, today: monday)
+        XCTAssertNotNil(retuned)
+        let fresh = generator.generate(TrainingPlanInputs(
+            goal: .marathon, tier: .medium, vo2Max: 54, goalDate: race, today: monday
+        ))
+        XCTAssertEqual(retuned?.weeks, fresh.weeks)
+        XCTAssertEqual(retuned?.startDate, plan.startDate)
+    }
+
     func test_retune_fires_whenDriftAtThreshold() {
         let plan = makePlan()
         XCTAssertNotNil(reconciler.retunedPlan(plan, toVDOT: 51.0, today: monday))
