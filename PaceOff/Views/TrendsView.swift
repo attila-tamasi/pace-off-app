@@ -23,7 +23,11 @@ struct TrendsView: View {
                     unit: "ml/kg/min",
                     layout: .compact
                 ) {
-                    vo2MaxChart.frame(height: 150).padding(.top, 6)
+                    if recentVO2.isEmpty {
+                        emptyChart("No VO₂ max readings in the last 28 days. Apple Watch records one on outdoor runs and walks.")
+                    } else {
+                        vo2MaxChart.frame(height: 150).padding(.top, 6)
+                    }
                 }
                 MetricCard(
                     title: "Weekly distance",
@@ -34,7 +38,11 @@ struct TrendsView: View {
                     unit: "km this week",
                     layout: .compact
                 ) {
-                    weeklyDistanceChart.frame(height: 150).padding(.top, 6)
+                    if weeklyDistances.isEmpty {
+                        emptyChart("No runs in the last 12 weeks. Runs saved to Apple Health show up here.")
+                    } else {
+                        weeklyDistanceChart.frame(height: 150).padding(.top, 6)
+                    }
                 }
                 MetricCard(
                     title: "Pace",
@@ -45,7 +53,11 @@ struct TrendsView: View {
                     unit: "/km avg",
                     layout: .compact
                 ) {
-                    paceChart.frame(height: 150).padding(.top, 6)
+                    if recentPacedRuns.isEmpty {
+                        emptyChart("No runs with a pace in the last 28 days.")
+                    } else {
+                        paceChart.frame(height: 150).padding(.top, 6)
+                    }
                 }
             }
             .padding(16)
@@ -54,6 +66,16 @@ struct TrendsView: View {
         .navigationTitle("Trends")
         .task { await load() }
         .refreshable { await load() }
+    }
+
+    /// What a card shows in place of its chart when there's nothing to draw.
+    private func emptyChart(_ text: String) -> some View {
+        Text(text)
+            .font(.system(.footnote, design: .rounded))
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, minHeight: 60, alignment: .leading)
+            .padding(.top, 6)
     }
 
     // MARK: - VO₂ max

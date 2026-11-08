@@ -45,6 +45,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 - `HistoryView` — list of past runs from Health
 - `RunDetailView` — opened from History, Today's run and Last run: the route, then every figure Health recorded (start–end time, duration, pace, speed, heart rate average / max / min, energy, elevation gain and loss, steps, weather, indoor or outdoor, METs), heart rate over time, the elevation profile, per-km splits with pace, heart rate and elapsed time, and running dynamics. A figure Health didn't record is left out
 - `TrendsView` — weekly mileage + pace charts
+- Trends: VO₂ max (28 days), weekly distance (12 weeks) and pace (28 days) cards, each with a line saying what's missing when it has nothing to draw
 - `VO2MaxDetailView` — 12-month VO₂ max chart; its trend line and "what it means" copy say what today's target does with the trend
 - `WeekDetailView` — opened from Today's Last 7 days card: the week's distance and streak, a bar per day with the plan's distance dashed across it, sessions done and distance against the plan with a button to the Plan tab, and each day with its plan workout (done, still to do, missed or rest) and its runs, which open their detail (`WeekReview` in `PaceOffShared`)
 - `HeartTrendDetailView` — HRV and resting heart rate, opened from their Today cards: the latest reading against the baseline the readiness card uses (30-day HRV, 14-day resting HR), a Week / Month / 3 Months chart with the baseline marked, the readiness thresholds, and what the number means (`HeartTrend` in `PaceOffShared`)
@@ -62,7 +63,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 - Time-of-day-based status dot; no live "in-progress run" state yet
 
 ### 9. Profile + preferences
-- Identity hero, goal + PB + prediction card, active training-plan card, notification / voice / health preferences
+- Identity hero (photo, name, age), goal + PB + prediction card, active training-plan card, notification / voice / health preferences. Each fact appears once: the goal, PB and race-day countdown live only in the goal card. The prediction is worked out again when the goal, race day, PB or birthday changes, or when a fresh Health read lands
 - Legal (T&C, Privacy, licenses), delete-my-data path, sign-out
 - Notifications: a "Daily pushes" switch (App Group `notificationsEnabled`, on until turned off) and the morning / afternoon / evening times, shown as they fire (the afternoon push at half past its hour, from `DailyPushPlanner.Schedule.time(of:)`). A change reschedules today's pushes at once, from the day's last scheduling inputs when they're today's, else from a fresh refresh. Turning the switch on when iOS was never asked ("Not now" in onboarding sets it off) asks then; when iOS was told no, Profile points to Settings. With the switch off, nothing is scheduled and pending notices go, the plan-retune one included
 
