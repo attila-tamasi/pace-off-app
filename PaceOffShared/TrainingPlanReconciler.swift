@@ -72,6 +72,47 @@ public struct TrainingPlanReconciler: Sendable {
         return PlanDayStatus(workout: workout, isCompleted: done)
     }
 
+    // MARK: Before the start
+
+    /// A plan built for a far-off race starts later (`startsLater`), and
+    /// until it does nothing of it has been run. So it's rebuilt from the
+    /// runner as they are now: paces from today's VDOT and week 1 from
+    /// their longest recent run, for the same race day, keeping its
+    /// identity. Returns nil once the plan has started (from then on
+    /// `retunedPlan` re-paces it), or when the rebuild changes nothing.
+    public func rebuiltBeforeStart(_ plan: TrainingPlan,
+                                   vo2Max: Double?,
+                                   personalBest: PersonalBest?,
+                                   recentLongestRunMeters: Double?,
+                                   today: Date = Date()) -> TrainingPlan? {
+        guard plan.startsLater(today: today) else { return nil }
+        let fresh = TrainingPlanGenerator().generate(TrainingPlanInputs(
+            goal: plan.goal,
+            tier: plan.tier,
+            longRunDay: plan.longRunDay,
+            vo2Max: vo2Max,
+            personalBest: personalBest,
+            goalDate: plan.lastDay,
+            recentLongestRunMeters: recentLongestRunMeters,
+            today: today
+        ))
+        guard fresh.weeks != plan.weeks
+                || fresh.vdot != plan.vdot
+                || fresh.startDate != plan.startDate
+        else { return nil }
+        return TrainingPlan(
+            id: plan.id,
+            goal: plan.goal,
+            tier: plan.tier,
+            longRunDay: plan.longRunDay,
+            weeks: fresh.weeks,
+            vdot: fresh.vdot,
+            usedBeginnerDefault: fresh.usedBeginnerDefault,
+            createdAt: plan.createdAt,
+            startDate: fresh.startDate
+        )
+    }
+
     // MARK: Retune
 
     /// Rebuild the remaining weeks' pace bands around `newVDOT`. Returns nil
@@ -87,10 +128,7 @@ public struct TrainingPlanReconciler: Sendable {
     public func retunedPlan(_ plan: TrainingPlan,
                             toVDOT newVDOT: Double,
                             today: Date = Date()) -> TrainingPlan? {
-        // Before the plan starts every week is still ahead.
-        guard let currentWeek = plan.currentWeekIndex(today: today)
-                ?? (plan.startsLater(today: today) ? 0 : nil)
-        else { return nil }
+        guard let currentWeek = plan.currentWeekIndex(today: today) else { return nil }
         let drift = abs(newVDOT - plan.vdot)
         guard plan.usedBeginnerDefault || drift >= Self.vdotDriftThreshold else { return nil }
 

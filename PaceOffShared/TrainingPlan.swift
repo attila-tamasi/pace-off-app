@@ -289,6 +289,25 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
         Calendar.current.startOfDay(for: startDate ?? createdAt)
     }
 
+    /// The plan's last day: race day, for a plan built for one.
+    public var lastDay: Date {
+        Calendar.current.date(byAdding: .day, value: weeks.count * 7 - 1, to: firstDay) ?? firstDay
+    }
+
+    /// The first day for display: "3 Mar", or "Tuesday, 3 March" with
+    /// `long`. The year is added when it isn't `today`'s, so a start more
+    /// than a year out can't pass for a nearer one.
+    public func firstDayText(long: Bool = false, today: Date = Date()) -> String {
+        let cal = Calendar.current
+        var style = long
+            ? Date.FormatStyle().weekday(.wide).day().month(.wide)
+            : Date.FormatStyle().day().month(.abbreviated)
+        if cal.component(.year, from: firstDay) != cal.component(.year, from: today) {
+            style = style.year()
+        }
+        return firstDay.formatted(style)
+    }
+
     /// True while the plan hasn't begun: it was built for a race further
     /// out than its length, so week 1 starts on a later day.
     public func startsLater(today: Date = Date()) -> Bool {

@@ -27,9 +27,12 @@ private struct ActivePlanView: View {
 
     @State private var settingsPresented = false
 
-    private var weekIndex: Int? { plan.currentWeekIndex() }
-    private var startsLater: Bool { plan.startsLater() }
-    private var today: Weekday { Weekday(date: Date()) }
+    /// One clock read per render, so every part of the screen agrees on
+    /// the day, even across midnight.
+    let now = Date()
+    private var weekIndex: Int? { plan.currentWeekIndex(today: now) }
+    private var startsLater: Bool { plan.startsLater(today: now) }
+    private var today: Weekday { Weekday(date: now) }
 
     var body: some View {
         ScrollView {
@@ -75,7 +78,7 @@ private struct ActivePlanView: View {
     /// before it begins.
     private var subtitle: String {
         if startsLater {
-            return "\(plan.displayName) · Starts \(plan.firstDay.formatted(.dateTime.day().month()))"
+            return "\(plan.displayName) · Starts \(plan.firstDayText(today: now))"
         }
         guard let weekIndex else { return plan.displayName }
         return "\(plan.displayName) · Week \(weekIndex + 1) of \(plan.weekCount)"
@@ -84,7 +87,7 @@ private struct ActivePlanView: View {
     // MARK: - Today
 
     private var todayHero: some View {
-        let workout = plan.todayWorkout()
+        let workout = plan.todayWorkout(today: now)
 
         return VStack(alignment: .leading, spacing: 8) {
             Text("TODAY")
@@ -127,15 +130,14 @@ private struct ActivePlanView: View {
     }
 
     private func heroTitle(_ workout: Workout?) -> String {
-        if startsLater { return "Starts \(plan.firstDay.formatted(.dateTime.day().month()))" }
+        if startsLater { return "Starts \(plan.firstDayText(today: now))" }
         guard let workout else { return "No session" }
         return workout.kind == .rest ? "Rest day" : workout.kind.displayName
     }
 
     private func heroDetail(_ workout: Workout?) -> String {
         if startsLater {
-            let day = plan.firstDay.formatted(.dateTime.weekday(.wide).day().month(.wide))
-            return "Week 1 of \(plan.weekCount) begins on \(day), so the plan ends on race day. Until then, Today's target keeps you running."
+            return "Week 1 of \(plan.weekCount) begins on \(plan.firstDayText(long: true, today: now)), so the plan ends on race day. Until then, Today's target keeps you running."
         }
         guard let workout else {
             return weekIndex == nil
@@ -215,9 +217,9 @@ private struct ActivePlanView: View {
             .buttonStyle(.plain)
             Divider().padding(.leading, 16)
             if startsLater {
-                planRow("Starts", value: plan.firstDay.formatted(.dateTime.weekday().day().month()))
+                planRow("Starts", value: plan.firstDayText(today: now))
             } else {
-                planRow("Weeks left", value: "\(plan.weeksRemaining())")
+                planRow("Weeks left", value: "\(plan.weeksRemaining(today: now))")
             }
             Divider().padding(.leading, 16)
             planRow("Runs per week", value: "\(plan.tier.runsPerWeek)")

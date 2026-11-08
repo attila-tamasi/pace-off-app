@@ -70,7 +70,7 @@ struct TrainingPlanDetailView: View {
                     Image(systemName: "calendar.badge.clock")
                         .font(.system(.caption, weight: .semibold))
                         .foregroundStyle(.secondary)
-                    Text("Starts \(plan.firstDay.formatted(.dateTime.weekday(.wide).day().month(.wide))), so it ends on race day.")
+                    Text("Starts \(plan.firstDayText(long: true)), so it ends on race day.")
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
                 }

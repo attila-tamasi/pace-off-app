@@ -114,21 +114,60 @@ final class TrainingPlanReconcilerTests: XCTestCase {
         XCTAssertNil(reconciler.retunedPlan(plan, toVDOT: 55, today: afterEnd))
     }
 
-    func test_retune_beforeThePlanStarts_repacesEveryWeek() {
-        // A race further out than the plan starts it later; until then
-        // every week is ahead, so all of them take the new paces.
+    // MARK: - Before the start
+
+    private func farRacePlan(vo2Max: Double = 50, longest: Double? = nil) -> (TrainingPlan, Date) {
         let race = day(26 * 7)
         let plan = generator.generate(TrainingPlanInputs(
-            goal: .marathon, tier: .medium, vo2Max: 50, goalDate: race, today: monday
+            goal: .marathon, tier: .medium, vo2Max: vo2Max, goalDate: race,
+            recentLongestRunMeters: longest, today: monday
         ))
+        return (plan, race)
+    }
+
+    func test_retune_waitsForThePlanToStart() {
+        // A race further out than the plan starts it later; until then
+        // the plan is rebuilt, not retuned, so no retune push goes out.
+        let (plan, _) = farRacePlan()
         XCTAssertTrue(plan.startsLater(today: monday))
-        let retuned = reconciler.retunedPlan(plan, toVDOT: 54, today: monday)
-        XCTAssertNotNil(retuned)
+        XCTAssertNil(reconciler.retunedPlan(plan, toVDOT: 54, today: monday))
+    }
+
+    func test_rebuildBeforeStart_takesTodaysFitness_forTheSameRace() {
+        let (plan, race) = farRacePlan(vo2Max: 50, longest: 5_000)
+        let later = day(60)  // still before the start
+        XCTAssertTrue(plan.startsLater(today: later))
+        let rebuilt = reconciler.rebuiltBeforeStart(plan, vo2Max: 54, personalBest: nil,
+                                                    recentLongestRunMeters: 15_000, today: later)
         let fresh = generator.generate(TrainingPlanInputs(
-            goal: .marathon, tier: .medium, vo2Max: 54, goalDate: race, today: monday
+            goal: .marathon, tier: .medium, vo2Max: 54, goalDate: race,
+            recentLongestRunMeters: 15_000, today: later
         ))
-        XCTAssertEqual(retuned?.weeks, fresh.weeks)
-        XCTAssertEqual(retuned?.startDate, plan.startDate)
+        XCTAssertEqual(rebuilt?.weeks, fresh.weeks)
+        XCTAssertEqual(rebuilt?.vdot, 54)
+        // Same plan, same race day.
+        XCTAssertEqual(rebuilt?.id, plan.id)
+        XCTAssertEqual(rebuilt?.createdAt, plan.createdAt)
+        XCTAssertEqual(rebuilt?.startDate, plan.startDate)
+        XCTAssertEqual(rebuilt?.todayWorkout(today: race)?.kind, .race)
+        XCTAssertEqual(plan.lastDay, cal.startOfDay(for: race))
+    }
+
+    func test_rebuildBeforeStart_isNil_whenNothingChanges_orOnceStarted() {
+        let (plan, _) = farRacePlan(vo2Max: 50, longest: 5_000)
+        XCTAssertNil(reconciler.rebuiltBeforeStart(plan, vo2Max: 50, personalBest: nil,
+                                                   recentLongestRunMeters: 5_000, today: monday))
+        let started = plan.firstDay
+        XCTAssertNil(reconciler.rebuiltBeforeStart(plan, vo2Max: 54, personalBest: nil,
+                                                   recentLongestRunMeters: 15_000, today: started))
+    }
+
+    func test_firstDayText_addsTheYear_onlyWhenItIsntThisYears() {
+        let (plan, _) = farRacePlan()
+        let sameYear = plan.firstDayText(today: plan.firstDay)
+        XCTAssertFalse(sameYear.contains(String(cal.component(.year, from: plan.firstDay))))
+        let yearBefore = cal.date(byAdding: .year, value: -1, to: plan.firstDay)!
+        XCTAssertTrue(plan.firstDayText(today: yearBefore).contains(String(cal.component(.year, from: plan.firstDay))))
     }
 
     func test_retune_fires_whenDriftAtThreshold() {
