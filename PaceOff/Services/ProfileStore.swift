@@ -116,8 +116,6 @@ public final class ProfileStore {
 
     // MARK: - Sign out
 
-    /// Clear the on-device profile and signal the app shell to return the
-    /// user to the auth gate. Apple Health data is untouched.
     /// Signs out by deleting everything, the same as "Delete my data": the
     /// app keeps nothing of a runner it no longer knows.
     public func signOut() {
@@ -131,9 +129,11 @@ public final class ProfileStore {
     public func deleteAllData() {
         photo = nil
         profile = nil
-        TrainingPlanStore.shared.clear()
-        Task { await HealthDataCache.shared.clear() }
+        HealthKitService.shared.stopObservingHealthUpdates()
+        // Erasing first clears the setup flag, so a refresh still running
+        // writes nothing back (it checks AppGroup.isRunnerSetUp).
         AppGroup.eraseAll(defaults: defaults, containerURL: AppGroup.containerURL)
+        TrainingPlanStore.shared.clear()
         NotificationScheduler.shared.cancelAll()
         WidgetCenter.shared.reloadAllTimelines()
         NotificationCenter.default.post(name: .paceOffSignOut, object: nil)

@@ -40,9 +40,18 @@ public enum AppGroup {
     /// Every App Group defaults key Pace Off writes starts with this.
     public static let keyPrefix = "paceoff."
 
+    /// Filename of the active training plan's JSON in the container.
+    public static let trainingPlanFilename = "training-plan.json"
+
+    /// Whether a runner is set up (onboarding done). Nothing about a runner
+    /// is computed, cached or shown before, or after they delete their data.
+    public static var isRunnerSetUp: Bool {
+        sharedDefaults?.bool(forKey: Keys.onboardingComplete) == true
+    }
+
     /// The files Pace Off writes in the container: the active plan, the
     /// Health snapshot and the profile photo.
-    public static let containerFiles = ["training-plan.json", "health-cache.json", profilePhotoFilename]
+    public static let containerFiles = [trainingPlanFilename, HealthDataCache.filename, profilePhotoFilename]
 
     /// Erases everything Pace Off keeps in the App Group, for "Delete my
     /// data" and sign-out: every `keyPrefix` defaults key (profile, flags,
