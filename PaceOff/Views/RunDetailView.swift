@@ -105,6 +105,7 @@ struct RunDetailView: View {
                     } else {
                         Image(systemName: "mappin.slash")
                             .scaledFont(size: 36, weight: .light)
+                            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                             .foregroundStyle(.secondary)
                         Text("No route recorded")
                             .font(.system(.headline, design: .rounded, weight: .semibold))
@@ -194,6 +195,8 @@ struct RunDetailView: View {
                 .foregroundStyle(.secondary)
             Text(String(format: "%.2f km", run.distanceKm))
                 .scaledFont(size: 56, weight: .bold, design: .rounded)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
             Text("\(run.formattedPace) · \(run.formattedDuration)")
                 .font(.system(.title3, design: .rounded))
                 .foregroundStyle(.secondary)

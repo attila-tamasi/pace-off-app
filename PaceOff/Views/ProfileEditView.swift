@@ -111,6 +111,7 @@ struct ProfilePhotoPicker: View {
                             Circle().fill(Color(.secondarySystemBackground))
                             Image(systemName: "person.fill")
                                 .scaledFont(size: 44)
+                                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -121,6 +122,7 @@ struct ProfilePhotoPicker: View {
 
                 Image(systemName: "camera.fill")
                     .scaledFont(size: 13, weight: .semibold)
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     .foregroundStyle(.white)
                     .padding(8)
                     .background(Color.accentColor, in: Circle())

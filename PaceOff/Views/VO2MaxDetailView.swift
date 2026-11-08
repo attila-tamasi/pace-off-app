@@ -45,6 +45,8 @@ struct VO2MaxDetailView: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(latestValueText)
                     .scaledFont(size: 64, weight: .bold, design: .rounded)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
                 Text("ml/kg·min")
@@ -128,6 +130,7 @@ struct VO2MaxDetailView: View {
         VStack(spacing: 8) {
             Image(systemName: "lungs")
                 .scaledFont(size: 36)
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 .foregroundStyle(.secondary)
             Text("No VO₂ max data yet")
                 .font(.system(.headline, design: .rounded))

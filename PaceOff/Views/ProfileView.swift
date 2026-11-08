@@ -136,6 +136,7 @@ struct ProfileView: View {
                     Circle().fill(Color.accentColor.opacity(0.15))
                     Image(systemName: "person.fill")
                         .scaledFont(size: 52, weight: .regular)
+                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                         .foregroundStyle(Color.accentColor)
                 }
             }
@@ -216,6 +217,8 @@ struct ProfileView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(goal.displayName)
                         .scaledFont(size: 30, weight: .bold, design: .rounded)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                     Text(String(format: "%.1f km", goal.distanceKm))
                         .font(.system(.subheadline, design: .rounded, weight: .medium))
                         .foregroundStyle(.secondary)
@@ -267,6 +270,8 @@ struct ProfileView: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(p.formattedProjectedTime)
                     .scaledFont(size: 38, weight: .bold, design: .rounded)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                     .contentTransition(.numericText())
                 Text(p.formattedProjectedPace)
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
@@ -522,6 +527,7 @@ struct ProfileView: View {
                     .fill(color.opacity(0.18))
                 Image(systemName: icon)
                     .scaledFont(size: 14, weight: .semibold)
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     .foregroundStyle(color)
             }
             .frame(width: 30, height: 30)

@@ -100,6 +100,8 @@ struct BrandSloganStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .scaledFont(size: 36, weight: .heavy, design: .rounded)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
             .foregroundStyle(.white)
             .multilineTextAlignment(.center)
             .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 2)

@@ -45,6 +45,8 @@ struct WeekDetailView: View {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(String(format: "%.1f", week.totalKm))
                     .scaledFont(size: 64, weight: .bold, design: .rounded)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                     .contentTransition(.numericText())
                 Text("km")
                     .font(.system(.body, design: .rounded, weight: .medium))

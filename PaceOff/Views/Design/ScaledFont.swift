@@ -37,19 +37,21 @@ extension View {
 
 extension Font.TextStyle {
     /// The text style whose default size is nearest `size`, so a design size
-    /// scales the way text of about that size does.
+    /// scales the way text of about that size does. The cut-offs sit
+    /// halfway between the default sizes (11, 12, 13, 15, 16, 17, 20, 22,
+    /// 28, 34 pt).
     static func nearest(to size: CGFloat) -> Font.TextStyle {
         switch size {
-        case ..<12:  return .caption2
-        case ..<13:  return .caption
-        case ..<15:  return .footnote
-        case ..<16:  return .subheadline
-        case ..<17:  return .callout
-        case ..<20:  return .body
-        case ..<22:  return .title3
-        case ..<28:  return .title2
-        case ..<34:  return .title
-        default:     return .largeTitle
+        case ..<11.5: return .caption2
+        case ..<12.5: return .caption
+        case ..<14:   return .footnote
+        case ..<15.5: return .subheadline
+        case ..<16.5: return .callout
+        case ..<18.5: return .body
+        case ..<21:   return .title3
+        case ..<25:   return .title2
+        case ..<31:   return .title
+        default:      return .largeTitle
         }
     }
 }

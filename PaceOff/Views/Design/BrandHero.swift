@@ -41,6 +41,8 @@ struct BrandHero<Footer: View>: View {
 
                     Text("Pace Off")
                         .scaledFont(size: 40, weight: .heavy, design: .rounded)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 2)
 
@@ -81,7 +83,8 @@ struct BrandHero<Footer: View>: View {
             sloganOpacity = 1
             sloganOffset = 0
         }
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.78).delay(0.55)) {
+        withAnimation(reduceMotion ? .easeInOut(duration: 0.4).delay(0.55)
+                                   : .spring(response: 0.6, dampingFraction: 0.78).delay(0.55)) {
             footerOpacity = 1
             footerOffset = 0
         }

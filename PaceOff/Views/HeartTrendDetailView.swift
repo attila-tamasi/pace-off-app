@@ -50,6 +50,8 @@ struct HeartTrendDetailView: View {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(trend.latest.map { "\(Int($0.value.rounded()))" } ?? "—")
                     .scaledFont(size: 64, weight: .bold, design: .rounded)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                     .contentTransition(.numericText())
                 Text(copy.unit)
                     .font(.system(.body, design: .rounded, weight: .medium))
@@ -220,6 +222,7 @@ struct HeartTrendDetailView: View {
         VStack(spacing: 8) {
             Image(systemName: copy.symbol)
                 .scaledFont(size: 36)
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 .foregroundStyle(.secondary)
             Text(copy.emptyTitle)
                 .font(.system(.headline, design: .rounded))
