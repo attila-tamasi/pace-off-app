@@ -62,6 +62,8 @@ struct TodayView: View {
         .navigationDestination(for: TodayDestination.self) { dest in
             switch dest {
             case .vo2Max: VO2MaxDetailView()
+            case .hrv: HeartTrendDetailView(metric: .hrv)
+            case .restingHeartRate: HeartTrendDetailView(metric: .restingHeartRate)
             }
         }
     }
@@ -208,34 +210,43 @@ struct TodayView: View {
                 readinessCard(readiness)
             }
             HStack(alignment: .top, spacing: 10) {
-                MetricCard(
-                    title: "HRV",
-                    systemImage: "heart.fill",
-                    tint: .pink,
-                    value: todayVM.yesterdayHRV.map { "\(Int($0.rounded()))" } ?? "—",
-                    unit: "ms",
-                    note: "Yesterday",
-                    layout: .compact
-                ) {
-                    if todayVM.hrvTrend.count > 1 {
-                        Sparkline(points: todayVM.hrvTrend, tint: .pink)
-                            .frame(height: 30)
+                NavigationLink(value: TodayDestination.hrv) {
+                    MetricCard(
+                        title: "HRV",
+                        systemImage: "heart.fill",
+                        tint: .pink,
+                        showsChevron: true,
+                        value: todayVM.yesterdayHRV.map { "\(Int($0.rounded()))" } ?? "—",
+                        unit: "ms",
+                        note: "Yesterday",
+                        layout: .compact
+                    ) {
+                        if todayVM.hrvTrend.count > 1 {
+                            Sparkline(points: todayVM.hrvTrend, tint: .pink)
+                                .frame(height: 30)
+                        }
                     }
                 }
-                MetricCard(
-                    title: "Resting HR",
-                    systemImage: "heart.fill",
-                    tint: .pink,
-                    value: todayVM.latestRestingHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
-                    unit: "bpm",
-                    note: todayVM.yesterdayAvgHeartRate.map { "Avg yesterday \(Int($0.rounded())) bpm" },
-                    layout: .compact
-                ) {
-                    if todayVM.restingHRTrend.count > 1 {
-                        Sparkline(points: todayVM.restingHRTrend, tint: .pink)
-                            .frame(height: 30)
+                .buttonStyle(.plain)
+
+                NavigationLink(value: TodayDestination.restingHeartRate) {
+                    MetricCard(
+                        title: "Resting HR",
+                        systemImage: "heart.fill",
+                        tint: .pink,
+                        showsChevron: true,
+                        value: todayVM.latestRestingHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
+                        unit: "bpm",
+                        note: todayVM.yesterdayAvgHeartRate.map { "Avg yesterday \(Int($0.rounded())) bpm" },
+                        layout: .compact
+                    ) {
+                        if todayVM.restingHRTrend.count > 1 {
+                            Sparkline(points: todayVM.restingHRTrend, tint: .pink)
+                                .frame(height: 30)
+                        }
                     }
                 }
+                .buttonStyle(.plain)
             }
             .fixedSize(horizontal: false, vertical: true)
         }
@@ -510,6 +521,8 @@ private struct ProfileAvatar: View {
 
 private enum TodayDestination: Hashable {
     case vo2Max
+    case hrv
+    case restingHeartRate
 }
 
 #if DEBUG

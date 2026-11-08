@@ -31,6 +31,90 @@ The items come from the full code review of 2026-10-18, re-checked against the s
 
 ---
 
+## Now · Owner's request (2026-11-08)
+
+Three requests the owner put ahead of the waves, in their order:
+1. Every card on Today opens a detail screen (F-09).
+2. A morning weather check that says what to run and when (F-10).
+3. Kettlebell or free-weight cross training in the plan (F-11).
+
+Each is split into one PR per sub-item.
+
+### F-09a · HRV and Resting HR detail screens
+- **Status:** todo
+- **Size:** M   ·   **Merge:** auto
+- **Problem:** The HRV and Resting HR cards on Today are dead ends: no history, no baseline, nothing on how they feed readiness.
+- **Where:** `TodayView` (`recoverySection`); `VO2MaxDetailView` (the pattern to follow); `HealthKitService.fetchHRVSeries` / `fetchRestingHeartRate`; `ReadinessEngine` (baselines and thresholds).
+- **Done when:**
+  - Tapping either card opens its detail screen, and the card shows a chevron.
+  - Each screen shows the latest value against the baseline readiness uses (30-day HRV, 14-day resting HR), a chart with Week / Month / 3 Months ranges with the baseline marked, and what the number means and how Pace Off uses it.
+  - The numbers come from a pure, tested function in `PaceOffShared` that agrees with `ReadinessEngine`.
+  - Empty and short-history states read sensibly.
+
+### F-09b · Last run opens the whole workout
+- **Status:** todo
+- **Size:** M   ·   **Merge:** auto
+- **Problem:** The Last run card has no detail. Today's run opens `RunDetailView`, but that shows only part of what Health records for a workout.
+- **Where:** `TodayView` (Last run card); `RunDetailView`; `HealthKitService` (`toRunRecord`, `fetchRunLocations`, `fetchHeartRateSamples`); `RunRecord`.
+- **Done when:**
+  - Tapping Last run opens that run's detail (and the card shows a chevron).
+  - The detail shows everything Health holds for the workout: start and end time, duration, distance, average pace and speed, heart rate (average, maximum, minimum) with a chart over time, energy, elevation gain with a profile, splits per km with pace and heart rate, cadence and steps, running dynamics (power, stride, vertical oscillation, ground contact), and weather and indoor/outdoor when recorded.
+  - A field Health didn't record is left out, not shown as a dash.
+
+### F-09c · Last 7 days opens the week
+- **Status:** todo
+- **Size:** M   ·   **Merge:** auto
+- **Problem:** The Last 7 days card has no detail.
+- **Decision (owner left it open, 2026-11-08):** a week screen rather than a jump to the Plan tab, because it works without a plan too, where the Plan tab would only offer to pick one. With a plan active it shows the plan beside the runs and links to the Plan tab.
+- **Where:** `TodayView`; `TodayViewModel.weekDistances`; `TrainingPlanReconciler`; `RootView` (switching to the Plan tab); `RunDetailView`.
+- **Done when:**
+  - Tapping the card opens a screen with each of the last seven days: its runs (each opens its detail) or rest, and the week's total and streak.
+  - With a plan active, each day shows its plan workout and whether a run covered it, the week's total against the plan's, and a button to the Plan tab.
+  - The day-by-day matching is a pure, tested function; it shares the completion rule with `TrainingPlanReconciler` (F-04 can reuse it for past weeks).
+
+### F-09d · Readiness explains itself
+- **Status:** todo
+- **Size:** S   ·   **Merge:** auto
+- **Problem:** Not in the owner's list, but "every card" covers it: the Readiness card says Ready / Ease off / Rest without what it compared.
+- **Where:** `TodayView` (`readinessCard`); `ReadinessEngine`; the F-09a screens.
+- **Done when:** tapping it opens a screen with today's HRV and resting HR against their baselines, the thresholds that set the colour, and links to the two F-09a screens.
+
+### F-10 · Morning weather: what to run, and when
+- **Status:** todo
+- **Size:** L   ·   **Merge:** see the sub-items
+- **Problem:** Pace Off says how far to run, not when. The owner wants the app to check each morning's forecast in the background and send a notification saying what to run and when.
+- **Approach:** WeatherKit (Apple's system framework: no third-party service, key or server of ours) and Core Location's When In Use permission at approximate accuracy. The background refresh fetches the day's hourly forecast; a pure planner picks the run's window; the morning push carries it. iOS decides when background refreshes run, so the push uses the last forecast fetched before it and leaves the weather out when that's over 12 hours old.
+- **Owner's part, before F-10b:** turn on WeatherKit for the app's App ID (developer.apple.com → Certificates, Identifiers & Profiles → Identifiers → the app → App Services → WeatherKit). Check the privacy label: the location goes only to Apple's WeatherKit, never to a server of ours, so *Data Not Collected* should still hold.
+- **Defaults (the owner can change them here):**
+  - Location is asked for from a Profile switch, "Weather-aware advice", off until turned on; not in onboarding.
+  - The window is within the runner's waking day (from the morning push hour to 21:00) and avoids rain, temperature over 25 °C or under −5 °C feels-like, strong wind and darkness, in that order.
+  - When the whole day is bad, the push names the least bad window and says so.
+  - Heat over 25 °C adds "go by effort, not pace" to the plan workout's pace band.
+- **Sub-items:**
+  - **F-10a · Run-window planner** (M, `auto`): a pure function in `PaceOffShared` that takes an hourly forecast (temperature, feels-like, precipitation chance and amount, wind, daylight) plus the day's run (plan workout or target; none on a rest day) and returns the window and a one-line reason ("Dry and 12 °C 07:00–09:00; rain from 16:00"). Tests: rain all afternoon, a hot midday, strong wind, rain all day, a rest day.
+  - **F-10b · Forecast in the morning push** (M, `review`: WeatherKit entitlement and a location privacy string): the Profile switch and location request, WeatherKit in `BackgroundRefreshService` and the foreground refresh, the forecast cached in the App Group, and `DailyPushPlanner`'s morning body leading with the window. Done when the morning push names the window whenever a fresh forecast exists, and reads exactly as today without location or forecast.
+
+### F-11 · Cross training: kettlebell or free weights in the plan
+- **Status:** todo
+- **Size:** L   ·   **Merge:** see the sub-items
+- **Problem:** The plan is running only, and the owner wants strength work in it, choosing kettlebell or free weights.
+- **Defaults (the owner can change them here):**
+  - The plan picker gets "Cross training: None / Kettlebell / Free weights", None by default; a saved plan without it decodes as None.
+  - Sessions a week: Easy 1, Medium 2, Aggressive 2.
+  - A session goes on a day without a run, never the day before the long run or a quality session, never two days in a row, and at least one full rest day stays in the week. When the week has no such day, it pairs with an easy run.
+  - A session is about 30–40 minutes of full-body, running-specific work:
+    - Kettlebell: swings, goblet squats, single-leg deadlifts, lunges, presses, carries.
+    - Free weights: squats, Romanian deadlifts, split squats, step-ups, calf raises, rows, core.
+  - Sessions ease off in the taper, and race week has none.
+  - A strength-only day is a rest day for running: no run push, and the morning push names the session.
+  - A strength workout recorded in Health that day ticks the session off.
+- **Sub-items:**
+  - **F-11a · Plan model and generator** (M, `auto`): `WorkoutKind.strength`, the cross-training choice on `TrainingPlanInputs` and `TrainingPlan`, placement, session templates and the taper, all in `TrainingPlanGenerator` with tests.
+  - **F-11b · Showing it** (M, `auto`): the picker option, the Plan tab and plan detail rows, Today's plan line, the push text and the widget.
+  - **F-11c · Done from Health** (M, `auto`): `HealthKitService` reads strength workouts (traditional and functional strength training; workouts are already readable, so no new permission) and `TrainingPlanReconciler` ticks the session off.
+
+---
+
 ## Wave 1 · Fixes (critical)
 
 These tell the runner the wrong thing or prescribe too much load. They go before any new feature.
