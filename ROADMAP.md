@@ -421,7 +421,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Previews at an accessibility size still lay out.
 
 ### Q-11 · The check-in card shows another day's "yesterday"
-- **Status:** todo
+- **Status:** done (PR #45)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** The cached snapshot stores yesterday's HRV and average heart rate as plain numbers. When Today renders a cache synced on an earlier day (cold launch, or a sync that kept the cache), the morning check-in card shows those values as yesterday's, though they belong to the day before the sync.
 - **Where:** `HealthDataSnapshot.yesterdayHRV` / `yesterdayAvgHeartRate` (`PaceOffShared/HealthDataCache.swift`); `TodayViewModel.applySnapshot`; the check-in card.
@@ -549,6 +549,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #45: Today's HRV and Resting HR cards: "Yesterday" / "Avg yesterday 58 bpm" after a sync today; after a cold launch on a cache from an earlier day, the weekday ("Thursday", "Avg Thursday 58 bpm"); a week-old cache shows no yesterday values
 - [ ] PR #44: at the largest accessibility text size: Today's hero, Plan, Week, VO₂ max, Heart trend and Run detail heroes, Profile's goal card, onboarding; onboarding with Reduce Motion; VoiceOver on the profile-photo picker
 - [ ] PR #43: Profile's hero without the chips and the goal card (PB row, race countdown with and without a prediction); Trends with no data
 - [ ] PR #42: Profile's Delete My Data button and confirmation, the reworded Sign Out confirmation; on a device, onboarding starts fresh afterwards and the widget shows "Open Pace Off"
@@ -572,6 +573,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · Q-11: yesterday's HRV and average heart rate name their own day when the cached snapshot was synced on an earlier day, and hide from a week back (PR #45)
 - 2026-11-08 · Q-10: the big custom font sizes follow Dynamic Type (scaledFont), the photo picker has a VoiceOver label, and repeating or sliding animations respect Reduce Motion (PR #44)
 - 2026-11-08 · Q-09: Profile shows the goal, PB and race day once and refreshes its prediction after a Health sync; Trends cards have empty states (PR #43)
 - 2026-11-08 · Q-08: Profile has Delete My Data; it and sign-out erase every App Group key and file, cancel every push and reset the widget (PR #42)
