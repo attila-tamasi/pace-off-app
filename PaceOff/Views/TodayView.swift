@@ -268,7 +268,7 @@ struct TodayView: View {
                         showsChevron: true,
                         value: todayVM.yesterdayHRV.map { "\(Int($0.rounded()))" } ?? "—",
                         unit: "ms",
-                        note: "Yesterday",
+                        note: todayVM.yesterdayValuesDayName?.capitalized,
                         layout: .compact
                     ) {
                         if todayVM.hrvTrend.count > 1 {
@@ -287,7 +287,9 @@ struct TodayView: View {
                         showsChevron: true,
                         value: todayVM.latestRestingHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
                         unit: "bpm",
-                        note: todayVM.yesterdayAvgHeartRate.map { "Avg yesterday \(Int($0.rounded())) bpm" },
+                        note: todayVM.yesterdayAvgHeartRate.flatMap { avg in
+                            todayVM.yesterdayValuesDayName.map { "Avg \($0) \(Int(avg.rounded())) bpm" }
+                        },
                         layout: .compact
                     ) {
                         if todayVM.restingHRTrend.count > 1 {
