@@ -13,18 +13,23 @@
 #
 # Without them the job still builds the app in Release for a device,
 # unsigned, so a Release-only compile error shows up on main, and then
-# stops before archiving with a notice. The build number is this
-# workflow's run number, so every upload is higher than the last.
+# stops before archiving with a notice. A pull request that changes this
+# workflow runs the same build, never the upload. The build number is
+# this workflow's run number, so every upload is higher than the last.
 
 name: TestFlight
 
 on:
   push:
     branches: [main]
+  pull_request:
+    paths:
+      - .github/workflows/testflight.yml
+      - ci/**
   workflow_dispatch:
 
 concurrency:
-  group: testflight
+  group: testflight-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -60,7 +65,10 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
         run: |
-          if [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -n "$ASC_KEY_P8" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=TestFlight upload skipped::Pull requests only build; main uploads."
+          elif [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ] && [ -n "$ASC_KEY_P8" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
