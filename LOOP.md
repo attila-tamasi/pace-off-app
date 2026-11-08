@@ -21,7 +21,7 @@ The owner can change these here.
 | Items per run | 1 | After merging one item, stop and report. |
 | Auto-merge | on, every item | Merge an item's PR once CI is green and the self-review is clean. Since 2026-11-08 every item is `auto`; the owner doesn't approve PRs. Off means every PR waits for the owner. |
 | Fix attempts | 3 | CI fix pushes on one PR before the item is marked `blocked`. |
-| Open review PRs | 2 | At most this many `Merge: review` PRs waiting for the owner. At the limit, only `auto` items are started. |
+| Open review PRs | 2 | Unused while every item is `auto`. If `Merge: review` comes back: at most this many such PRs waiting for the owner. |
 | Report language | Hungarian | The end-of-run report is for the owner. |
 
 ## One iteration
