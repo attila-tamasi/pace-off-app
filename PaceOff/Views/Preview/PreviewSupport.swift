@@ -15,7 +15,7 @@ extension UserProfile {
             displayName: "Alex Runner",
             birthday: Calendar.current.date(from: DateComponents(year: 1992, month: 4, day: 17)),
             goal: .halfMarathon,
-            personalBest: PersonalBest(durationSeconds: 5_482, year: 2024),
+            personalBest: PersonalBest(durationSeconds: 5_482, year: 2024, distance: .halfMarathon),
             appleUserID: "preview-user.000123",
             hasPhoto: false
         )
@@ -174,7 +174,7 @@ enum PreviewProfileStore {
         var profile = UserProfile.sample
         profile.goal = .marathon
         profile.goalDate = Calendar.current.date(byAdding: .weekOfYear, value: 14, to: Date())
-        profile.personalBest = PersonalBest(durationSeconds: 14_400, year: 2024) // 4:00:00
+        profile.personalBest = PersonalBest(durationSeconds: 14_400, year: 2024, distance: .marathon) // 4:00:00
         let store = ProfileStore()
         store.previewLoad(profile: profile, photo: nil)
         return store

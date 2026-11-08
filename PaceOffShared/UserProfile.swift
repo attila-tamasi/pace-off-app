@@ -56,31 +56,41 @@ public struct PersonalBest: Codable, Sendable, Equatable {
     public var durationSeconds: Double
     /// Calendar year the PB was achieved.
     public var year: Int
-    /// The race distance the time is for. Nil only on a PB saved before
-    /// distances were stored: `UserProfile` gives it the goal's distance
-    /// when it decodes, and callers read a nil as the goal's.
+    /// The race distance the time is for. Nil when it isn't known: a PB
+    /// saved before distances were stored whose time can't be the goal's
+    /// (see `UserProfile.init(from:)`). Such a PB isn't used until the
+    /// runner picks its distance in the editor.
     public var distance: RunningGoal?
 
-    public init(durationSeconds: Double, year: Int, distance: RunningGoal? = nil) {
+    public init(durationSeconds: Double, year: Int, distance: RunningGoal?) {
         self.durationSeconds = durationSeconds
         self.year = year
         self.distance = distance
     }
 
-    /// The runner's VDOT from this PB, over its own distance (the goal's
-    /// when it has none). Nil when Daniels' formula can't use the time.
-    public func vdot(goal: RunningGoal) -> Double? {
-        VDOTCalculator().vdot(fromRaceDistanceMeters: (distance ?? goal).distanceMeters,
-                              timeSeconds: durationSeconds)
+    /// The VDOT this time gives over `distance`, when it's a time a person
+    /// could run there (`VDOTCalculator.plausibleRange`).
+    static func plausibleVDOT(seconds: Double, over distance: RunningGoal) -> Double? {
+        guard seconds > 0,
+              let vdot = VDOTCalculator().vdot(fromRaceDistanceMeters: distance.distanceMeters, timeSeconds: seconds),
+              VDOTCalculator.plausibleRange.contains(vdot)
+        else { return nil }
+        return vdot
+    }
+
+    /// The runner's VDOT from this PB, over its own distance. Nil while the
+    /// distance is unknown, or for a time no one could run (a 0:00 or a
+    /// typo), so a bad PB never anchors anything.
+    public var vdot: Double? {
+        distance.flatMap { Self.plausibleVDOT(seconds: durationSeconds, over: $0) }
     }
 
     /// The time this PB is worth over `goal`'s distance: the time itself
     /// when it's for that distance, otherwise the time at the same VDOT
-    /// (Daniels' equivalent performance). Nil when it can't be converted.
+    /// (Daniels' equivalent performance). Nil when `vdot` is.
     public func equivalentSeconds(at goal: RunningGoal) -> Double? {
-        let own = distance ?? goal
-        if own == goal { return durationSeconds }
-        guard let vdot = vdot(goal: goal) else { return nil }
+        guard let vdot else { return nil }
+        if distance == goal { return durationSeconds }
         return VDOTCalculator().raceTimeSeconds(distanceMeters: goal.distanceMeters, vdot: vdot)
     }
 
@@ -146,16 +156,22 @@ public struct UserProfile: Codable, Sendable, Equatable {
         case displayName, birthday, goal, personalBest, goalDate, appleUserID, hasPhoto
     }
 
-    /// Decodes profiles of every earlier shape: optional fields that didn't
-    /// exist yet decode as nil, and a PB saved without a distance was the
-    /// goal's (the editor only took one for the goal), so it gets it.
+    /// Decodes profiles of every earlier shape: fields added later decode
+    /// as nil or false. A PB saved without a distance was entered for the
+    /// goal of the day, which may not be today's goal: it takes today's
+    /// only when its time is plausible there (a 1:31 half, not a 45:00
+    /// half). Otherwise its distance stays unknown and it isn't used until
+    /// the runner picks one.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        displayName = try c.decodeIfPresent(String.self, forKey: .displayName) ?? ""
+        displayName = try c.decode(String.self, forKey: .displayName)
         birthday = try c.decodeIfPresent(Date.self, forKey: .birthday)
-        goal = try c.decodeIfPresent(RunningGoal.self, forKey: .goal) ?? .tenK
+        goal = try c.decode(RunningGoal.self, forKey: .goal)
         var pb = try c.decodeIfPresent(PersonalBest.self, forKey: .personalBest)
-        if pb != nil, pb?.distance == nil { pb?.distance = goal }
+        if let old = pb, old.distance == nil,
+           PersonalBest.plausibleVDOT(seconds: old.durationSeconds, over: goal) != nil {
+            pb?.distance = goal
+        }
         personalBest = pb
         goalDate = try c.decodeIfPresent(Date.self, forKey: .goalDate)
         appleUserID = try c.decodeIfPresent(String.self, forKey: .appleUserID)

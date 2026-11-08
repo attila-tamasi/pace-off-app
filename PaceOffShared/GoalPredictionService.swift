@@ -216,7 +216,7 @@ public struct GoalPredictionService: Sendable {
         // The gap is to a PB over the goal's own distance; a converted one
         // isn't a time the runner ran.
         let gap: Double? = personalBest.flatMap { pb in
-            (pb.distance ?? goal) == goal ? projectedTime - pb.durationSeconds : nil
+            pb.distance == goal && pb.vdot != nil ? projectedTime - pb.durationSeconds : nil
         }
 
         return GoalPrediction(

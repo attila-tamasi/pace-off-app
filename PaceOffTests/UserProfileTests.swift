@@ -42,15 +42,25 @@ final class UserProfileTests: XCTestCase {
         // A 45:00 10K is VDOT 45.3: about 1:39:44 for the half, 3:27:15 for
         // the marathon. Used raw it would claim a 45-minute half.
         let pb = PersonalBest(durationSeconds: 2_700, year: 2026, distance: .tenK)
-        XCTAssertEqual(pb.vdot(goal: .marathon) ?? 0, 45.26, accuracy: 0.01)
+        XCTAssertEqual(pb.vdot ?? 0, 45.26, accuracy: 0.01)
         XCTAssertEqual(pb.equivalentSeconds(at: .halfMarathon) ?? 0, 5_984, accuracy: 5)
         XCTAssertEqual(pb.equivalentSeconds(at: .marathon) ?? 0, 12_435, accuracy: 5)
     }
 
-    func test_PB_withoutADistance_isReadAsTheGoals() {
-        let pb = PersonalBest(durationSeconds: 2_700, year: 2026)
-        XCTAssertEqual(pb.equivalentSeconds(at: .tenK), 2_700)
-        XCTAssertEqual(pb.vdot(goal: .tenK) ?? 0, 45.26, accuracy: 0.01)
+    func test_PB_ofUnknownDistance_isNotUsed() {
+        let pb = PersonalBest(durationSeconds: 2_700, year: 2026, distance: nil)
+        XCTAssertNil(pb.vdot)
+        XCTAssertNil(pb.equivalentSeconds(at: .tenK))
+    }
+
+    func test_PB_noOneCouldRun_isNotUsed() {
+        // A 0:00 left by the toggle, or a 4:30 10K typo.
+        for pb in [PersonalBest(durationSeconds: 0, year: 2026, distance: .tenK),
+                   PersonalBest(durationSeconds: 270, year: 2026, distance: .tenK)] {
+            XCTAssertNil(pb.vdot)
+            XCTAssertNil(pb.equivalentSeconds(at: .tenK))
+            XCTAssertNil(pb.equivalentSeconds(at: .halfMarathon))
+        }
     }
 
     // MARK: - Migration
@@ -67,6 +77,19 @@ final class UserProfileTests: XCTestCase {
         XCTAssertNil(profile.goalDate)
     }
 
+    func test_profileSavedWithoutAPBDistance_whoseTimeCantBeTheGoals_leavesItUnknown() throws {
+        // A 45:00 10K, saved before distances, by a runner who has since
+        // switched the goal to the half: it isn't a 45-minute half.
+        let json = """
+        {"displayName":"Ana","goal":"halfMarathon","hasPhoto":false,
+         "personalBest":{"durationSeconds":2700,"year":2024}}
+        """
+        let profile = try JSONDecoder().decode(UserProfile.self, from: Data(json.utf8))
+        XCTAssertNotNil(profile.personalBest)
+        XCTAssertNil(profile.personalBest?.distance)
+        XCTAssertNil(profile.personalBest?.vdot)
+    }
+
     func test_profile_keepsAPBForAnotherDistance_throughAGoalChange() throws {
         var profile = UserProfile(displayName: "Ana", goal: .tenK,
                                   personalBest: PersonalBest(durationSeconds: 2_700, year: 2026, distance: .tenK))
@@ -74,6 +97,12 @@ final class UserProfileTests: XCTestCase {
         let decoded = try JSONDecoder().decode(UserProfile.self, from: JSONEncoder().encode(profile))
         XCTAssertEqual(decoded.personalBest?.distance, .tenK)
         XCTAssertEqual(decoded, profile)
+    }
+
+    func test_profileWithoutAGoal_doesNotDecode() {
+        // A broken blob fails, as before, rather than loading a goal no one chose.
+        let json = #"{"displayName":"Ana"}"#
+        XCTAssertThrowsError(try JSONDecoder().decode(UserProfile.self, from: Data(json.utf8)))
     }
 
     func test_oldestProfileShape_stillDecodes() throws {

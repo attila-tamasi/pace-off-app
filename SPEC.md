@@ -38,7 +38,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 ### 5. Race-time projection
 - `GoalPredictionService` predicts a realistic finish time for the user's goal, given recent runs, VO₂ max history, PB, and race date
 - Surfaced on the Profile screen with confidence, gap-to-PB, projected training improvement, and age-graded equivalent
-- **The PB and its distance** — a PB records the distance it was run over (the onboarding and profile editors ask for it, the goal's by default). A PB for another distance is converted through VDOT to the goal's (Daniels' equivalent performance, `VDOTCalculator.raceTimeSeconds`), never used as a time for the goal; the gap to PB shows only for a PB over the goal's own distance. A profile saved before PBs had a distance gives its PB the goal's distance when it loads
+- **The PB and its distance** — a PB records the distance it was run over (the onboarding and profile editors ask for it, the goal's by default). A PB for another distance is converted through VDOT to the goal's (Daniels' equivalent performance, `VDOTCalculator.raceTimeSeconds`), never used as a time for the goal; the gap to PB shows only for a PB over the goal's own distance. A PB no one could run (a 0:00, a typo) is never used. A profile saved before PBs had a distance gives its PB the goal's distance when it loads, but only if the time is plausible there (a 45:00 saved under a 10K goal and loaded under a half goal isn't a half time): otherwise the distance stays unknown, the PB isn't used, and Profile asks the runner to set it
 
 ### 6. History + Trends + VO₂ max detail
 - `HistoryView` — list of past runs from Health

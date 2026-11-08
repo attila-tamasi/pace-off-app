@@ -176,7 +176,7 @@ private extension TrainingPlan {
                 tier: .medium,
                 longRunDay: .sunday,
                 vo2Max: 49.2,
-                personalBest: PersonalBest(durationSeconds: 5_482, year: 2024)
+                personalBest: PersonalBest(durationSeconds: 5_482, year: 2024, distance: .halfMarathon)
             )
         )
     }

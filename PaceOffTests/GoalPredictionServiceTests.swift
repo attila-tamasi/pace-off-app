@@ -184,7 +184,7 @@ final class GoalPredictionServiceTests: XCTestCase {
     func test_predict_recentSlowRunBeatsFasterPB() {
         let today = Date()
         let runs = [run(daysAgo: 7, km: 10, paceSecPerKm: 360, today: today)] // 60:00 10K — out of shape
-        let pb = PersonalBest(durationSeconds: 2700, year: 2015)               // 45:00 10K, a decade ago
+        let pb = PersonalBest(durationSeconds: 2700, year: 2015, distance: .tenK)               // 45:00 10K, a decade ago
         let p = service.predict(goal: .tenK,
                                 runs: runs,
                                 age: 35,
@@ -205,7 +205,7 @@ final class GoalPredictionServiceTests: XCTestCase {
 
     func test_predict_oldPBOnly_isPenalisedForAge() {
         let today = Date()
-        let pb = PersonalBest(durationSeconds: 2700, year: 2015)  // 10-year-old 45:00 10K
+        let pb = PersonalBest(durationSeconds: 2700, year: 2015, distance: .tenK)  // 10-year-old 45:00 10K
         let p = service.predict(goal: .tenK,
                                 runs: [],
                                 age: 40,
@@ -283,7 +283,7 @@ final class GoalPredictionServiceTests: XCTestCase {
     func test_predict_gapToPersonalBestIsSignedSeconds() {
         let today = Date()
         let recent = run(daysAgo: 5, km: 10, paceSecPerKm: 240, today: today) // 40:00 10K
-        let slowerPB = PersonalBest(durationSeconds: 2700, year: 2024)        // 45:00 10K — recent is faster
+        let slowerPB = PersonalBest(durationSeconds: 2700, year: 2024, distance: .tenK)        // 45:00 10K — recent is faster
         let p = service.predict(goal: .tenK,
                                 runs: [recent],
                                 age: nil,
