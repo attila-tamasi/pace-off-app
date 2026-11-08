@@ -151,7 +151,7 @@ struct ProfileView: View {
             statChip(label: "GOAL",
                      value: profileStore.profile?.goal.shortName ?? "—",
                      systemImage: "target")
-            statChip(label: "PB",
+            statChip(label: profileStore.profile?.personalBest?.distance.map { "\($0.shortName.uppercased()) PB" } ?? "PB",
                      value: profileStore.profile?.personalBest?.formattedTime ?? "—",
                      systemImage: "trophy.fill")
             if let countdown = goalCountdownChipText {
@@ -250,15 +250,17 @@ struct ProfileView: View {
                 // PB
                 if let pb {
                     HStack(alignment: .firstTextBaseline) {
-                        cardLabel("PB · \(goal.shortName)", systemImage: "trophy.fill")
+                        cardLabel(pb.distance.map { "PB · \($0.shortName)" } ?? "PB", systemImage: "trophy.fill")
                         Spacer()
-                        Text("\(pb.formattedTime) · \(String(pb.year))")
+                        Text(pb.distance == nil
+                             ? "\(pb.formattedTime) · set its distance in Edit"
+                             : "\(pb.formattedTime) · \(String(pb.year))")
                             .font(.system(.subheadline, design: .rounded, weight: .semibold))
                             .foregroundStyle(.secondary)
                     }
                 } else {
                     HStack {
-                        cardLabel("PB · \(goal.shortName)", systemImage: "trophy.fill")
+                        cardLabel("PB", systemImage: "trophy.fill")
                         Spacer()
                         Text("Not logged")
                             .font(.system(.subheadline, design: .rounded))

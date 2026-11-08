@@ -385,8 +385,8 @@ private struct PersonalBestStep: View {
     var body: some View {
         OnboardingStepScaffold(
             progress: OnboardingStep.personalBest.progress,
-            title: "What's your \(draft.goal.displayName) PB?",
-            subtitle: "We use it to anchor your pace zones. If you've never raced this distance, skip and we'll estimate from HealthKit.",
+            title: "What's your best race time?",
+            subtitle: "We use it to anchor your pace zones. Any distance works: a 10K time sets marathon paces too. Never raced? Skip and we'll estimate from Apple Health.",
             primaryTitle: "Continue",
             onPrimary: onNext,
             secondaryTitle: "Skip for now",

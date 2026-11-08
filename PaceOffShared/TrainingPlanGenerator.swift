@@ -87,6 +87,25 @@ public struct VDOTCalculator: Sendable {
         return vo2Demand(velocityMetersPerMin: v) / f
     }
 
+    /// The race time over `distanceMeters` that `vdot` predicts: the
+    /// inverse of `vdot(fromRaceDistanceMeters:timeSeconds:)`, found by
+    /// bisection (VDOT falls as the time grows). Nil outside 1 minute to
+    /// 12 hours.
+    public func raceTimeSeconds(distanceMeters: Double, vdot target: Double) -> Double? {
+        guard distanceMeters > 0, target > 0 else { return nil }
+        var fast = 60.0, slow = 12 * 3600.0
+        guard let atFast = vdot(fromRaceDistanceMeters: distanceMeters, timeSeconds: fast),
+              let atSlow = vdot(fromRaceDistanceMeters: distanceMeters, timeSeconds: slow),
+              target <= atFast, target >= atSlow
+        else { return nil }
+        for _ in 0..<60 {
+            let mid = (fast + slow) / 2
+            guard let v = vdot(fromRaceDistanceMeters: distanceMeters, timeSeconds: mid) else { return nil }
+            if v > target { fast = mid } else { slow = mid }
+        }
+        return (fast + slow) / 2
+    }
+
     /// Velocity (m/min) at which oxygen demand equals `targetVO2`.
     /// Solves the quadratic `a2·v² + a1·v + (a0 - target) = 0`.
     public func velocity(forVO2Demand target: Double) -> Double {
@@ -162,8 +181,9 @@ public struct TrainingPlanInputs: Sendable {
     public let longRunDay: Weekday
     /// Latest VO₂ max reading from HealthKit (ml/kg/min). nil if unknown.
     public let vo2Max: Double?
-    /// User's PB for *the goal distance*, if recorded. Refines VDOT when
-    /// VO₂ max is missing or stale.
+    /// The runner's PB, for whichever distance it records. Its VDOT is
+    /// distance-free, so a 10K PB anchors a marathon plan as well. A PB of
+    /// unknown distance is ignored. Refines VDOT when VO₂ max is missing.
     public let personalBest: PersonalBest?
     /// Race-day deadline for the goal. When set in the future, the plan is
     /// shortened to fit (capped at the goal's default plan length, with a
@@ -280,10 +300,7 @@ public struct TrainingPlanGenerator: Sendable {
     /// 25-minute 5K. The beginner default applies only with no measurement.
     /// Returns `(vdot, usedFallback)`.
     public func resolveVDOT(_ inputs: TrainingPlanInputs) -> (Double, Bool) {
-        let fromPB = inputs.personalBest.flatMap { pb in
-            vdotCalc.vdot(fromRaceDistanceMeters: inputs.goal.distanceMeters,
-                          timeSeconds: pb.durationSeconds)
-        }
+        let fromPB = inputs.personalBest?.vdot
         let measured = [inputs.vo2Max, fromPB]
             .compactMap { $0 }
             .filter { VDOTCalculator.plausibleRange.contains($0) }

@@ -245,13 +245,18 @@ struct GoalGridPicker: View {
     }
 }
 
-/// Personal-best editor: a toggle for "have you run this distance?", and when
-/// on, H:MM:SS wheels plus the year it was achieved.
+/// Personal-best editor: a toggle, and when on, the distance, H:MM:SS
+/// wheels and the year. The distance is the stored PB's own; for a new PB
+/// it follows the goal until the runner picks one.
 struct PersonalBestEditor: View {
     let goal: RunningGoal
     @Binding var personalBest: PersonalBest?
 
     @State private var hasPB: Bool
+    @State private var distance: RunningGoal
+    /// True once the distance is the runner's choice (or the stored PB's),
+    /// so a goal change elsewhere in the form no longer moves it.
+    @State private var distanceChosen: Bool
     @State private var hours: Int
     @State private var minutes: Int
     @State private var seconds: Int
@@ -265,6 +270,8 @@ struct PersonalBestEditor: View {
         _personalBest = personalBest
         let pb = personalBest.wrappedValue
         _hasPB = State(initialValue: pb != nil)
+        _distance = State(initialValue: pb?.distance ?? goal)
+        _distanceChosen = State(initialValue: pb?.distance != nil)
         let total = Int(pb?.durationSeconds ?? 0)
         _hours = State(initialValue: total / 3600)
         _minutes = State(initialValue: (total % 3600) / 60)
@@ -273,12 +280,26 @@ struct PersonalBestEditor: View {
     }
 
     var body: some View {
-        Toggle("I've raced a \(goal.displayName)", isOn: $hasPB)
+        Toggle("I have a race personal best", isOn: $hasPB)
             .onChange(of: hasPB) { _, on in
                 syncBinding(enabled: on)
             }
+            .onChange(of: goal) { _, newGoal in
+                guard !distanceChosen else { return }
+                distance = newGoal
+                if hasPB { syncBinding(enabled: true) }
+            }
 
         if hasPB {
+            Picker("Distance", selection: Binding(
+                get: { distance },
+                set: { distance = $0; distanceChosen = true; syncBinding(enabled: true) }
+            )) {
+                ForEach(RunningGoal.allCases) { goal in
+                    Text(goal.displayName).tag(goal)
+                }
+            }
+
             HStack(spacing: 0) {
                 wheel(value: $hours, range: 0...9, label: "hr")
                 colon
@@ -327,7 +348,7 @@ struct PersonalBestEditor: View {
             return
         }
         let total = Double(hours * 3600 + minutes * 60 + seconds)
-        personalBest = PersonalBest(durationSeconds: total, year: year)
+        personalBest = PersonalBest(durationSeconds: total, year: year, distance: distance)
     }
 }
 
@@ -364,7 +385,7 @@ struct PersonalBestEditor: View {
 }
 
 #Preview("Personal best editor") {
-    StatefulPreviewWrapper(PersonalBest?.some(PersonalBest(durationSeconds: 5_482, year: 2024))) { binding in
+    StatefulPreviewWrapper(PersonalBest?.some(PersonalBest(durationSeconds: 5_482, year: 2024, distance: .halfMarathon))) { binding in
         Form {
             PersonalBestEditor(goal: .halfMarathon, personalBest: binding)
         }

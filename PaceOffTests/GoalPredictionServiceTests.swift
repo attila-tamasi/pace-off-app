@@ -184,7 +184,7 @@ final class GoalPredictionServiceTests: XCTestCase {
     func test_predict_recentSlowRunBeatsFasterPB() {
         let today = Date()
         let runs = [run(daysAgo: 7, km: 10, paceSecPerKm: 360, today: today)] // 60:00 10K — out of shape
-        let pb = PersonalBest(durationSeconds: 2700, year: 2015)               // 45:00 10K, a decade ago
+        let pb = PersonalBest(durationSeconds: 2700, year: 2015, distance: .tenK)               // 45:00 10K, a decade ago
         let p = service.predict(goal: .tenK,
                                 runs: runs,
                                 age: 35,
@@ -205,7 +205,7 @@ final class GoalPredictionServiceTests: XCTestCase {
 
     func test_predict_oldPBOnly_isPenalisedForAge() {
         let today = Date()
-        let pb = PersonalBest(durationSeconds: 2700, year: 2015)  // 10-year-old 45:00 10K
+        let pb = PersonalBest(durationSeconds: 2700, year: 2015, distance: .tenK)  // 10-year-old 45:00 10K
         let p = service.predict(goal: .tenK,
                                 runs: [],
                                 age: 40,
@@ -221,6 +221,27 @@ final class GoalPredictionServiceTests: XCTestCase {
         } else {
             XCTFail("Expected aged-PB basis, got \(p.basis)")
         }
+    }
+
+    func test_predict_PBForAnotherDistance_isConvertedThroughVDOT() {
+        // A 45:00 10K this year, goal the half, no recent runs: the PB is
+        // worth about 1:39:44 over 21.1 km, not 45:00.
+        let today = Date()
+        let year = Calendar.current.component(.year, from: today)
+        let pb = PersonalBest(durationSeconds: 2_700, year: year, distance: .tenK)
+        let p = service.predict(goal: .halfMarathon, runs: [], age: nil, personalBest: pb, today: today)
+        XCTAssertEqual(p?.projectedTimeSeconds ?? 0, 5_984, accuracy: 10)
+        // No gap: the runner never ran a half in that time.
+        XCTAssertNil(p?.gapToPersonalBestSeconds)
+    }
+
+    func test_predict_PBForTheGoalsDistance_keepsItsGap() {
+        let today = Date()
+        let year = Calendar.current.component(.year, from: today)
+        let pb = PersonalBest(durationSeconds: 2_700, year: year, distance: .tenK)
+        let p = service.predict(goal: .tenK, runs: [], age: nil, personalBest: pb, today: today)
+        XCTAssertEqual(p?.projectedTimeSeconds ?? 0, 2_700, accuracy: 1)
+        XCTAssertEqual(p?.gapToPersonalBestSeconds ?? 99, 0, accuracy: 1)
     }
 
     func test_predict_pickedFastestRunWhenMultiple() {
@@ -262,7 +283,7 @@ final class GoalPredictionServiceTests: XCTestCase {
     func test_predict_gapToPersonalBestIsSignedSeconds() {
         let today = Date()
         let recent = run(daysAgo: 5, km: 10, paceSecPerKm: 240, today: today) // 40:00 10K
-        let slowerPB = PersonalBest(durationSeconds: 2700, year: 2024)        // 45:00 10K — recent is faster
+        let slowerPB = PersonalBest(durationSeconds: 2700, year: 2024, distance: .tenK)        // 45:00 10K — recent is faster
         let p = service.predict(goal: .tenK,
                                 runs: [recent],
                                 age: nil,

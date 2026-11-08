@@ -339,7 +339,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Tests cover the engine's no-data case.
 
 ### Q-04 · The PB isn't tied to a distance
-- **Status:** todo
+- **Status:** done (PR #38)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** When the goal changes, the old PB stays, so a 10K time is used as a half-marathon time in the prediction and the plan paces.
 - **Where:** `UserProfile.personalBest`, `ProfileStore`, `GoalPredictionService`, `TrainingPlanGenerator` inputs, `ProfileEditView`.
@@ -549,6 +549,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #38: the onboarding PB step (new title, distance picker), Profile → Edit PB section, Profile's "10K PB" chip and "PB · 10K" row
 - [ ] PR #37: Today with no runs (preview "Today (first run)"): the Log your first run card, its glass Open Health button on the blue card, and that it opens Health
 - [ ] PR #35: Plan tab with a race further out than the plan (preview "Plan tab — starts later"): "Starts 3 Mar" subtitle and hero, the First week card with no day marked, the Starts row; the plan detail's start line and Settings → Starts
 - [ ] PR #32: Today's Readiness card (chevron) and its screen: the verdict, the two signal cards with their grades (each opening its HRV / Resting HR screen), the rules card, and the not-enough-history state
@@ -565,6 +566,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · Q-04: the PB records its distance; a PB for another distance converts through VDOT for the plan and the prediction (PR #38)
 - 2026-11-08 · Q-03: no target and no pushes until Health holds a run; Today shows how to log a first run instead (PR #37)
 - 2026-11-08 · Q-02: Sign in with Apple asks only for the name, never the email (PR #36)
 - 2026-11-08 · R-07b: a race further out than the plan starts the plan later, so it ends on race day; the Plan tab says when it starts (PR #35)
