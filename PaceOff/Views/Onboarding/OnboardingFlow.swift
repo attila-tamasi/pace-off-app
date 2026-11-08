@@ -93,6 +93,7 @@ struct OnboardingFlow: View {
         case .notifications: NotificationsStep(
                                 isRequesting: $isRequestingPermission,
                                 onAllow: { await requestNotifications(); advance() },
+                                onSkip: advance,
                                 onBack: back
                             )
         case .done:         DoneStep(name: draft.displayName,
@@ -473,6 +474,8 @@ private struct HealthPermissionStep: View {
 private struct NotificationsStep: View {
     @Binding var isRequesting: Bool
     let onAllow: () async -> Void
+    /// "Not now": moves on without asking iOS for permission.
+    let onSkip: () -> Void
     let onBack: () -> Void
 
     var body: some View {
@@ -484,7 +487,7 @@ private struct NotificationsStep: View {
             primaryEnabled: !isRequesting,
             onPrimary: { Task { await onAllow() } },
             secondaryTitle: "Not now",
-            onSecondary: { Task { await onAllow() } },
+            onSecondary: onSkip,
             onBack: onBack
         ) {
             VStack(spacing: 20) {

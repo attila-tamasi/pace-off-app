@@ -13,7 +13,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 ### 2. Onboarding
 - Short flow: value prop → HealthKit permission → weekly cadence + goal setup
 - HealthKit read access: workouts, VO₂ max, resting HR, running dynamics, date of birth
-- Notification permission requested at the end
+- Notification permission requested at the end; "Not now" moves on without asking iOS, and the app works the same without it (the pushes just don't show)
 
 ### 3. Today — daily push target
 - `TodayView` shows the day's prescribed run distance + tone (drill-sergeant / etc.), the reasoning behind it, and an "already ran" card when applicable, in Health-style cards with mini charts for HRV, resting HR, VO₂ max and the last seven days' distance
