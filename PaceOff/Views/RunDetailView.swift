@@ -1,6 +1,8 @@
 // RunDetailView.swift
-// Full breakdown of a single run including the GPS route map, per-km
-// pace-decay chart, and running dynamics.
+// Everything Health holds for one run: the GPS route, a summary of every
+// recorded figure (time, pace, speed, heart rate, energy, elevation, steps,
+// weather), heart rate over time, the elevation profile, per-km splits and
+// running dynamics. A figure Health didn't record is left out.
 
 import SwiftUI
 import MapKit
@@ -19,6 +21,12 @@ struct RunDetailView: View {
     @State private var splits: [KilometerSplit] = []
     @State private var isLoadingSplits: Bool = true
 
+    /// Heart rate across the run, the elevation along it, and what Health
+    /// keeps on the workout itself. Nil until loaded, or when not recorded.
+    @State private var heartRate: WorkoutHeartRate?
+    @State private var elevation: WorkoutElevation?
+    @State private var extras: WorkoutExtras?
+
     /// Map height as a fraction of the available screen height. Matches the
     /// proportion used on the Today screen so the experience feels consistent.
     private let mapHeightFraction: CGFloat = 0.42
@@ -33,7 +41,13 @@ struct RunDetailView: View {
 
                     VStack(alignment: .leading, spacing: 24) {
                         header
-                        metricsGrid
+                        summaryGrid
+                        if let heartRate, heartRate.points.count >= 2 {
+                            heartRateCard(heartRate)
+                        }
+                        if let elevation, elevation.high - elevation.low >= 1 {
+                            elevationCard(elevation)
+                        }
                         splitsSection
                         if hasDynamics { dynamicsSection }
                     }
@@ -108,6 +122,12 @@ struct RunDetailView: View {
     private func loadRouteAndSplits() async {
         isLoadingRoute = true
         isLoadingSplits = true
+        heartRate = nil
+        elevation = nil
+        extras = nil
+        // Read alongside the route and heart rate, not after them.
+        let run = self.run
+        let workoutExtras = Task { await HealthKitService.shared.fetchWorkoutExtras(for: run) }
 
         // Fetch the full CLLocation stream (with timestamps) so we can
         // both draw the map polyline AND compute pace-decay splits from
@@ -136,6 +156,14 @@ struct RunDetailView: View {
             heartRates: hrSamples
         )
         isLoadingSplits = false
+
+        heartRate = WorkoutHeartRate(samples: hrRaw, start: run.startDate, end: run.endDate)
+        // Distances along the whole route; a negative vertical accuracy
+        // marks a point without a valid altitude, which the profile skips.
+        elevation = WorkoutElevation(samples: zip(locations, locationSamples)
+            .filter { $0.0.verticalAccuracy >= 0 }
+            .map { (meters: $0.1.cumulativeMeters, altitude: $0.0.altitude) })
+        extras = await workoutExtras.value
     }
 
     private func updateCamera(for coords: [CLLocationCoordinate2D]) {
@@ -169,15 +197,156 @@ struct RunDetailView: View {
             Text("\(run.formattedPace) · \(run.formattedDuration)")
                 .font(.system(.title3, design: .rounded))
                 .foregroundStyle(.secondary)
+            Text("\(run.startDate.formatted(date: .omitted, time: .shortened))–\(run.endDate.formatted(date: .omitted, time: .shortened))")
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var metricsGrid: some View {
+    /// One tile per figure Health recorded for this run, in a fixed order.
+    private var summaryGrid: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-            metric("HEART RATE", value: run.averageHeartRate.map { "\(Int($0)) bpm" } ?? "—", icon: "heart.fill")
-            metric("ENERGY", value: run.activeEnergyKcal.map { "\(Int($0)) kcal" } ?? "—", icon: "flame.fill")
+            ForEach(summaryItems) { item in
+                metric(item.label, value: item.value, icon: item.icon)
+            }
         }
+    }
+
+    private struct SummaryItem: Identifiable {
+        let label: String
+        let value: String
+        let icon: String
+        var id: String { label }
+    }
+
+    private var summaryItems: [SummaryItem] {
+        var items = [SummaryItem(label: "DURATION", value: run.formattedDuration, icon: "stopwatch")]
+        if run.distanceMeters > 0 {
+            items.append(SummaryItem(label: "AVG PACE", value: run.formattedPace, icon: "speedometer"))
+        }
+        if run.distanceMeters > 0, run.durationSeconds > 0 {
+            let kmh = run.distanceKm / (run.durationSeconds / 3600)
+            items.append(SummaryItem(label: "AVG SPEED", value: String(format: "%.1f km/h", kmh), icon: "gauge.with.dots.needle.33percent"))
+        }
+        if let avg = run.averageHeartRate ?? heartRate?.average {
+            items.append(SummaryItem(label: "AVG HEART RATE", value: "\(Int(avg.rounded())) bpm", icon: "heart.fill"))
+        }
+        if let heartRate {
+            items.append(SummaryItem(label: "MAX HEART RATE", value: "\(Int(heartRate.high.rounded())) bpm", icon: "arrow.up.heart.fill"))
+            items.append(SummaryItem(label: "MIN HEART RATE", value: "\(Int(heartRate.low.rounded())) bpm", icon: "arrow.down.heart.fill"))
+        }
+        if let kcal = run.activeEnergyKcal {
+            items.append(SummaryItem(label: "ACTIVE ENERGY", value: "\(Int(kcal.rounded())) kcal", icon: "flame.fill"))
+        }
+        // Gain and loss from one source: Health's own figures when it has
+        // them, else the route's. Indoors there's no elevation to speak of.
+        if extras?.indoor != true {
+            let fromHealth = extras?.elevationGainMeters != nil
+            let gain = fromHealth ? extras?.elevationGainMeters : elevation?.gain
+            let loss = fromHealth ? extras?.elevationLossMeters : elevation?.loss
+            if let gain {
+                items.append(SummaryItem(label: "ELEVATION GAIN", value: "\(Int(gain.rounded())) m", icon: "arrow.up.right"))
+            }
+            if let loss {
+                items.append(SummaryItem(label: "ELEVATION LOSS", value: "\(Int(loss.rounded())) m", icon: "arrow.down.right"))
+            }
+        }
+        if let steps = extras?.steps {
+            items.append(SummaryItem(label: "STEPS", value: Int(steps.rounded()).formatted(), icon: "shoeprints.fill"))
+        }
+        if let temperature = extras?.temperatureCelsius {
+            let humidity = extras?.humidityPercent.map { " · \(Int($0.rounded()))%" } ?? ""
+            items.append(SummaryItem(label: "WEATHER", value: "\(Int(temperature.rounded())) °C\(humidity)", icon: "thermometer.medium"))
+        }
+        if let indoor = extras?.indoor {
+            items.append(SummaryItem(label: "LOCATION", value: indoor ? "Indoor" : "Outdoor", icon: indoor ? "house.fill" : "tree.fill"))
+        }
+        if let mets = extras?.averageMETs {
+            items.append(SummaryItem(label: "INTENSITY", value: String(format: "%.1f METs", mets), icon: "bolt.heart.fill"))
+        }
+        return items
+    }
+
+    // MARK: - Heart rate over time
+
+    private func heartRateCard(_ heartRate: WorkoutHeartRate) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionLabel("HEART RATE")
+            Text("\(Int(heartRate.low.rounded()))–\(Int(heartRate.high.rounded())) bpm, \(Int(heartRate.average.rounded())) on average")
+                .font(.system(.subheadline, design: .rounded, weight: .medium))
+            Chart {
+                ForEach(heartRate.points) { point in
+                    LineMark(
+                        x: .value("Time", point.date),
+                        y: .value("bpm", point.bpm)
+                    )
+                    .interpolationMethod(.monotone)
+                    .foregroundStyle(Color.pink)
+                }
+                RuleMark(y: .value("Average", heartRate.average))
+                    .foregroundStyle(Color.secondary)
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+            }
+            .chartYScale(domain: max(0, heartRate.low - 10)...(heartRate.high + 10))
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 5)) { _ in
+                    AxisGridLine()
+                    AxisValueLabel(format: Date.FormatStyle.dateTime.hour().minute())
+                }
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading)
+            }
+            .frame(height: 180)
+        }
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    // MARK: - Elevation profile
+
+    private func elevationCard(_ elevation: WorkoutElevation) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionLabel("ELEVATION")
+            Text("\(Int(elevation.low.rounded()))–\(Int(elevation.high.rounded())) m above sea level")
+                .font(.system(.subheadline, design: .rounded, weight: .medium))
+            Chart {
+                ForEach(elevation.points) { point in
+                    AreaMark(
+                        x: .value("km", point.meters / 1000),
+                        yStart: .value("Base", elevation.low - 5),
+                        yEnd: .value("m", point.altitude)
+                    )
+                    .interpolationMethod(.monotone)
+                    .foregroundStyle(BrandPalette.trackFill.opacity(0.35))
+                    LineMark(
+                        x: .value("km", point.meters / 1000),
+                        y: .value("m", point.altitude)
+                    )
+                    .interpolationMethod(.monotone)
+                    .foregroundStyle(BrandPalette.track)
+                }
+            }
+            .chartYScale(domain: (elevation.low - 5)...(elevation.high + 5))
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 5)) { value in
+                    AxisGridLine()
+                    AxisValueLabel {
+                        if let km = value.as(Double.self) {
+                            Text(String(format: km == km.rounded() ? "%.0f km" : "%.1f km", km))
+                                .font(.system(.caption2, design: .rounded))
+                        }
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading)
+            }
+            .frame(height: 150)
+        }
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     // MARK: - Pace-decay chart
@@ -269,43 +438,57 @@ struct RunDetailView: View {
             }
             .frame(height: 200)
 
-            if hasHR {
-                // A compact HR row — one small stat per km, wrapping — so
-                // the user can still see "km 4 spiked to 168" without
-                // buying into the dual-axis complexity of an overlaid line.
-                heartRateRow
-            }
+            splitsTable(showsHR: hasHR)
         }
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
-    private var heartRateRow: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("AVG HR PER KM")
-                .font(.system(.caption2, design: .rounded, weight: .semibold))
-                .kerning(0.8)
-                .foregroundStyle(.tertiary)
-            LazyVGrid(
-                columns: [GridItem(.adaptive(minimum: 44, maximum: 60), spacing: 6)],
-                alignment: .leading,
-                spacing: 6
-            ) {
-                ForEach(splits) { split in
-                    VStack(spacing: 1) {
-                        Text("\(split.index)")
-                            .font(.system(.caption2, design: .rounded, weight: .semibold))
-                            .foregroundStyle(.tertiary)
-                        Text(split.averageHeartRate.map { "\(Int($0.rounded()))" } ?? "—")
-                            .font(.system(.footnote, design: .rounded, weight: .semibold))
-                            .foregroundStyle(hrColor(for: split.averageHeartRate))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 4)
-                    .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: 6))
-                }
+    /// One row per km: its pace, its average heart rate (when recorded,
+    /// red above the run's median) and the elapsed time at its end.
+    private func splitsTable(showsHR: Bool) -> some View {
+        VStack(spacing: 0) {
+            splitRow(km: "KM", pace: "PACE", hr: showsHR ? "HR" : nil, time: "TIME", isHeader: true)
+            ForEach(splits) { split in
+                Divider()
+                splitRow(
+                    km: "\(split.index)",
+                    pace: split.formattedPace,
+                    hr: showsHR ? (split.averageHeartRate.map { "\(Int($0.rounded()))" } ?? "—") : nil,
+                    hrColor: hrColor(for: split.averageHeartRate),
+                    time: formatElapsed(split.cumulativeSeconds),
+                    isHeader: false
+                )
             }
         }
+    }
+
+    private func splitRow(km: String, pace: String, hr: String?, hrColor: Color = .secondary,
+                          time: String, isHeader: Bool) -> some View {
+        HStack {
+            Text(km).frame(width: 36, alignment: .leading)
+            Text(pace).frame(maxWidth: .infinity, alignment: .leading)
+            if let hr {
+                Text(hr)
+                    .foregroundStyle(isHeader ? Color.secondary : hrColor)
+                    .frame(width: 56, alignment: .trailing)
+            }
+            Text(time).frame(width: 64, alignment: .trailing)
+        }
+        .font(isHeader
+              ? Font.system(.caption2, design: .rounded, weight: .semibold)
+              : Font.system(.subheadline, design: .rounded, weight: .medium))
+        .foregroundStyle(isHeader ? Color.secondary : Color.primary)
+        .monospacedDigit()
+        .padding(.vertical, 6)
+        .accessibilityElement(children: .combine)
+    }
+
+    /// "27:41", or "1:02:05" past the hour.
+    private func formatElapsed(_ seconds: Double) -> String {
+        let total = Int(seconds.rounded())
+        let h = total / 3600, m = (total % 3600) / 60, s = total % 60
+        return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%d:%02d", m, s)
     }
 
     /// Redden HR values that sit above the run's own median — a cheap way

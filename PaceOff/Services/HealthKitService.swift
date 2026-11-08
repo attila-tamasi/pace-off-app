@@ -467,34 +467,7 @@ public final class HealthKitService {
     /// when the run has no attached route (treadmill, permission denied, or
     /// the workout was already evicted from HealthKit).
     public func fetchRunRoute(for record: RunRecord) async -> [CLLocationCoordinate2D] {
-        // Look up workouts in a ±60s window around the record's start date.
-        // HealthKit queries are exclusive of `end`, so we widen by one second.
-        let windowStart = record.startDate.addingTimeInterval(-60)
-        let windowEnd = record.endDate.addingTimeInterval(60)
-
-        let runPred = HKQuery.predicateForWorkouts(with: .running)
-        let datePred = HKQuery.predicateForSamples(withStart: windowStart, end: windowEnd, options: [])
-        let combined = NSCompoundPredicate(andPredicateWithSubpredicates: [runPred, datePred])
-
-        let workout: HKWorkout? = await withCheckedContinuation { continuation in
-            let q = HKSampleQuery(
-                sampleType: .workoutType(),
-                predicate: combined,
-                limit: 20,
-                sortDescriptors: nil
-            ) { _, samples, _ in
-                let workouts = (samples as? [HKWorkout]) ?? []
-                // Match by start-date proximity (within 2s) — covers any drift
-                // between the record we surfaced and HealthKit's stored sample.
-                let match = workouts.min { lhs, rhs in
-                    abs(lhs.startDate.timeIntervalSince(record.startDate)) <
-                    abs(rhs.startDate.timeIntervalSince(record.startDate))
-                }
-                continuation.resume(returning: match)
-            }
-            store.execute(q)
-        }
-        guard let workout else { return [] }
+        guard let workout = await matchingWorkout(for: record) else { return [] }
         return await routeCoordinates(for: workout)
     }
 
@@ -545,6 +518,58 @@ public final class HealthKitService {
     /// matching logic as `fetchRunRoute` but returns the raw `CLLocation`
     /// values so callers can compute per-km splits from timestamps + coords.
     public func fetchRunLocations(for record: RunRecord) async -> [CLLocation] {
+        guard let workout = await matchingWorkout(for: record) else { return [] }
+        return await routeLocations(for: workout)
+    }
+
+    /// What Health keeps on the workout behind `record`: indoor or outdoor,
+    /// its own elevation gain, the weather, steps and average METs. Nil when
+    /// the workout can't be found; each value is nil when it isn't stored.
+    public func fetchWorkoutExtras(for record: RunRecord) async -> WorkoutExtras? {
+        guard let workout = await matchingWorkout(for: record) else { return nil }
+        let metadata = workout.metadata ?? [:]
+
+        /// A metadata quantity in `unit`, or nil when it's missing or in a
+        /// unit that doesn't convert (`doubleValue(for:)` would trap).
+        func quantity(_ key: String, _ unit: HKUnit) -> Double? {
+            guard let q = metadata[key] as? HKQuantity, q.is(compatibleWith: unit) else { return nil }
+            return q.doubleValue(for: unit)
+        }
+
+        let metsUnit = HKUnit.kilocalorie().unitDivided(by: HKUnit.gramUnit(with: .kilo).unitMultiplied(by: .hour()))
+        return WorkoutExtras(
+            indoor: (metadata[HKMetadataKeyIndoorWorkout] as? NSNumber)?.boolValue,
+            elevationGainMeters: quantity(HKMetadataKeyElevationAscended, .meter()),
+            elevationLossMeters: quantity(HKMetadataKeyElevationDescended, .meter()),
+            temperatureCelsius: quantity(HKMetadataKeyWeatherTemperature, .degreeCelsius()),
+            // Health stores humidity as a percent quantity: 0.65 is 65%.
+            humidityPercent: quantity(HKMetadataKeyWeatherHumidity, .percent()).map { $0 * 100 },
+            steps: await stepCount(from: workout.startDate, to: workout.endDate),
+            averageMETs: quantity(HKMetadataKeyAverageMETs, metsUnit)
+        )
+    }
+
+    /// Steps taken between two moments, from every source, merged the way
+    /// Health shows them. Step samples usually aren't attached to the
+    /// workout itself, so they're found by time, not by workout.
+    private func stepCount(from start: Date, to end: Date) async -> Double? {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .stepCount) else { return nil }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: [])
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsQuery(
+                quantityType: type,
+                quantitySamplePredicate: predicate,
+                options: .cumulativeSum
+            ) { _, stats, _ in
+                continuation.resume(returning: stats?.sumQuantity()?.doubleValue(for: .count()))
+            }
+            store.execute(query)
+        }
+    }
+
+    /// The running workout `record` was made from: the one starting
+    /// closest to it within a minute either side.
+    private func matchingWorkout(for record: RunRecord) async -> HKWorkout? {
         let windowStart = record.startDate.addingTimeInterval(-60)
         let windowEnd = record.endDate.addingTimeInterval(60)
 
@@ -552,7 +577,7 @@ public final class HealthKitService {
         let datePred = HKQuery.predicateForSamples(withStart: windowStart, end: windowEnd, options: [])
         let combined = NSCompoundPredicate(andPredicateWithSubpredicates: [runPred, datePred])
 
-        let workout: HKWorkout? = await withCheckedContinuation { continuation in
+        return await withCheckedContinuation { continuation in
             let q = HKSampleQuery(
                 sampleType: .workoutType(),
                 predicate: combined,
@@ -568,8 +593,6 @@ public final class HealthKitService {
             }
             store.execute(q)
         }
-        guard let workout else { return [] }
-        return await routeLocations(for: workout)
     }
 
     /// Timestamped `CLLocation` samples from a workout's attached route

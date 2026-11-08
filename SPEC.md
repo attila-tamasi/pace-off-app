@@ -39,6 +39,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 
 ### 6. History + Trends + VO₂ max detail
 - `HistoryView` — list of past runs from Health
+- `RunDetailView` — opened from History, Today's run and Last run: the route, then every figure Health recorded (start–end time, duration, pace, speed, heart rate average / max / min, energy, elevation gain and loss, steps, weather, indoor or outdoor, METs), heart rate over time, the elevation profile, per-km splits with pace, heart rate and elapsed time, and running dynamics. A figure Health didn't record is left out
 - `TrendsView` — weekly mileage + pace charts
 - `VO2MaxDetailView` — 12-month VO₂ max chart
 - `HeartTrendDetailView` — HRV and resting heart rate, opened from their Today cards: the latest reading against the baseline the readiness card uses (30-day HRV, 14-day resting HR), a Week / Month / 3 Months chart with the baseline marked, the readiness thresholds, and what the number means (`HeartTrend` in `PaceOffShared`)
