@@ -44,12 +44,12 @@ struct ReadinessDetailView: View {
                     .frame(width: 18, height: 18)
                     .accessibilityHidden(true)
                 Text(label(readiness.level))
-                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                    .font(.system(.largeTitle, design: .rounded, weight: .bold))
             }
             Text(readiness.sentence)
                 .font(.system(.body, design: .rounded, weight: .medium))
                 .fixedSize(horizontal: false, vertical: true)
-            Text("Worked out at \(readiness.computedAt.formatted(date: .omitted, time: .shortened))")
+            Text(workedOut(readiness.computedAt))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
@@ -67,14 +67,16 @@ struct ReadinessDetailView: View {
         let note: String
         if let value, let baseline, baseline > 0 {
             let change = value / baseline - 1
-            let percent = Int((abs(change) * 100).rounded())
+            // Rounded toward zero, so the shown percent never crosses a
+            // threshold the grade hasn't.
+            let percent = Int((abs(change) * 100).rounded(.towardZero))
             let direction = percent == 0 ? "on" : (change > 0 ? "\(percent)% above" : "\(percent)% below")
             let window = isHRV ? ReadinessEngine.hrvBaselineWindowDays : ReadinessEngine.rhrBaselineWindowDays
             note = "\(direction) your \(window)-day baseline of \(Int(baseline.rounded())) \(unit)"
-        } else if value != nil {
-            note = "No baseline yet, so it doesn't count today"
         } else {
-            note = "No recent reading, so it doesn't count today"
+            // Readiness keeps a signal's numbers only when it has both a
+            // recent reading and a baseline to compare it with.
+            note = "Not counted today: no reading since yesterday, or not enough days yet for a baseline"
         }
 
         return NavigationLink {
@@ -104,9 +106,9 @@ struct ReadinessDetailView: View {
 
     private var notYet: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Not enough history yet")
+            Text("No readiness today")
                 .font(.system(.title2, design: .rounded, weight: .bold))
-            Text("Readiness needs 7 days of HRV or 5 days of resting heart rate from Apple Watch before it trusts a baseline. Until then the card stays hidden and today's target ignores it.")
+            Text("Readiness needs a reading from Apple Watch since yesterday, and \(ReadinessEngine.minHRVBaselineDays) days of HRV or \(ReadinessEngine.minRHRBaselineDays) days of resting heart rate to compare it with. Until it has both, the card stays hidden and today's target ignores it.")
                 .font(.system(.body, design: .rounded))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -133,9 +135,9 @@ struct ReadinessDetailView: View {
             ruleRow(.green, "Ready",
                     "HRV less than \(hrvYellow)% below and resting HR less than \(rhrYellow)% above. Today's target is set as usual.")
             ruleRow(.yellow, "Ease off",
-                    "HRV \(hrvYellow)% or more below, or resting HR \(rhrYellow)% or more above. The target stays at your usual distance and an aggressive tone softens.")
+                    "HRV \(hrvYellow)% or more below, or resting HR \(rhrYellow)% or more above. The target goes no higher than your usual distance and an aggressive tone softens.")
             ruleRow(.red, "Rest",
-                    "HRV \(hrvRed)% or more below, resting HR \(rhrRed)% or more above, or both signals off. The target is cut to 60% and the day turns to recovery.")
+                    "HRV \(hrvRed)% or more below, resting HR \(rhrRed)% or more above, or both signals off. The target is capped at \(Int((PushTargetEngine.redReadinessCapFactor * 100).rounded()))% of your usual distance and the day turns to recovery.")
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -161,6 +163,14 @@ struct ReadinessDetailView: View {
     }
 
     // MARK: - Helpers
+
+    /// "Worked out at 07:12", with the day when it isn't today's.
+    private func workedOut(_ date: Date) -> String {
+        if Calendar.current.isDateInToday(date) {
+            return "Worked out at \(date.formatted(date: .omitted, time: .shortened))"
+        }
+        return "Worked out \(date.formatted(date: .abbreviated, time: .shortened)), not yet refreshed today"
+    }
 
     private func percent(_ fraction: Double) -> Int {
         Int((fraction * 100).rounded())

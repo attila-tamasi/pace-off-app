@@ -42,7 +42,7 @@ public struct PushTargetEngine: Sendable {
     private static let recoveryFactor = 0.6
     /// Red readiness caps the day at this fraction of baseline — the same
     /// reduction a post-long-run recovery day gets.
-    private static let redReadinessCapFactor = 0.6
+    static let redReadinessCapFactor = 0.6
 
     // VO2Max slope thresholds (ml/kg/min per WEEK)
     static let vo2MaxDecliningSlope = -0.05
