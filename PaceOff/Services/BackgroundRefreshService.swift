@@ -97,14 +97,64 @@ public final class BackgroundRefreshService {
             await refreshHealthData()
         }
 
-        // iOS gives us a hard deadline; if we get cancelled mid-flight, kill
-        // the work cleanly and report failure so iOS can back off.
+        // iOS gives us a hard deadline. When it hits, cancel the work and
+        // report the task done right there, failed, so iOS can back off;
+        // the work may not notice the cancellation before the deadline.
+        // Whichever finishes first reports, once.
+        let report = TaskReport(task)
         task.expirationHandler = {
             work.cancel()
+            report.complete(success: false)
         }
 
         let success = await work.value
-        task.setTaskCompleted(success: success)
+        report.complete(success: success)
+    }
+
+    /// Reports a background task complete exactly once, from whichever of
+    /// the work and the expiration handler gets there first.
+    private final class TaskReport: @unchecked Sendable {
+        private let task: BGTask
+        private let once = OnceFlag()
+
+        init(_ task: BGTask) {
+            self.task = task
+        }
+
+        func complete(success: Bool) {
+            if once.claim() { task.setTaskCompleted(success: success) }
+        }
+    }
+
+    // MARK: - Health observers
+
+    private var observerRefresh: Task<Void, Never>?
+
+    /// Starts the workout and VO₂ max observers. A new run or reading
+    /// re-syncs Health, recomputes the target, reschedules today's pushes
+    /// and reloads the widget, the same as a scheduled background refresh,
+    /// so a finished run stops the afternoon reminder without the app
+    /// being opened. Changes that arrive during a refresh share it.
+    public func startHealthObservers() {
+        HealthKitService.shared.startObservingHealthUpdates { done in
+            Task { @MainActor in
+                await BackgroundRefreshService.shared.refreshForObserver()
+                done()
+            }
+        }
+    }
+
+    private func refreshForObserver() async {
+        if let running = observerRefresh {
+            await running.value
+            return
+        }
+        let refresh = Task { @MainActor in
+            _ = await self.refreshHealthData()
+        }
+        observerRefresh = refresh
+        await refresh.value
+        observerRefresh = nil
     }
 
     /// The actual refresh. Returns true on success, false on cancellation/error.

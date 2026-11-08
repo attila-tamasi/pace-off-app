@@ -37,6 +37,12 @@ struct PaceOffApp: App {
         // BGTaskScheduler refuses registrations after launch finishes, so we
         // register the handler here, before any scene attaches.
         BackgroundRefreshService.shared.register()
+        // Health observers must be running by the end of launch for iOS to
+        // wake the app with a new workout. Before onboarding has asked for
+        // Health access they'd only fail, so they start once it's done.
+        if AppGroup.sharedDefaults?.bool(forKey: AppGroup.Keys.onboardingComplete) == true {
+            BackgroundRefreshService.shared.startHealthObservers()
+        }
     }
 
     var body: some Scene {
@@ -127,6 +133,7 @@ struct PaceOffApp: App {
     private func completeOnboarding() {
         onboardingComplete = true
         stage = .main
+        BackgroundRefreshService.shared.startHealthObservers()
     }
 
     private func handleSignOut() {
