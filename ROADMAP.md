@@ -41,7 +41,7 @@ Three requests the owner put ahead of the waves, in their order:
 Each is split into one PR per sub-item.
 
 ### F-09a · HRV and Resting HR detail screens
-- **Status:** todo
+- **Status:** done (PR #29)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** The HRV and Resting HR cards on Today are dead ends: no history, no baseline, nothing on how they feed readiness.
 - **Where:** `TodayView` (`recoverySection`); `VO2MaxDetailView` (the pattern to follow); `HealthKitService.fetchHRVSeries` / `fetchRestingHeartRate`; `ReadinessEngine` (baselines and thresholds).
@@ -462,6 +462,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #29: Today's HRV and Resting HR cards (chevron) and their detail screens: the summary line's colour, the Week / Month / 3 Months picker, the dashed baseline, the "baseline appears after N more days" line with short history, and the empty state
 - [ ] PR #28: onboarding's notifications step: "Not now" goes straight to the last step with no system prompt (and hides while the prompt is up); "Allow Notifications" still shows it; the new footnote; Profile → Notifications → "Allow notifications" shows the prompt after a "Not now"
 - [ ] PR #27: the widget (all four families) right after a run logged in the app, and after midnight before opening the app: "—", "Open Pace Off" and a grey dot; the stale entry in the systemSmall preview
 - [ ] PR #25: the Plan tab on race day (hero "Race day", the race row marked in the week), the plan detail week with the race, and Today's plan line "… plan · Race day"; a new race plan's week 1 can show a few days already past
@@ -472,6 +473,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · F-09a: the HRV and Resting HR cards open detail screens with their baseline, a Week / Month / 3 Months chart and how readiness grades them (PR #29)
 - 2026-11-08 · Q-01: "Not now" on onboarding's notifications step moves on without asking iOS for permission (PR #28)
 - 2026-11-07 · R-09: the app reloads the widget after each refresh; its timeline turns at noon and midnight, and a day cached earlier shows "Open Pace Off", never as today's (PR #27)
 - 2026-11-06 · R-08: a slow runner's measured VO₂ max or PB is used (below VDOT 20 it's raised to 20); junk readings (outside 10–90) are ignored; the beginner default only when there's no usable measurement (PR #26)
