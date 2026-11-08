@@ -153,7 +153,7 @@ struct TodayView: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(todayVM.target.map { "\($0.displayedDistanceKm)" } ?? "—")
-                    .font(.system(size: 76, weight: .heavy, design: .rounded))
+                    .scaledFont(size: 76, weight: .heavy, design: .rounded)
                     .foregroundStyle(.white)
                     .contentTransition(.numericText())
                     .lineLimit(1)
@@ -650,6 +650,15 @@ private extension View {
         .environment(PreviewProfileStore.populated)
         .environment(TrainingPlanStore.shared)
         .environment(AppNavigation())
+}
+
+#Preview("Today (largest text)") {
+    NavigationStack { TodayView() }
+        .environment(TodayViewModel.preview())
+        .environment(PreviewProfileStore.populated)
+        .environment(TrainingPlanStore.shared)
+        .environment(AppNavigation())
+        .environment(\.dynamicTypeSize, .accessibility3)
 }
 
 #Preview("Today (empty)") {

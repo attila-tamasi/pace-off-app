@@ -96,7 +96,7 @@ private struct ActivePlanView: View {
                 .foregroundStyle(.white.opacity(0.85))
 
             Text(heroTitle(workout))
-                .font(.system(size: 40, weight: .heavy, design: .rounded))
+                .scaledFont(size: 40, weight: .heavy, design: .rounded)
                 .foregroundStyle(.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)

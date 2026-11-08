@@ -31,7 +31,7 @@ struct SplashView: View {
                     .opacity(markOpacity)
 
                 Text("Pace Off")
-                    .font(.system(size: 40, weight: .heavy, design: .rounded))
+                    .scaledFont(size: 40, weight: .heavy, design: .rounded)
                     .foregroundStyle(.white)
                     .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 2)
                     .offset(y: wordmarkOffset)

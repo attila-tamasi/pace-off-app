@@ -15,6 +15,9 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 - HealthKit read access: workouts, VO₂ max, resting HR, running dynamics, date of birth
 - Notification permission requested at the end; "Not now" moves on without asking iOS. The app works the same without it (the pushes just don't show), "Not now" leaves the Profile "Daily pushes" switch off, and turning it on asks iOS then
 
+### Accessibility
+- Every text size follows Dynamic Type: text styles, and `.scaledFont(size:)` (a `@ScaledMetric` size relative to the nearest text style) for the big hero numbers and artwork symbols. Icon-only controls carry VoiceOver labels. Under Reduce Motion the notifications bell stops wiggling, and the onboarding hero and the done check fade in instead of sliding or bouncing
+
 ### 3. Today — daily push target
 - `TodayView` shows the day's prescribed run distance + tone (drill-sergeant / etc.), the reasoning behind it, and an "already ran" card when applicable, in Health-style cards with mini charts for HRV, resting HR, VO₂ max and the last seven days' distance
 - The voice line (`VoiceState` → `VoiceCopy`) names a skip only when a day was actually missed: a run yesterday gets a streak line, and a run today ends the pushing for the day unless it falls short of the plan's workout. The engine's restart and recovery tones pick restart and rest copy, so the line never fights the tone badge. The streak counts through yesterday until today's run is in

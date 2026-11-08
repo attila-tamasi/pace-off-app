@@ -44,7 +44,7 @@ struct VO2MaxDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(latestValueText)
-                    .font(.system(size: 64, weight: .bold, design: .rounded))
+                    .scaledFont(size: 64, weight: .bold, design: .rounded)
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
                 Text("ml/kg·min")
@@ -127,7 +127,7 @@ struct VO2MaxDetailView: View {
     private var emptyState: some View {
         VStack(spacing: 8) {
             Image(systemName: "lungs")
-                .font(.system(size: 36))
+                .scaledFont(size: 36)
                 .foregroundStyle(.secondary)
             Text("No VO₂ max data yet")
                 .font(.system(.headline, design: .rounded))

@@ -99,7 +99,7 @@ extension View {
 struct BrandSloganStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .font(.system(size: 36, weight: .heavy, design: .rounded))
+            .scaledFont(size: 36, weight: .heavy, design: .rounded)
             .foregroundStyle(.white)
             .multilineTextAlignment(.center)
             .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 2)

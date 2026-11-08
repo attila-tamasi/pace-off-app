@@ -110,7 +110,7 @@ struct ProfilePhotoPicker: View {
                         ZStack {
                             Circle().fill(Color(.secondarySystemBackground))
                             Image(systemName: "person.fill")
-                                .font(.system(size: 44))
+                                .scaledFont(size: 44)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -120,7 +120,7 @@ struct ProfilePhotoPicker: View {
                 .overlay(Circle().stroke(.separator, lineWidth: 1))
 
                 Image(systemName: "camera.fill")
-                    .font(.system(size: 13, weight: .semibold))
+                    .scaledFont(size: 13, weight: .semibold)
                     .foregroundStyle(.white)
                     .padding(8)
                     .background(Color.accentColor, in: Circle())
@@ -128,6 +128,7 @@ struct ProfilePhotoPicker: View {
             }
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(image == nil ? "Add a profile photo" : "Change profile photo")
     }
 }
 
