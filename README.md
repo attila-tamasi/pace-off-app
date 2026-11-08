@@ -128,7 +128,7 @@ Delete the app and you lose nothing — your runs and VO₂ max stay in Health.
 
 ## TestFlight
 
-Every push to `main` runs `.github/workflows/testflight.yml`. It builds the app in Release for a device, then archives it, signs it automatically with Apple's cloud-managed certificates and uploads it to App Store Connect. The build appears in TestFlight once Apple has processed it, which takes 10–30 minutes. You can also start it by hand: Actions → TestFlight → Run workflow. The build number is the workflow's run number.
+Every push to `main` runs `.github/workflows/testflight.yml`. It builds the app in Release for a device, then archives it, signs it automatically with Apple's cloud-managed certificates and uploads it to App Store Connect. The build appears in TestFlight once Apple has processed it, which takes 10–30 minutes. You can also start it by hand: Actions → TestFlight → Run workflow. The build number is the workflow's run number × 10 plus the attempt, so re-runs never repeat one.
 
 The upload needs a one-time setup by the account holder. Until it's done, the job only builds and skips the upload with a notice.
 
