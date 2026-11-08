@@ -130,7 +130,7 @@ struct ProfilePhotoPicker: View {
             }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(image == nil ? "Add a profile photo" : "Change profile photo")
+        .accessibilityLabel(image == nil ? Text("Add a profile photo") : Text("Change profile photo"))
     }
 }
 
