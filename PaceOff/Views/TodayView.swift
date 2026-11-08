@@ -64,6 +64,7 @@ struct TodayView: View {
             case .vo2Max: VO2MaxDetailView()
             case .hrv: HeartTrendDetailView(metric: .hrv)
             case .restingHeartRate: HeartTrendDetailView(metric: .restingHeartRate)
+            case .week: WeekDetailView()
             }
         }
     }
@@ -325,17 +326,21 @@ struct TodayView: View {
                 .buttonStyle(.plain)
             }
 
-            MetricCard(
-                title: "Last 7 days",
-                systemImage: "figure.run",
-                tint: BrandPalette.track,
-                detail: streakLabel,
-                value: String(format: "%.1f", todayVM.weekTotalKm),
-                unit: "km"
-            ) {
-                DailyDistanceBars(days: todayVM.weekDistances)
-                    .frame(width: 150, height: 64)
+            NavigationLink(value: TodayDestination.week) {
+                MetricCard(
+                    title: "Last 7 days",
+                    systemImage: "figure.run",
+                    tint: BrandPalette.track,
+                    detail: streakLabel,
+                    showsChevron: true,
+                    value: String(format: "%.1f", todayVM.weekTotalKm),
+                    unit: "km"
+                ) {
+                    DailyDistanceBars(days: todayVM.weekDistances)
+                        .frame(width: 150, height: 64)
+                }
             }
+            .buttonStyle(.plain)
 
             HStack(alignment: .top, spacing: 10) {
                 NavigationLink(value: TodayDestination.vo2Max) {
@@ -538,6 +543,7 @@ private enum TodayDestination: Hashable {
     case vo2Max
     case hrv
     case restingHeartRate
+    case week
 }
 
 #if DEBUG
@@ -546,6 +552,7 @@ private enum TodayDestination: Hashable {
         .environment(TodayViewModel.preview())
         .environment(PreviewProfileStore.populated)
         .environment(TrainingPlanStore.shared)
+        .environment(AppNavigation())
 }
 
 #Preview("Today (ran today)") {
@@ -553,6 +560,7 @@ private enum TodayDestination: Hashable {
         .environment(TodayViewModel.preview(todayRun: .sample, streak: 5))
         .environment(PreviewProfileStore.populated)
         .environment(TrainingPlanStore.shared)
+        .environment(AppNavigation())
 }
 
 #Preview("Today (rest day)") {
@@ -560,6 +568,7 @@ private enum TodayDestination: Hashable {
         .environment(TodayViewModel.preview(readiness: .sampleRed))
         .environment(PreviewProfileStore.populated)
         .environment(TrainingPlanStore.shared)
+        .environment(AppNavigation())
 }
 
 #Preview("Today (empty)") {
@@ -567,5 +576,6 @@ private enum TodayDestination: Hashable {
         .environment(TodayViewModel())
         .environment(PreviewProfileStore.empty)
         .environment(TrainingPlanStore.shared)
+        .environment(AppNavigation())
 }
 #endif

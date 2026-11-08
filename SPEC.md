@@ -42,6 +42,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 - `RunDetailView` — opened from History, Today's run and Last run: the route, then every figure Health recorded (start–end time, duration, pace, speed, heart rate average / max / min, energy, elevation gain and loss, steps, weather, indoor or outdoor, METs), heart rate over time, the elevation profile, per-km splits with pace, heart rate and elapsed time, and running dynamics. A figure Health didn't record is left out
 - `TrendsView` — weekly mileage + pace charts
 - `VO2MaxDetailView` — 12-month VO₂ max chart
+- `WeekDetailView` — opened from Today's Last 7 days card: the week's distance and streak, a bar per day with the plan's distance dashed across it, sessions done and distance against the plan with a button to the Plan tab, and each day with its plan workout (done, still to do, missed or rest) and its runs, which open their detail (`WeekReview` in `PaceOffShared`)
 - `HeartTrendDetailView` — HRV and resting heart rate, opened from their Today cards: the latest reading against the baseline the readiness card uses (30-day HRV, 14-day resting HR), a Week / Month / 3 Months chart with the baseline marked, the readiness thresholds, and what the number means (`HeartTrend` in `PaceOffShared`)
 
 ### 7. Watch app
