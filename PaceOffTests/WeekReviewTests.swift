@@ -97,6 +97,26 @@ final class WeekReviewTests: XCTestCase {
         }
     }
 
+    func test_daysBeforeThePlanWasMade_haveNoPlan() {
+        // A race plan made on Thursday the 8th whose week 1 began Monday the 5th.
+        let base = plan()
+        let late = TrainingPlan(goal: base.goal, tier: base.tier, longRunDay: base.longRunDay,
+                                weeks: base.weeks, vdot: base.vdot, usedBeginnerDefault: false,
+                                createdAt: date(day: 8, hour: 20), startDate: date(day: 5, hour: 0))
+        let week = WeekReview(runs: [], plan: late, today: date(day: 10, hour: 9))
+        // Sun 4, Mon 5, Tue 6, Wed 7: before the plan was made. Thu 8 rest, Fri 9 missed, Sat 10 to do.
+        XCTAssertEqual(week.days.map(\.planMark), [nil, nil, nil, nil, .rest, .missed, .pending])
+        XCTAssertEqual(week.plannedSessions, 2)
+    }
+
+    func test_kmOnPlanDays_leavesOutRunsOnOtherDays() {
+        // 10 km on Monday's rest day and 8 km on Tuesday's easy 8.
+        let week = WeekReview(runs: [run(day: 5, km: 10), run(day: 6, km: 8)],
+                              plan: plan(), today: date(day: 10, hour: 9))
+        XCTAssertEqual(week.totalKm, 18, accuracy: 0.001)
+        XCTAssertEqual(week.kmOnPlanDays, 8, accuracy: 0.001)
+    }
+
     func test_todayDone_isMarkedDone_notPending() {
         let week = WeekReview(runs: [run(day: 10, km: 8)], plan: plan(), today: date(day: 10, hour: 9))
         XCTAssertEqual(week.days.last?.planMark, .done)

@@ -30,7 +30,7 @@ struct RootView: View {
 }
 
 /// Which tab is showing, shared through the environment so a screen deep
-/// in one tab can switch to another (the week screen's "Open plan").
+/// in one tab can switch to another.
 @MainActor
 @Observable
 final class AppNavigation {

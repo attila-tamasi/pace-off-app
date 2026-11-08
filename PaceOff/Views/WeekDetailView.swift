@@ -114,11 +114,11 @@ struct WeekDetailView: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 16) {
                 stat(value: "\(week.completedSessions) of \(week.plannedSessions)", label: "sessions done")
-                stat(value: String(format: "%.1f of %.1f", week.totalKm, week.plannedKm), label: "km against the plan")
+                stat(value: String(format: "%.1f of %.1f", week.kmOnPlanDays, week.plannedKm), label: "km on plan days")
             }
 
             if week.plannedKm > 0 {
-                ProgressView(value: min(week.totalKm, week.plannedKm), total: week.plannedKm)
+                ProgressView(value: min(week.kmOnPlanDays, week.plannedKm), total: week.plannedKm)
                     .tint(Color.accentColor)
             }
 
@@ -217,7 +217,8 @@ struct WeekDetailView: View {
         case .pending:
             symbol = "clock.fill"; color = .accentColor; label = "Plan workout still to do"
         case .missed:
-            symbol = "xmark.circle.fill"; color = .orange; label = "Plan workout missed"
+            // Neutral grey: orange means running on these screens.
+            symbol = "xmark.circle.fill"; color = .secondary; label = "Plan workout missed"
         case .rest:
             symbol = "moon.zzz.fill"; color = .secondary; label = "Planned rest day"
         }

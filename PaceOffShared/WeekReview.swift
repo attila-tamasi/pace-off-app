@@ -27,7 +27,9 @@ public struct WeekReview: Equatable, Sendable {
         /// The day's runs, earliest first.
         public let runs: [RunRecord]
         /// The plan's workout that day and whether it was done; nil when
-        /// no plan is active or the plan doesn't cover the day.
+        /// no plan is active, the plan doesn't cover the day, or the day
+        /// came before the plan was made (a race plan's week 1 can start a
+        /// few days earlier, and nobody missed a workout they weren't given).
         public let plan: PlanDayStatus?
 
         public var id: Date { date }
@@ -54,6 +56,7 @@ public struct WeekReview: Equatable, Sendable {
         let cal = Calendar.current
         let startOfToday = cal.startOfDay(for: today)
         let reconciler = TrainingPlanReconciler()
+        let planMade = plan.map { cal.startOfDay(for: $0.createdAt) }
         days = (0..<max(1, dayCount)).reversed().compactMap { offset in
             guard let date = cal.date(byAdding: .day, value: -offset, to: startOfToday) else { return nil }
             let dayRuns = runs
@@ -61,7 +64,10 @@ public struct WeekReview: Equatable, Sendable {
                 .sorted { $0.startDate < $1.startDate }
             // Midday, so the plan lookup lands on the day whatever the time zone does at midnight.
             let noon = cal.date(byAdding: .hour, value: 12, to: date) ?? date
-            let status = plan.map { reconciler.todayStatus(plan: $0, runs: dayRuns, today: noon) }
+            let status = plan.flatMap { p -> PlanDayStatus? in
+                guard let planMade, date >= planMade else { return nil }
+                return reconciler.todayStatus(plan: p, runs: dayRuns, today: noon)
+            }
             return Day(date: date,
                        isToday: offset == 0,
                        runs: dayRuns,
@@ -83,6 +89,15 @@ public struct WeekReview: Equatable, Sendable {
         days.reduce(0) { total, day in
             guard let workout = day.plan?.workout, workout.kind != .rest else { return total }
             return total + workout.distanceKm
+        }
+    }
+
+    /// Distance run on the days with a plan workout that asks for a run:
+    /// what `plannedKm` is measured against.
+    public var kmOnPlanDays: Double {
+        days.reduce(0) { total, day in
+            guard let workout = day.plan?.workout, workout.kind != .rest else { return total }
+            return total + day.distanceKm
         }
     }
 
