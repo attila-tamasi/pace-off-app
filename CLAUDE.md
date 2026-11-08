@@ -35,7 +35,7 @@ The app icon is one opaque 1024×1024 PNG, the same file in the iOS, widget and 
 ## Design rules
 - iOS 26 **Liquid Glass** design language: prefer native materials (`.glassEffect`, `.background`, system backgrounds); never fake glass with manual blur/opacity hacks
 - Screens read like Apple's Health app: large titles, data in `MetricCard`s (solid `secondarySystemGroupedBackground` cards with a coloured symbol + category, a big value, an optional mini chart). Glass stays on the navigation layer (tab bar, toolbar, pills), as in Health. Colour by meaning: the icon's blue (accent) for fitness and the plan, the track orange for running, pink for heart data
-- Follow Apple HIG: SF Symbols only, Dynamic Type, system colors, standard navigation
+- Follow Apple HIG: SF Symbols only, Dynamic Type, system colors, standard navigation. A big custom size (hero numbers, artwork symbols) uses `.scaledFont(size:weight:design:)` from `Views/Design/ScaledFont.swift`, never a fixed `.font(.system(size:))`, so it follows the text-size setting; repeating or sliding animations respect `accessibilityReduceMotion`
 - Support Dark Mode from day one; respect safe areas
 - Minimal UI: one screen = one job. Don't stuff dashboards with stats.
 - Accessibility: VoiceOver labels on interactive elements, sensible Dynamic Type behavior

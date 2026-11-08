@@ -18,6 +18,7 @@ struct BrandHero<Footer: View>: View {
     @State private var sloganOffset: CGFloat = 16
     @State private var footerOpacity: Double = 0
     @State private var footerOffset: CGFloat = 24
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(
         headline: String,
@@ -39,7 +40,9 @@ struct BrandHero<Footer: View>: View {
                         .shadow(color: BrandPalette.navy.opacity(0.45), radius: 18, y: 10)
 
                     Text("Pace Off")
-                        .font(.system(size: 40, weight: .heavy, design: .rounded))
+                        .scaledFont(size: 40, weight: .heavy, design: .rounded)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.25), radius: 6, x: 0, y: 2)
 
@@ -71,11 +74,17 @@ struct BrandHero<Footer: View>: View {
     }
 
     private func runEntryAnimations() {
+        // Reduce Motion: the copy fades in where it stands, without sliding.
+        if reduceMotion {
+            sloganOffset = 0
+            footerOffset = 0
+        }
         withAnimation(.easeOut(duration: 0.7).delay(0.15)) {
             sloganOpacity = 1
             sloganOffset = 0
         }
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.78).delay(0.55)) {
+        withAnimation(reduceMotion ? .easeInOut(duration: 0.4).delay(0.55)
+                                   : .spring(response: 0.6, dampingFraction: 0.78).delay(0.55)) {
             footerOpacity = 1
             footerOffset = 0
         }

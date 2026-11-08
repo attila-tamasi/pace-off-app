@@ -407,7 +407,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - Each Trends card has an empty state.
 
 ### Q-10 · Dynamic Type, VoiceOver and Reduce Motion
-- **Status:** todo
+- **Status:** done (PR #44)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:**
   - About 30 fixed font sizes, the Today hero among them, ignore the text-size setting.
@@ -549,6 +549,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #44: at the largest accessibility text size: Today's hero, Plan, Week, VO₂ max, Heart trend and Run detail heroes, Profile's goal card, onboarding; onboarding with Reduce Motion; VoiceOver on the profile-photo picker
 - [ ] PR #43: Profile's hero without the chips and the goal card (PB row, race countdown with and without a prediction); Trends with no data
 - [ ] PR #42: Profile's Delete My Data button and confirmation, the reworded Sign Out confirmation; on a device, onboarding starts fresh afterwards and the widget shows "Open Pace Off"
 - [ ] PR #41: on a device, a run finished on Apple Watch with the phone locked stops the afternoon reminder and shows on the widget without opening the app
@@ -571,6 +572,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · Q-10: the big custom font sizes follow Dynamic Type (scaledFont), the photo picker has a VoiceOver label, and repeating or sliding animations respect Reduce Motion (PR #44)
 - 2026-11-08 · Q-09: Profile shows the goal, PB and race day once and refreshes its prediction after a Health sync; Trends cards have empty states (PR #43)
 - 2026-11-08 · Q-08: Profile has Delete My Data; it and sign-out erase every App Group key and file, cancel every push and reset the widget (PR #42)
 - 2026-11-08 · Q-07: Health observers on workouts and VO₂ max wake the app for a new run; an expiring background task completes from its handler (PR #41)

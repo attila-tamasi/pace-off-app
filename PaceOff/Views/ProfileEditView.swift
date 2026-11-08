@@ -99,35 +99,49 @@ struct ProfilePhotoPicker: View {
     @Binding var photoItem: PhotosPickerItem?
 
     var body: some View {
+        // The label is its own view: PhotosPicker builds it outside the main
+        // actor, and `scaledFont` needs the main actor, which a view's body has.
         PhotosPicker(selection: $photoItem, matching: .images, photoLibrary: .shared()) {
-            ZStack(alignment: .bottomTrailing) {
-                Group {
-                    if let image {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                    } else {
-                        ZStack {
-                            Circle().fill(Color(.secondarySystemBackground))
-                            Image(systemName: "person.fill")
-                                .font(.system(size: 44))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                .frame(width: 110, height: 110)
-                .clipShape(Circle())
-                .overlay(Circle().stroke(.separator, lineWidth: 1))
-
-                Image(systemName: "camera.fill")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .padding(8)
-                    .background(Color.accentColor, in: Circle())
-                    .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 2))
-            }
+            ProfilePhotoPickerLabel(image: image)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(image == nil ? Text("Add a profile photo") : Text("Change profile photo"))
+    }
+}
+
+/// The photo, or a placeholder glyph, with the camera badge.
+private struct ProfilePhotoPickerLabel: View {
+    let image: UIImage?
+
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            Group {
+                if let image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                } else {
+                    ZStack {
+                        Circle().fill(Color(.secondarySystemBackground))
+                        Image(systemName: "person.fill")
+                            .scaledFont(size: 44)
+                            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .frame(width: 110, height: 110)
+            .clipShape(Circle())
+            .overlay(Circle().stroke(.separator, lineWidth: 1))
+
+            Image(systemName: "camera.fill")
+                .scaledFont(size: 13, weight: .semibold)
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                .foregroundStyle(.white)
+                .padding(8)
+                .background(Color.accentColor, in: Circle())
+                .overlay(Circle().stroke(Color(.systemBackground), lineWidth: 2))
+        }
     }
 }
 

@@ -159,6 +159,7 @@
 		8C17229E371CB281CE8962D9 /* OnceFlag.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518F932B08979B0859ABFBB2 /* OnceFlag.swift */; };
 		53288641CF6C3550FE8EB053 /* OnceFlagTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F6A692DEE744E4A792F2AA /* OnceFlagTests.swift */; };
 		70E2A5FE2AEAFB6FA502996E /* AppGroupTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B3B4430415CDBABF6D4761F /* AppGroupTests.swift */; };
+		268710EE520889798F108AE8 /* ScaledFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5F5E32A8E4587F3877449ED /* ScaledFont.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -305,6 +306,7 @@
 		518F932B08979B0859ABFBB2 /* OnceFlag.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFlag.swift; sourceTree = "<group>"; };
 		73F6A692DEE744E4A792F2AA /* OnceFlagTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceFlagTests.swift; sourceTree = "<group>"; };
 		7B3B4430415CDBABF6D4761F /* AppGroupTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupTests.swift; sourceTree = "<group>"; };
+		E5F5E32A8E4587F3877449ED /* ScaledFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScaledFont.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -527,6 +529,7 @@
 		ABA65778295BD1DDD6652D74 /* Design */ = {
 			isa = PBXGroup;
 			children = (
+				E5F5E32A8E4587F3877449ED /* ScaledFont.swift */,
 				8D861FC48ACFAD0E74BEAC65 /* MetricCard.swift */,
 				8B03A0ABD34E26E1BB4FC13A /* TrackBend.swift */,
 				E96A6583E9A382E6662FD125 /* BrandHero.swift */,
@@ -843,6 +846,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				268710EE520889798F108AE8 /* ScaledFont.swift in Sources */,
 				9C541E4BBF47AE57F6980955 /* OnceFlag.swift in Sources */,
 				FAF17C2AD374A10B666B74AF /* ReadinessDetailView.swift in Sources */,
 				FEC05ECF181FD31355C62CB7 /* WeekDetailView.swift in Sources */,

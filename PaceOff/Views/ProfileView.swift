@@ -135,7 +135,8 @@ struct ProfileView: View {
                 ZStack {
                     Circle().fill(Color.accentColor.opacity(0.15))
                     Image(systemName: "person.fill")
-                        .font(.system(size: 52, weight: .regular))
+                        .scaledFont(size: 52, weight: .regular)
+                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                         .foregroundStyle(Color.accentColor)
                 }
             }
@@ -215,7 +216,9 @@ struct ProfileView: View {
 
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(goal.displayName)
-                        .font(.system(size: 30, weight: .bold, design: .rounded))
+                        .scaledFont(size: 30, weight: .bold, design: .rounded)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                     Text(String(format: "%.1f km", goal.distanceKm))
                         .font(.system(.subheadline, design: .rounded, weight: .medium))
                         .foregroundStyle(.secondary)
@@ -266,7 +269,9 @@ struct ProfileView: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(p.formattedProjectedTime)
-                    .font(.system(size: 38, weight: .bold, design: .rounded))
+                    .scaledFont(size: 38, weight: .bold, design: .rounded)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                     .contentTransition(.numericText())
                 Text(p.formattedProjectedPace)
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
@@ -521,7 +526,8 @@ struct ProfileView: View {
                 RoundedRectangle(cornerRadius: 7, style: .continuous)
                     .fill(color.opacity(0.18))
                 Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
+                    .scaledFont(size: 14, weight: .semibold)
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     .foregroundStyle(color)
             }
             .frame(width: 30, height: 30)

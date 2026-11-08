@@ -43,6 +43,7 @@ struct OnboardingFlow: View {
     @Environment(ProfileStore.self) private var profileStore
     @Environment(HealthKitService.self) private var health
     @Environment(NotificationScheduler.self) private var notifications
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var step: OnboardingStep = .welcome
     @State private var draft: UserProfile = .init()
@@ -66,8 +67,10 @@ struct OnboardingFlow: View {
     /// Slide + fade based on direction — forward slides in from the right,
     /// back from the left. `stepTransition` reads the current step and
     /// picks a direction; SwiftUI applies the reverse for the outgoing view.
+    /// Under Reduce Motion, a plain cross-fade.
     private var stepTransition: AnyTransition {
-        .asymmetric(
+        if reduceMotion { return .opacity }
+        return .asymmetric(
             insertion: .move(edge: .trailing).combined(with: .opacity),
             removal: .move(edge: .leading).combined(with: .opacity)
         )
@@ -231,7 +234,8 @@ private struct WelcomeStep: View {
                 RoundedRectangle(cornerRadius: 9, style: .continuous)
                     .fill(Color.accentColor.opacity(0.16))
                 Image(systemName: icon)
-                    .font(.system(size: 15, weight: .semibold))
+                    .scaledFont(size: 15, weight: .semibold)
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     .foregroundStyle(Color.accentColor)
             }
             .frame(width: 36, height: 36)
@@ -434,7 +438,8 @@ private struct HealthPermissionStep: View {
         ) {
             VStack(spacing: 16) {
                 Image(systemName: "heart.text.square.fill")
-                    .font(.system(size: 72, weight: .semibold))
+                    .scaledFont(size: 72, weight: .semibold)
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     .foregroundStyle(.pink)
                     .brandSoftGlow(color: .pink, radius: 16)
                     .padding(.vertical, 8)
@@ -463,7 +468,8 @@ private struct HealthPermissionStep: View {
     private func readRow(icon: String, label: String, detail: String) -> some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
+                .scaledFont(size: 15, weight: .semibold)
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 .foregroundStyle(Color.accentColor)
                 .frame(width: 22)
             VStack(alignment: .leading, spacing: 2) {
@@ -481,6 +487,7 @@ private struct HealthPermissionStep: View {
 // MARK: - Step 7: Notifications
 
 private struct NotificationsStep: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Binding var isRequesting: Bool
     let onAllow: () async -> Void
     /// "Not now": moves on without asking iOS for permission.
@@ -503,10 +510,11 @@ private struct NotificationsStep: View {
         ) {
             VStack(spacing: 20) {
                 Image(systemName: "bell.badge.fill")
-                    .font(.system(size: 72, weight: .semibold))
+                    .scaledFont(size: 72, weight: .semibold)
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     .foregroundStyle(.red)
                     .brandSoftGlow(color: .red, radius: 16)
-                    .symbolEffect(.wiggle, options: .repeat(.periodic(2, delay: 3)))
+                    .symbolEffect(.wiggle, options: .repeat(.periodic(2, delay: 3)), isActive: !reduceMotion)
                     .padding(.vertical, 8)
 
                 Text("You can change the times, or allow notifications later, in Profile → Notifications.")
@@ -529,6 +537,7 @@ private struct DoneStep: View {
     let onFinish: () -> Void
 
     @State private var celebrate = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         OnboardingStepScaffold(
@@ -545,9 +554,10 @@ private struct DoneStep: View {
                         .fill(Color.accentColor.opacity(0.16))
                         .frame(width: 140, height: 140)
                     Image(systemName: "checkmark")
-                        .font(.system(size: 68, weight: .bold))
+                        .scaledFont(size: 68, weight: .bold)
+                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                         .foregroundStyle(Color.accentColor)
-                        .scaleEffect(celebrate ? 1 : 0.4)
+                        .scaleEffect(celebrate || reduceMotion ? 1 : 0.4)
                         .opacity(celebrate ? 1 : 0)
                 }
                 .brandSoftGlow(color: .accentColor, radius: 24)
@@ -556,7 +566,9 @@ private struct DoneStep: View {
             }
             .frame(maxWidth: .infinity)
             .onAppear {
-                withAnimation(.spring(response: 0.55, dampingFraction: 0.55).delay(0.1)) {
+                // Reduce Motion: a fade, not the bouncing scale.
+                withAnimation(reduceMotion ? .easeInOut(duration: 0.3)
+                                           : .spring(response: 0.55, dampingFraction: 0.55).delay(0.1)) {
                     celebrate = true
                 }
             }
@@ -593,7 +605,8 @@ private struct DoneStep: View {
     private func summaryRow(icon: String, label: String, value: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 14, weight: .semibold))
+                .scaledFont(size: 14, weight: .semibold)
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 .foregroundStyle(Color.accentColor)
                 .frame(width: 22)
             Text(label)
