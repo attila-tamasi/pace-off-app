@@ -11,7 +11,6 @@ struct ProfileView: View {
     @Environment(AppleSignInService.self) private var appleSignIn
     @Environment(HealthKitService.self) private var health
     @Environment(NotificationScheduler.self) private var notifications
-    @Environment(TodayViewModel.self) private var todayVM
 
     @AppStorage(AppGroup.Keys.notificationMorningHour, store: AppGroup.sharedDefaults)
 
@@ -173,7 +172,7 @@ struct ProfileView: View {
                       goalDate: profileStore.profile?.goalDate,
                       personalBest: profileStore.profile?.personalBest,
                       birthday: profileStore.profile?.birthday,
-                      healthSyncedAt: todayVM.lastSyncedAt)
+                      healthSyncedAt: health.lastSyncedAt)
     }
 
     private var signedInBadge: some View {
@@ -204,7 +203,7 @@ struct ProfileView: View {
                     cardLabel("GOAL", systemImage: "target")
                     Spacer()
                     if let countdown = GoalPrediction.countdown(to: profileStore.profile?.goalDate) {
-                        Text("RACE IN \(countdown.uppercased())")
+                        Text(countdown == "today" ? "RACE TODAY" : "RACE IN \(countdown.uppercased())")
                             .font(.system(.caption2, design: .rounded, weight: .bold))
                             .kerning(0.8)
                             .padding(.horizontal, 8)
@@ -628,7 +627,6 @@ struct ProfileView: View {
         .environment(HealthKitService.shared)
         .environment(NotificationScheduler.shared)
         .environment(TrainingPlanStore.shared)
-        .environment(TodayViewModel.preview())
 }
 
 #Preview("Profile (empty)") {
@@ -638,6 +636,5 @@ struct ProfileView: View {
         .environment(HealthKitService.shared)
         .environment(NotificationScheduler.shared)
         .environment(TrainingPlanStore.shared)
-        .environment(TodayViewModel.preview())
 }
 #endif

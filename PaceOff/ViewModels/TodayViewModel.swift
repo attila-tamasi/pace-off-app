@@ -47,9 +47,7 @@ public final class TodayViewModel {
     public private(set) var weekDistances: [TrendPoint] = []
     /// The snapshot's runs, for the screens Today's cards open.
     public private(set) var recentRuns: [RunRecord] = []
-    /// When the Health snapshot on screen was read; Profile refreshes its
-    /// prediction when it changes.
-    public private(set) var lastSyncedAt: Date?
+
 
     public var weekTotalKm: Double { weekDistances.reduce(0) { $0 + $1.value } }
 
@@ -189,7 +187,6 @@ public final class TodayViewModel {
             .map { TrendPoint(date: $0.date, value: $0.value) }
         self.weekDistances = Self.dailyDistances(runs, days: 7, now: now)
         self.recentRuns = runs
-        self.lastSyncedAt = snapshot.lastSyncedAt
     }
 
     /// Mean value per calendar day over the last `days` days (today

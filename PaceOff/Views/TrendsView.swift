@@ -10,6 +10,9 @@ struct TrendsView: View {
 
     @State private var vo2Max: [VO2MaxSnapshot] = []
     @State private var runs: [RunRecord] = []
+    /// False until there's something to show (the cache) or the Health
+    /// read is back, so the empty lines never show while still loading.
+    @State private var loaded = false
 
     var body: some View {
         ScrollView {
@@ -24,7 +27,7 @@ struct TrendsView: View {
                     layout: .compact
                 ) {
                     if recentVO2.isEmpty {
-                        emptyChart("No VO₂ max readings in the last 28 days. Apple Watch records one on outdoor runs and walks.")
+                        emptyChart(loaded ? "No VO₂ max readings in the last 28 days. Apple Watch records one on outdoor runs and walks." : "Loading…")
                     } else {
                         vo2MaxChart.frame(height: 150).padding(.top, 6)
                     }
@@ -39,7 +42,7 @@ struct TrendsView: View {
                     layout: .compact
                 ) {
                     if weeklyDistances.isEmpty {
-                        emptyChart("No runs in the last 12 weeks. Runs saved to Apple Health show up here.")
+                        emptyChart(loaded ? "No runs in the last 12 weeks. Runs saved to Apple Health show up here." : "Loading…")
                     } else {
                         weeklyDistanceChart.frame(height: 150).padding(.top, 6)
                     }
@@ -54,7 +57,7 @@ struct TrendsView: View {
                     layout: .compact
                 ) {
                     if recentPacedRuns.isEmpty {
-                        emptyChart("No runs with a pace in the last 28 days.")
+                        emptyChart(loaded ? "No runs with a pace in the last 28 days." : "Loading…")
                     } else {
                         paceChart.frame(height: 150).padding(.top, 6)
                     }
@@ -104,7 +107,9 @@ struct TrendsView: View {
 
     private var weeklyDistances: [(week: Date, km: Double)] {
         let cal = Calendar.current
-        let cutoff = cal.date(byAdding: .day, value: -84, to: Date()) ?? Date()
+        // Twelve whole weeks: this one and the eleven before it.
+        let thisWeek = cal.dateInterval(of: .weekOfYear, for: Date())?.start ?? Date()
+        let cutoff = cal.date(byAdding: .weekOfYear, value: -11, to: thisWeek) ?? thisWeek
         let recent = runs.filter { $0.startDate >= cutoff }
         let weekly = Dictionary(grouping: recent) { run -> Date in
             cal.dateInterval(of: .weekOfYear, for: run.startDate)?.start ?? run.startDate
@@ -170,14 +175,20 @@ struct TrendsView: View {
 
     private func load() async {
         // Paint from cache immediately so the charts aren't blank.
-        if let cached = await HealthDataCache.shared.load() {
+        if let cached = await HealthDataCache.shared.load(), !cached.isEmpty {
             self.vo2Max = cached.vo2Max
             self.runs = cached.runs
+            loaded = true
         }
         async let v = HealthKitService.shared.fetchVO2Max(daysBack: 90)
         async let r = HealthKitService.shared.fetchRuns(daysBack: 90)
-        self.vo2Max = await v
-        self.runs = await r
+        // A read that comes back empty over cached data is more likely a
+        // locked or failed read than data gone: keep what's on screen.
+        let freshVO2 = await v
+        let freshRuns = await r
+        if !freshVO2.isEmpty || vo2Max.isEmpty { self.vo2Max = freshVO2 }
+        if !freshRuns.isEmpty || runs.isEmpty { self.runs = freshRuns }
+        loaded = true
     }
 }
 
