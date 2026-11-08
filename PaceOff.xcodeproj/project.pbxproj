@@ -140,6 +140,11 @@
 		3A1368584A91874E8C2AFE31 /* HeartTrend.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99A0550C6980C0A93297332 /* HeartTrend.swift */; };
 		BFA1ACA618B8A87E65CF6B1E /* HeartTrendDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E03C110B5FE6439BB64C92 /* HeartTrendDetailView.swift */; };
 		F0094AB371E88EFC0B8C8FC5 /* HeartTrendTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C9783C9526CA5739ABF593E /* HeartTrendTests.swift */; };
+		B79E05D94A914D179363FA37 /* WorkoutProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF8906F1FC3C24CB53B24D9 /* WorkoutProfile.swift */; };
+		A1A7803CE54E4807C4CF2B21 /* WorkoutProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF8906F1FC3C24CB53B24D9 /* WorkoutProfile.swift */; };
+		7BFEC82FEA13A6711000B508 /* WorkoutProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF8906F1FC3C24CB53B24D9 /* WorkoutProfile.swift */; };
+		0F5041E602BB56B8E3F50F13 /* WorkoutProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF8906F1FC3C24CB53B24D9 /* WorkoutProfile.swift */; };
+		0B7D5ECE770D64B4FD1AC5E5 /* WorkoutProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9A016482D358502B6CAD1CE /* WorkoutProfileTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -276,6 +281,8 @@
 		D99A0550C6980C0A93297332 /* HeartTrend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartTrend.swift; sourceTree = "<group>"; };
 		D5E03C110B5FE6439BB64C92 /* HeartTrendDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartTrendDetailView.swift; sourceTree = "<group>"; };
 		5C9783C9526CA5739ABF593E /* HeartTrendTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartTrendTests.swift; sourceTree = "<group>"; };
+		0FF8906F1FC3C24CB53B24D9 /* WorkoutProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutProfile.swift; sourceTree = "<group>"; };
+		A9A016482D358502B6CAD1CE /* WorkoutProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutProfileTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -307,6 +314,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				0FF8906F1FC3C24CB53B24D9 /* WorkoutProfile.swift */,
 				D99A0550C6980C0A93297332 /* HeartTrend.swift */,
 				E31F4C4C1D283B639C221294 /* WidgetCache.swift */,
 				BC831434D44606757BE1FC6B /* RunStreak.swift */,
@@ -333,6 +341,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				A9A016482D358502B6CAD1CE /* WorkoutProfileTests.swift */,
 				5C9783C9526CA5739ABF593E /* HeartTrendTests.swift */,
 				8AA3FF3F869DFA3EF8E332F9 /* WidgetCacheTests.swift */,
 				6FDC02D91475E85C98373026 /* VoiceCopyTests.swift */,
@@ -694,6 +703,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0B7D5ECE770D64B4FD1AC5E5 /* WorkoutProfileTests.swift in Sources */,
+				7BFEC82FEA13A6711000B508 /* WorkoutProfile.swift in Sources */,
 				F0094AB371E88EFC0B8C8FC5 /* HeartTrendTests.swift in Sources */,
 				8569D8D132A04040657A51F8 /* HeartTrend.swift in Sources */,
 				C30D6F77AC6A83393CF969F4 /* WidgetCacheTests.swift in Sources */,
@@ -731,6 +742,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1A7803CE54E4807C4CF2B21 /* WorkoutProfile.swift in Sources */,
 				027A4AD2729712E0954A0183 /* HeartTrend.swift in Sources */,
 				EF7E1603426957668C17D08B /* WidgetCache.swift in Sources */,
 				4DA78FDD28D107BF625BE9CE /* RunStreak.swift in Sources */,
@@ -759,6 +771,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0F5041E602BB56B8E3F50F13 /* WorkoutProfile.swift in Sources */,
 				3A1368584A91874E8C2AFE31 /* HeartTrend.swift in Sources */,
 				87EA318E72F6AB0F1B2E394A /* WidgetCache.swift in Sources */,
 				A92528AD716046FE7909DAA6 /* RunStreak.swift in Sources */,
@@ -790,6 +803,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B79E05D94A914D179363FA37 /* WorkoutProfile.swift in Sources */,
 				BFA1ACA618B8A87E65CF6B1E /* HeartTrendDetailView.swift in Sources */,
 				B5D4AE33FDB698C83FDA37F0 /* HeartTrend.swift in Sources */,
 				F532321BF6582CAAD35EC801 /* WidgetCache.swift in Sources */,

@@ -355,17 +355,32 @@ struct TodayView: View {
                 }
                 .buttonStyle(.plain)
 
-                MetricCard(
-                    title: "Last run",
-                    systemImage: "calendar",
-                    tint: .accentColor,
-                    value: lastRunValue,
-                    note: todayVM.yesterday.map { String(format: "%.1f km", $0.distanceKm) },
-                    layout: .compact
-                )
+                if let lastRun = todayVM.yesterday {
+                    NavigationLink {
+                        RunDetailView(run: lastRun)
+                    } label: {
+                        lastRunCard(showsChevron: true)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    lastRunCard(showsChevron: false)
+                }
             }
             .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    /// The most recent run before today: how long ago and how far.
+    private func lastRunCard(showsChevron: Bool) -> some View {
+        MetricCard(
+            title: "Last run",
+            systemImage: "calendar",
+            tint: .accentColor,
+            showsChevron: showsChevron,
+            value: lastRunValue,
+            note: todayVM.yesterday.map { String(format: "%.1f km", $0.distanceKm) },
+            layout: .compact
+        )
     }
 
     /// "5-day streak", or nil before the first day of a streak.
