@@ -47,7 +47,7 @@ public final class NotificationScheduler {
         planStatus: PlanDayStatus?,
         overrideBody: String? = nil
     ) {
-        center.removePendingNotificationRequests(withIdentifiers: Self.dailyIds)
+        cancelDailyPushes()
 
         let defaults = AppGroup.sharedDefaults
         guard defaults?.bool(forKey: AppGroup.Keys.onboardingComplete) == true else { return }

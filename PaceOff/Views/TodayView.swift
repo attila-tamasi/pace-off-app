@@ -171,30 +171,10 @@ struct TodayView: View {
                 .padding(.trailing, 96)
 
             if let planLine {
-                HStack(spacing: 7) {
-                    Circle()
-                        .fill(BrandPalette.trackLight)
-                        .frame(width: 7, height: 7)
-                        .shadow(color: BrandPalette.trackLight, radius: 4)
-                    Text(planLine)
-                        .font(.system(.footnote, design: .rounded, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.92))
-                }
-                .padding(.top, 4)
-                .padding(.trailing, 96)
+                planLineRow(planLine)
             }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(alignment: .bottomTrailing) {
-            ZStack(alignment: .bottomTrailing) {
-                BrandPalette.cardGradient
-                TrackBend(radius: 0.75, width: 0.27)
-                    .frame(width: 150, height: 150)
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .shadow(color: BrandPalette.deepBlue.opacity(0.25), radius: 16, x: 0, y: 8)
+        .heroSurface(trackSize: 150)
         .accessibilityElement(children: .combine)
     }
 
@@ -235,18 +215,27 @@ struct TodayView: View {
             }
             .buttonStyle(.glass)
             .padding(.top, 2)
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(alignment: .bottomTrailing) {
-            ZStack(alignment: .bottomTrailing) {
-                BrandPalette.cardGradient
-                TrackBend(radius: 0.75, width: 0.27)
-                    .frame(width: 120, height: 120)
+
+            if let planLine {
+                planLineRow(planLine)
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-        .shadow(color: BrandPalette.deepBlue.opacity(0.25), radius: 16, x: 0, y: 8)
+        .heroSurface(trackSize: 120)
+    }
+
+    /// Today's plan workout under the hero's copy, on a glowing track dot.
+    private func planLineRow(_ line: String) -> some View {
+        HStack(spacing: 7) {
+            Circle()
+                .fill(BrandPalette.trackLight)
+                .frame(width: 7, height: 7)
+                .shadow(color: BrandPalette.trackLight, radius: 4)
+            Text(line)
+                .font(.system(.footnote, design: .rounded, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.92))
+        }
+        .padding(.top, 4)
+        .padding(.trailing, 96)
     }
 
     /// "Half Marathon plan · Tempo", or "Rest day in your plan". Nil when
@@ -606,6 +595,24 @@ private enum TodayDestination: Hashable {
     case restingHeartRate
     case week
     case readiness
+}
+
+private extension View {
+    /// The hero's surface: the icon's blue gradient with its running track
+    /// in the corner, rounded and lifted, as on Today's target card.
+    func heroSurface(trackSize: CGFloat) -> some View {
+        padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(alignment: .bottomTrailing) {
+                ZStack(alignment: .bottomTrailing) {
+                    BrandPalette.cardGradient
+                    TrackBend(radius: 0.75, width: 0.27)
+                        .frame(width: trackSize, height: trackSize)
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .shadow(color: BrandPalette.deepBlue.opacity(0.25), radius: 16, x: 0, y: 8)
+    }
 }
 
 #if DEBUG

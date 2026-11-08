@@ -44,6 +44,16 @@ final class PushTargetEngineTests: XCTestCase {
         XCTAssertNil(engine.target(PushTargetEngine.Inputs(today: today, runs: [later], vo2Max: [], restingHeartRate: [])))
     }
 
+    func test_target_forARunnerSeenBefore_isTheRestartTarget_evenWithNoRunInTheWindow() {
+        // Back after more than 90 days off: the snapshot holds no run, but
+        // Pace Off has seen this runner run, so it's a restart, not a start.
+        let today = Date()
+        let inputs = PushTargetEngine.Inputs(today: today, runs: [], vo2Max: [], restingHeartRate: [])
+        let target = engine.target(inputs, hasRunBefore: true)
+        XCTAssertEqual(target?.tone, .restart)
+        XCTAssertEqual(target?.distanceMeters, 3_000)
+    }
+
     func test_target_withARun_isTheComputedTarget() {
         let today = Date()
         let inputs = PushTargetEngine.Inputs(today: today, runs: [run(daysAgo: 1, km: 5, today: today)],

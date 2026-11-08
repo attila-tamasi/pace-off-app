@@ -163,7 +163,9 @@ public final class TodayViewModel {
             restingHeartRate: rhr,
             readiness: self.readiness?.level
         )
-        let computed = engine.target(inputs)
+        let defaults = AppGroup.sharedDefaults
+        if !runs.isEmpty { defaults?.set(true, forKey: AppGroup.Keys.hasSeenRun) }
+        let computed = engine.target(inputs, hasRunBefore: defaults?.bool(forKey: AppGroup.Keys.hasSeenRun) ?? false)
         self.target = computed
         self.needsFirstRun = computed == nil
         self.yesterday = mostRecentRunBefore(today: now, in: runs)

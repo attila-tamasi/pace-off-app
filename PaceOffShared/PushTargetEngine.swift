@@ -56,11 +56,13 @@ public struct PushTargetEngine: Sendable {
         runs.contains { $0.startDate <= today }
     }
 
-    /// Today's target, or nil while there's no run to base it on (a new
-    /// runner, or Health access denied). Then there's no target and no
-    /// pushes: Today shows how to log a first run instead.
-    public func target(_ inputs: Inputs) -> RunTarget? {
-        guard Self.hasRunHistory(inputs.runs, today: inputs.today) else { return nil }
+    /// Today's target, or nil for a runner Pace Off has never seen run (a
+    /// new runner, or Health access denied): then there's no target and no
+    /// pushes, and Today shows how to log a first run. `hasRunBefore` is
+    /// true once any Health read has held a run; such a runner, back after
+    /// more than the 90-day window, gets the restart target as before.
+    public func target(_ inputs: Inputs, hasRunBefore: Bool = false) -> RunTarget? {
+        guard hasRunBefore || Self.hasRunHistory(inputs.runs, today: inputs.today) else { return nil }
         return compute(inputs)
     }
 

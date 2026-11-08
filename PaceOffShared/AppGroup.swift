@@ -24,6 +24,10 @@ public enum AppGroup {
         public static let userProfile = "paceoff.userProfile"
         public static let lastPlanWorkoutSummary = "paceoff.lastPlanWorkoutSummary"
         public static let planWorkoutCompletedToday = "paceoff.planWorkoutCompletedToday"
+        /// Set once a Health read has held a run. A runner back after more
+        /// than the 90-day window gets a restart target, not the first-run
+        /// card a new runner gets.
+        public static let hasSeenRun = "paceoff.hasSeenRun"
     }
 
     /// Filename of the profile photo JPEG, stored in the App Group container
