@@ -10,6 +10,7 @@ struct ProfileView: View {
     @Environment(ProfileStore.self) private var profileStore
     @Environment(AppleSignInService.self) private var appleSignIn
     @Environment(HealthKitService.self) private var health
+    @Environment(NotificationScheduler.self) private var notifications
 
     @AppStorage(AppGroup.Keys.notificationMorningHour, store: AppGroup.sharedDefaults)
 
@@ -417,6 +418,18 @@ struct ProfileView: View {
     private var notificationRow: some View {
         DisclosureGroup {
             VStack(spacing: 10) {
+                // iOS only asks once: after "Not now" in onboarding this
+                // shows the prompt; once answered it does nothing, and
+                // Settings → Notifications takes over.
+                Button {
+                    Task { await notifications.requestAuthorization() }
+                } label: {
+                    Label("Allow notifications", systemImage: "bell")
+                        .font(.system(.subheadline, design: .rounded, weight: .medium))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Color.accentColor)
                 Stepper("Morning push: \(formatHour(morningHour))",
                         value: $morningHour, in: 5...11)
                 Stepper("Afternoon: \(formatHour(afternoonHour))",
@@ -598,6 +611,7 @@ struct ProfileView: View {
         .environment(PreviewProfileStore.populated)
         .environment(PreviewAppleSignInService.signedIn)
         .environment(HealthKitService.shared)
+        .environment(NotificationScheduler.shared)
         .environment(TrainingPlanStore.shared)
 }
 
@@ -606,6 +620,7 @@ struct ProfileView: View {
         .environment(PreviewProfileStore.empty)
         .environment(PreviewAppleSignInService.notSignedIn)
         .environment(HealthKitService.shared)
+        .environment(NotificationScheduler.shared)
         .environment(TrainingPlanStore.shared)
 }
 #endif

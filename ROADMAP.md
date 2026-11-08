@@ -144,7 +144,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 ## Wave 2 · Quality
 
 ### Q-01 · Notification "Not now" asks for permission anyway
-- **Status:** todo
+- **Status:** done (PR #28)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** On the onboarding notifications step, "Not now" triggers the same system prompt as "Allow".
 - **Where:** `PaceOff/Views/Onboarding/OnboardingFlow.swift` (`secondaryTitle: "Not now"`, `onSecondary: { … onAllow() }`).
@@ -201,6 +201,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
   - The times shown are the times scheduled.
   - An on/off toggle is stored in App Group defaults and respected everywhere.
   - Changing a time or the toggle reschedules immediately.
+  - Turning the toggle on when iOS was never asked ("Not now" in onboarding, Q-01) requests permission then.
 
 ### Q-07 · Pace Off doesn't notice a finished run
 - **Status:** todo
@@ -377,6 +378,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #28: onboarding's notifications step: "Not now" goes straight to the last step with no system prompt (and hides while the prompt is up); "Allow Notifications" still shows it; the new footnote; Profile → Notifications → "Allow notifications" shows the prompt after a "Not now"
 - [ ] PR #27: the widget (all four families) right after a run logged in the app, and after midnight before opening the app: "—", "Open Pace Off" and a grey dot; the stale entry in the systemSmall preview
 - [ ] PR #25: the Plan tab on race day (hero "Race day", the race row marked in the week), the plan detail week with the race, and Today's plan line "… plan · Race day"; a new race plan's week 1 can show a few days already past
 - [ ] PR #20: Today's "N-day streak" label now shows before today's run, and the hero card's voice line follows the new states (streak, recovery, ran today)
@@ -386,6 +388,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · Q-01: "Not now" on onboarding's notifications step moves on without asking iOS for permission (PR #28)
 - 2026-11-07 · R-09: the app reloads the widget after each refresh; its timeline turns at noon and midnight, and a day cached earlier shows "Open Pace Off", never as today's (PR #27)
 - 2026-11-06 · R-08: a slow runner's measured VO₂ max or PB is used (below VDOT 20 it's raised to 20); junk readings (outside 10–90) are ignored; the beginner default only when there's no usable measurement (PR #26)
 - 2026-11-05 · R-07a: a reachable race is the plan's last day, counted back from it, with a rest day and no hard sessions before it; R-07b blocked (PR #25)

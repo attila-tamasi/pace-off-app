@@ -93,6 +93,7 @@ struct OnboardingFlow: View {
         case .notifications: NotificationsStep(
                                 isRequesting: $isRequestingPermission,
                                 onAllow: { await requestNotifications(); advance() },
+                                onSkip: advance,
                                 onBack: back
                             )
         case .done:         DoneStep(name: draft.displayName,
@@ -473,6 +474,8 @@ private struct HealthPermissionStep: View {
 private struct NotificationsStep: View {
     @Binding var isRequesting: Bool
     let onAllow: () async -> Void
+    /// "Not now": moves on without asking iOS for permission.
+    let onSkip: () -> Void
     let onBack: () -> Void
 
     var body: some View {
@@ -483,8 +486,10 @@ private struct NotificationsStep: View {
             primaryTitle: isRequesting ? "Requesting…" : "Allow Notifications",
             primaryEnabled: !isRequesting,
             onPrimary: { Task { await onAllow() } },
-            secondaryTitle: "Not now",
-            onSecondary: { Task { await onAllow() } },
+            // Hidden while the system prompt is up, so a skip can't race
+            // the request.
+            secondaryTitle: isRequesting ? nil : "Not now",
+            onSecondary: isRequesting ? nil : onSkip,
             onBack: onBack
         ) {
             VStack(spacing: 20) {
@@ -495,7 +500,7 @@ private struct NotificationsStep: View {
                     .symbolEffect(.wiggle, options: .repeat(.periodic(2, delay: 3)))
                     .padding(.vertical, 8)
 
-                Text("You can change timing or turn any of them off later in Profile → Notifications.")
+                Text("You can change the times, or allow notifications later, in Profile → Notifications.")
                     .font(.system(.footnote, design: .rounded))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
