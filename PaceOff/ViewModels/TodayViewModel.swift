@@ -42,6 +42,8 @@ public final class TodayViewModel {
     public private(set) var vo2Trend: [TrendPoint] = []
     /// Kilometres run on each of the last seven days, today last; 0 on rest days.
     public private(set) var weekDistances: [TrendPoint] = []
+    /// The snapshot's runs, for the screens Today's cards open.
+    public private(set) var recentRuns: [RunRecord] = []
 
     public var weekTotalKm: Double { weekDistances.reduce(0) { $0 + $1.value } }
 
@@ -173,6 +175,7 @@ public final class TodayViewModel {
             .suffix(12)
             .map { TrendPoint(date: $0.date, value: $0.value) }
         self.weekDistances = Self.dailyDistances(runs, days: 7, now: now)
+        self.recentRuns = runs
     }
 
     /// Mean value per calendar day over the last `days` days (today
@@ -264,6 +267,7 @@ public final class TodayViewModel {
             vm.restingHRTrend = series([54, 53, 53, 52, 52, 51, 51])
             vm.vo2Trend = series([47.9, 48.2, 48.1, 48.6, 48.8, 49.0, 49.2])
             vm.weekDistances = series([6.1, 0, 8.4, 0, 5.2, 12.3, todayRun?.distanceKm ?? 0])
+            vm.recentRuns = RunRecord.samples + [todayRun].compactMap { $0 }
         }
         return vm
     }

@@ -145,6 +145,12 @@
 		7BFEC82FEA13A6711000B508 /* WorkoutProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF8906F1FC3C24CB53B24D9 /* WorkoutProfile.swift */; };
 		0F5041E602BB56B8E3F50F13 /* WorkoutProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF8906F1FC3C24CB53B24D9 /* WorkoutProfile.swift */; };
 		0B7D5ECE770D64B4FD1AC5E5 /* WorkoutProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9A016482D358502B6CAD1CE /* WorkoutProfileTests.swift */; };
+		C45CB2AB60328CC7D378DEC5 /* WeekReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79DEFC03881AF55665EB0AF2 /* WeekReview.swift */; };
+		6FEC638C6700E353F6FED950 /* WeekReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79DEFC03881AF55665EB0AF2 /* WeekReview.swift */; };
+		15528F5496188D4DF8EC0B86 /* WeekReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79DEFC03881AF55665EB0AF2 /* WeekReview.swift */; };
+		A5534DD54512341037EFBC0C /* WeekReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79DEFC03881AF55665EB0AF2 /* WeekReview.swift */; };
+		FEC05ECF181FD31355C62CB7 /* WeekDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC7AA862D1B73A6B0BB1EF0E /* WeekDetailView.swift */; };
+		134EF0EA559B03EAB9B2EED8 /* WeekReviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C38A19F87DCA31C7FFFCED0D /* WeekReviewTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -283,6 +289,9 @@
 		5C9783C9526CA5739ABF593E /* HeartTrendTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartTrendTests.swift; sourceTree = "<group>"; };
 		0FF8906F1FC3C24CB53B24D9 /* WorkoutProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutProfile.swift; sourceTree = "<group>"; };
 		A9A016482D358502B6CAD1CE /* WorkoutProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutProfileTests.swift; sourceTree = "<group>"; };
+		79DEFC03881AF55665EB0AF2 /* WeekReview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekReview.swift; sourceTree = "<group>"; };
+		BC7AA862D1B73A6B0BB1EF0E /* WeekDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekDetailView.swift; sourceTree = "<group>"; };
+		C38A19F87DCA31C7FFFCED0D /* WeekReviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekReviewTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -314,6 +323,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				79DEFC03881AF55665EB0AF2 /* WeekReview.swift */,
 				0FF8906F1FC3C24CB53B24D9 /* WorkoutProfile.swift */,
 				D99A0550C6980C0A93297332 /* HeartTrend.swift */,
 				E31F4C4C1D283B639C221294 /* WidgetCache.swift */,
@@ -341,6 +351,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				C38A19F87DCA31C7FFFCED0D /* WeekReviewTests.swift */,
 				A9A016482D358502B6CAD1CE /* WorkoutProfileTests.swift */,
 				5C9783C9526CA5739ABF593E /* HeartTrendTests.swift */,
 				8AA3FF3F869DFA3EF8E332F9 /* WidgetCacheTests.swift */,
@@ -460,6 +471,7 @@
 		7EEACE0D6218931943423686 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				BC7AA862D1B73A6B0BB1EF0E /* WeekDetailView.swift */,
 				D5E03C110B5FE6439BB64C92 /* HeartTrendDetailView.swift */,
 				ABA65778295BD1DDD6652D74 /* Design */,
 				22CB6B947F1CF60F198071D6 /* Legal */,
@@ -703,6 +715,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				134EF0EA559B03EAB9B2EED8 /* WeekReviewTests.swift in Sources */,
+				15528F5496188D4DF8EC0B86 /* WeekReview.swift in Sources */,
 				0B7D5ECE770D64B4FD1AC5E5 /* WorkoutProfileTests.swift in Sources */,
 				7BFEC82FEA13A6711000B508 /* WorkoutProfile.swift in Sources */,
 				F0094AB371E88EFC0B8C8FC5 /* HeartTrendTests.swift in Sources */,
@@ -742,6 +756,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6FEC638C6700E353F6FED950 /* WeekReview.swift in Sources */,
 				A1A7803CE54E4807C4CF2B21 /* WorkoutProfile.swift in Sources */,
 				027A4AD2729712E0954A0183 /* HeartTrend.swift in Sources */,
 				EF7E1603426957668C17D08B /* WidgetCache.swift in Sources */,
@@ -771,6 +786,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A5534DD54512341037EFBC0C /* WeekReview.swift in Sources */,
 				0F5041E602BB56B8E3F50F13 /* WorkoutProfile.swift in Sources */,
 				3A1368584A91874E8C2AFE31 /* HeartTrend.swift in Sources */,
 				87EA318E72F6AB0F1B2E394A /* WidgetCache.swift in Sources */,
@@ -803,6 +819,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FEC05ECF181FD31355C62CB7 /* WeekDetailView.swift in Sources */,
+				C45CB2AB60328CC7D378DEC5 /* WeekReview.swift in Sources */,
 				B79E05D94A914D179363FA37 /* WorkoutProfile.swift in Sources */,
 				BFA1ACA618B8A87E65CF6B1E /* HeartTrendDetailView.swift in Sources */,
 				B5D4AE33FDB698C83FDA37F0 /* HeartTrend.swift in Sources */,

@@ -8,24 +8,33 @@ import SwiftUI
 
 struct RootView: View {
 
-    @State private var selection: AppTab = .today
-
-    enum AppTab: Hashable { case today, history, trends, plan }
+    @State private var navigation = AppNavigation()
 
     var body: some View {
-        TabView(selection: $selection) {
-            SwiftUI.Tab("Today", systemImage: "figure.run", value: AppTab.today) {
+        TabView(selection: $navigation.tab) {
+            SwiftUI.Tab("Today", systemImage: "figure.run", value: AppNavigation.Tab.today) {
                 NavigationStack { TodayView() }
             }
-            SwiftUI.Tab("History", systemImage: "clock.arrow.circlepath", value: AppTab.history) {
+            SwiftUI.Tab("History", systemImage: "clock.arrow.circlepath", value: AppNavigation.Tab.history) {
                 NavigationStack { HistoryView() }
             }
-            SwiftUI.Tab("Trends", systemImage: "chart.line.uptrend.xyaxis", value: AppTab.trends) {
+            SwiftUI.Tab("Trends", systemImage: "chart.line.uptrend.xyaxis", value: AppNavigation.Tab.trends) {
                 NavigationStack { TrendsView() }
             }
-            SwiftUI.Tab("Plan", systemImage: "list.bullet.rectangle.portrait", value: AppTab.plan) {
+            SwiftUI.Tab("Plan", systemImage: "list.bullet.rectangle.portrait", value: AppNavigation.Tab.plan) {
                 NavigationStack { PlanTabView() }
             }
         }
+        .environment(navigation)
     }
+}
+
+/// Which tab is showing, shared through the environment so a screen deep
+/// in one tab can switch to another.
+@MainActor
+@Observable
+final class AppNavigation {
+    enum Tab: Hashable { case today, history, trends, plan }
+
+    var tab: Tab = .today
 }
