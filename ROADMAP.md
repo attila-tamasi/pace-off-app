@@ -73,7 +73,7 @@ Each is split into one PR per sub-item.
   - The day-by-day matching is a pure, tested function; it shares the completion rule with `TrainingPlanReconciler` (F-04 can reuse it for past weeks).
 
 ### F-09d · Readiness explains itself
-- **Status:** todo
+- **Status:** done (PR #32)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** Not in the owner's list, but "every card" covers it: the Readiness card says Ready / Ease off / Rest without what it compared.
 - **Where:** `TodayView` (`readinessCard`); `ReadinessEngine`; the F-09a screens.
@@ -462,6 +462,7 @@ These tell the runner the wrong thing or prescribe too much load. They go before
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #32: Today's Readiness card (chevron) and its screen: the verdict, the two signal cards with their grades (each opening its HRV / Resting HR screen), the rules card, and the not-enough-history state
 - [ ] PR #31: Today's Last 7 days card (chevron) and the week screen, with and without a plan: the bars and dashed plan lines, the plan card and its "Open training plan" button switching tabs, the day cards and their marks, a run opening its detail
 - [ ] PR #30: Today's Last run card (chevron) and the run detail: start–end time, the summary tiles, the heart rate chart, the elevation profile, the splits table; a treadmill run shows "Indoor" and no elevation
 - [ ] PR #29: Today's HRV and Resting HR cards (chevron) and their detail screens: the summary line's colour, the Week / Month / 3 Months picker, the dashed baseline, the "baseline appears after N more days" line with short history, and the empty state
@@ -475,6 +476,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-08 · F-09d: Readiness opens a screen with each signal against its baseline, how the two combine and what each colour does to the target; every Today card now has a detail (PR #32)
 - 2026-11-08 · F-09c: Last 7 days opens a week screen: each day's runs and, with a plan, its workout marked done, to do, missed or rest, with a way to the Plan tab (PR #31)
 - 2026-11-08 · F-09b: Last run opens the run's detail, which now shows every figure Health recorded, heart rate over time, the elevation profile and a splits table (PR #30)
 - 2026-11-08 · F-09a: the HRV and Resting HR cards open detail screens with their baseline, a Week / Month / 3 Months chart and how readiness grades them (PR #29)

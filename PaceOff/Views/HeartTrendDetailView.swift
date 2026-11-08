@@ -75,7 +75,9 @@ struct HeartTrendDetailView: View {
     private func baselineLine(_ trend: HeartTrend) -> (text: String, icon: String, color: Color)? {
         let window = "\(trend.baselineWindowDays)-day"
         if let change = trend.change, let baseline = trend.baseline, let level = trend.level {
-            let percent = Int((abs(change) * 100).rounded())
+            // Rounded toward zero, so the shown percent never crosses a
+            // threshold the grade hasn't.
+            let percent = Int((abs(change) * 100).rounded(.towardZero))
             let base = "\(window) baseline of \(Int(baseline.rounded())) \(copy.unit)"
             let color: Color
             switch level {
@@ -247,8 +249,8 @@ struct HeartTrendDetailView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 thresholdRow(color: .green, label: "Ready", text: "Less than \(yellow)% \(direction) your baseline")
-                thresholdRow(color: .yellow, label: "Ease off", text: "\(yellow)% or more \(direction): today's target stays at your usual distance")
-                thresholdRow(color: .red, label: "Rest", text: "\(red)% or more \(direction): the target is cut to 60% and the day turns to recovery")
+                thresholdRow(color: .yellow, label: "Ease off", text: "\(yellow)% or more \(direction): today's target goes no higher than your usual distance")
+                thresholdRow(color: .red, label: "Rest", text: "\(red)% or more \(direction): the target is capped at \(Int((PushTargetEngine.redReadinessCapFactor * 100).rounded()))% of your usual distance and the day turns to recovery")
             }
 
             Text("The other signal counts too: when HRV and resting heart rate are both off, the day turns red.")

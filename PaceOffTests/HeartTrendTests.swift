@@ -84,6 +84,35 @@ final class HeartTrendTests: XCTestCase {
         XCTAssertEqual(trendAndReadiness(48).0.level, .green)   // below is good
     }
 
+    // MARK: - One signal on its own, as the readiness screen shows it
+
+    func test_staticLevel_gradesOneSignal() {
+        XCTAssertEqual(HeartTrend.level(for: .hrv, value: 47, baseline: 60), .red)
+        XCTAssertEqual(HeartTrend.level(for: .hrv, value: 53, baseline: 60), .yellow)
+        XCTAssertEqual(HeartTrend.level(for: .hrv, value: 66, baseline: 60), .green)
+        XCTAssertEqual(HeartTrend.level(for: .restingHeartRate, value: 54.5, baseline: 50), .red)
+        XCTAssertEqual(HeartTrend.level(for: .restingHeartRate, value: 52.5, baseline: 50), .yellow)
+        XCTAssertEqual(HeartTrend.level(for: .restingHeartRate, value: 48, baseline: 50), .green)
+        XCTAssertNil(HeartTrend.level(for: .hrv, value: 50, baseline: 0))
+    }
+
+    func test_twoYellowSignals_eachYellow_dayRed() {
+        // The readiness screen shows each signal yellow and explains why the
+        // day is red: both are off.
+        let hrv = samples(-20 ... -1, value: 60, plus: [(date: day(0), value: 53)])
+        let rhr = samples(-10 ... -1, value: 50, plus: [(date: day(0, hour: 8), value: 52.5)])
+        let readiness = ReadinessEngine().compute(ReadinessEngine.Inputs(
+            today: today,
+            hrv: hrv.map { HRVSnapshot(date: $0.date, sdnnMs: $0.value) },
+            restingHeartRate: rhr.map { RestingHeartRateSnapshot(date: $0.date, bpm: $0.value) }
+        ))
+        XCTAssertEqual(readiness?.level, .red)
+        XCTAssertEqual(HeartTrend.level(for: .hrv, value: readiness?.hrvMs ?? 0, baseline: readiness?.hrvBaselineMs ?? 0), .yellow)
+        XCTAssertEqual(HeartTrend.level(for: .restingHeartRate,
+                                        value: readiness?.restingHR ?? 0,
+                                        baseline: readiness?.restingHRBaseline ?? 0), .yellow)
+    }
+
     // MARK: - Latest reading
 
     func test_latest_fallsBackToYesterday() {

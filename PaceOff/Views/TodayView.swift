@@ -65,6 +65,7 @@ struct TodayView: View {
             case .hrv: HeartTrendDetailView(metric: .hrv)
             case .restingHeartRate: HeartTrendDetailView(metric: .restingHeartRate)
             case .week: WeekDetailView()
+            case .readiness: ReadinessDetailView()
             }
         }
     }
@@ -208,7 +209,10 @@ struct TodayView: View {
 
         VStack(spacing: 10) {
             if let readiness = todayVM.readiness {
-                readinessCard(readiness)
+                NavigationLink(value: TodayDestination.readiness) {
+                    readinessCard(readiness)
+                }
+                .buttonStyle(.plain)
             }
             HStack(alignment: .top, spacing: 10) {
                 NavigationLink(value: TodayDestination.hrv) {
@@ -261,6 +265,7 @@ struct TodayView: View {
             systemImage: readinessSymbol(readiness.level),
             tint: readinessTint(readiness.level),
             detail: readiness.computedAt.formatted(date: .omitted, time: .shortened),
+            showsChevron: true,
             value: readinessLabel(readiness.level),
             note: readiness.sentence
         ) {
@@ -544,6 +549,7 @@ private enum TodayDestination: Hashable {
     case hrv
     case restingHeartRate
     case week
+    case readiness
 }
 
 #if DEBUG

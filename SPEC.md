@@ -70,7 +70,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 - Nothing is scheduled before onboarding completes, and sign-out removes every pending and delivered push
 
 ### 11. Daily readiness traffic light
-- Green / Yellow / Red readiness card on Today — HRV (SDNN) + resting HR versus rolling personal baselines (30-day HRV, 14-day RHR), with one supporting sentence ("HRV below your baseline — easy day.")
+- Green / Yellow / Red readiness card on Today; it opens `ReadinessDetailView`, which shows each signal against its baseline with its own grade (each opening its `HeartTrendDetailView`), how the two combine, and what each colour does to the target — HRV (SDNN) + resting HR versus rolling personal baselines (30-day HRV, 14-day RHR), with one supporting sentence ("HRV below your baseline — easy day.")
 - `ReadinessEngine` — pure Swift in `PaceOffShared`, unit-tested; two independently degraded signals escalate to red; hides entirely (returns nil) until ≥7 days of HRV or ≥5 days of RHR history
 - **Feeds the push target** (since the readiness-integration follow-up): red caps the day at 0.6× baseline and shifts tone to recovery; yellow refuses to push above baseline and softens an aggressive tone; green/unknown changes nothing. `RunTarget.readinessCapApplied` records when the cap fired.
 - HRV series cached in `HealthDataSnapshot` (schema v2); no new HealthKit read scope — SDNN was already requested for the morning check-in card
