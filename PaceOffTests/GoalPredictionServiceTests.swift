@@ -223,6 +223,27 @@ final class GoalPredictionServiceTests: XCTestCase {
         }
     }
 
+    func test_predict_PBForAnotherDistance_isConvertedThroughVDOT() {
+        // A 45:00 10K this year, goal the half, no recent runs: the PB is
+        // worth about 1:39:44 over 21.1 km, not 45:00.
+        let today = Date()
+        let year = Calendar.current.component(.year, from: today)
+        let pb = PersonalBest(durationSeconds: 2_700, year: year, distance: .tenK)
+        let p = service.predict(goal: .halfMarathon, runs: [], age: nil, personalBest: pb, today: today)
+        XCTAssertEqual(p?.projectedTimeSeconds ?? 0, 5_984, accuracy: 10)
+        // No gap: the runner never ran a half in that time.
+        XCTAssertNil(p?.gapToPersonalBestSeconds)
+    }
+
+    func test_predict_PBForTheGoalsDistance_keepsItsGap() {
+        let today = Date()
+        let year = Calendar.current.component(.year, from: today)
+        let pb = PersonalBest(durationSeconds: 2_700, year: year, distance: .tenK)
+        let p = service.predict(goal: .tenK, runs: [], age: nil, personalBest: pb, today: today)
+        XCTAssertEqual(p?.projectedTimeSeconds ?? 0, 2_700, accuracy: 1)
+        XCTAssertEqual(p?.gapToPersonalBestSeconds ?? 99, 0, accuracy: 1)
+    }
+
     func test_predict_pickedFastestRunWhenMultiple() {
         let today = Date()
         let slow = run(daysAgo: 30, km: 5, paceSecPerKm: 360, today: today) // 30:00 5K

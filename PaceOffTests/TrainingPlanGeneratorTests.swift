@@ -465,6 +465,17 @@ final class TrainingPlanGeneratorTests: XCTestCase {
         XCTAssertFalse(fallback45)
     }
 
+    func test_resolveVDOT_readsThePBOverItsOwnDistance() {
+        // A 45:00 10K anchors a marathon plan at VDOT 45.3. Read as a
+        // marathon time it would be VDOT 284, thrown out as implausible.
+        let pb = PersonalBest(durationSeconds: 2_700, year: 2026, distance: .tenK)
+        let (vdot, fallback) = generator.resolveVDOT(TrainingPlanInputs(
+            goal: .marathon, tier: .medium, vo2Max: nil, personalBest: pb
+        ))
+        XCTAssertFalse(fallback)
+        XCTAssertEqual(vdot, 45.26, accuracy: 0.01)
+    }
+
     func test_slowRunnersPlan_easyPaceIsTheirs_notTheBeginnerDefaults() {
         let slow = plan(.fiveK, .easy, vo2: 20)
         let beginner = plan(.fiveK, .easy, vo2: nil)

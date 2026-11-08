@@ -181,11 +181,12 @@ public struct GoalPredictionService: Sendable {
             // fitness, so no VO₂ correction is needed.
             base = recentBest
             vo2Multiplier = nil
-        } else if let pb = personalBest {
-            // No usable recent runs — fall back to the PB, but decay it for
-            // its age and (optionally) for current vs. peak VO₂ max.
+        } else if let pb = personalBest, let pbSeconds = pb.equivalentSeconds(at: goal) {
+            // No usable recent runs — fall back to the PB, converted through
+            // VDOT when it's for another distance, and decayed for its age
+            // and (optionally) for current vs. peak VO₂ max.
             let pbAge = pbAgeYears(pb: pb, today: today)
-            let decayed = pb.durationSeconds * pbDecayMultiplier(pbYearsOld: pbAge)
+            let decayed = pbSeconds * pbDecayMultiplier(pbYearsOld: pbAge)
             let vo2 = vo2DeclineMultiplier(history: vo2MaxHistory)
             let basis = GoalPrediction.Basis.agedPersonalBest(yearsOld: pbAge)
             base = (basis, decayed * vo2)
@@ -212,7 +213,11 @@ public struct GoalPredictionService: Sendable {
             goal: goal
         )
         let ageGraded = age.map { projectedTime * ageGradeFactor(age: $0) }
-        let gap: Double? = personalBest.map { projectedTime - $0.durationSeconds }
+        // The gap is to a PB over the goal's own distance; a converted one
+        // isn't a time the runner ran.
+        let gap: Double? = personalBest.flatMap { pb in
+            (pb.distance ?? goal) == goal ? projectedTime - pb.durationSeconds : nil
+        }
 
         return GoalPrediction(
             goal: goal,

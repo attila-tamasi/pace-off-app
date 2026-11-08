@@ -228,9 +228,8 @@ public final class BackgroundRefreshService {
         let status = reconciler.todayStatus(plan: plan, runs: runs, today: now)
 
         // Resolve the runner's current VDOT the same way the picker does.
-        // The profile's PB only applies when it's for the plan's distance.
-        let profile = ProfileStore.shared.profile
-        let pb = (profile?.goal == plan.goal) ? profile?.personalBest : nil
+        // The PB counts whatever its distance: its VDOT is distance-free.
+        let pb = ProfileStore.shared.profile?.personalBest
 
         // A plan that hasn't started is rebuilt from today's data, quietly:
         // there's nothing the runner has to change yet.

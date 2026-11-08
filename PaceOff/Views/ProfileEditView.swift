@@ -247,11 +247,14 @@ struct GoalGridPicker: View {
 
 /// Personal-best editor: a toggle for "have you run this distance?", and when
 /// on, H:MM:SS wheels plus the year it was achieved.
+/// One personal best, for the distance the runner picks: the goal's by
+/// default, the stored PB's own when there is one.
 struct PersonalBestEditor: View {
     let goal: RunningGoal
     @Binding var personalBest: PersonalBest?
 
     @State private var hasPB: Bool
+    @State private var distance: RunningGoal
     @State private var hours: Int
     @State private var minutes: Int
     @State private var seconds: Int
@@ -265,6 +268,7 @@ struct PersonalBestEditor: View {
         _personalBest = personalBest
         let pb = personalBest.wrappedValue
         _hasPB = State(initialValue: pb != nil)
+        _distance = State(initialValue: pb?.distance ?? goal)
         let total = Int(pb?.durationSeconds ?? 0)
         _hours = State(initialValue: total / 3600)
         _minutes = State(initialValue: (total % 3600) / 60)
@@ -273,12 +277,19 @@ struct PersonalBestEditor: View {
     }
 
     var body: some View {
-        Toggle("I've raced a \(goal.displayName)", isOn: $hasPB)
+        Toggle("I have a race personal best", isOn: $hasPB)
             .onChange(of: hasPB) { _, on in
                 syncBinding(enabled: on)
             }
 
         if hasPB {
+            Picker("Distance", selection: $distance) {
+                ForEach(RunningGoal.allCases) { goal in
+                    Text(goal.displayName).tag(goal)
+                }
+            }
+            .onChange(of: distance) { _, _ in syncBinding(enabled: true) }
+
             HStack(spacing: 0) {
                 wheel(value: $hours, range: 0...9, label: "hr")
                 colon
@@ -327,7 +338,7 @@ struct PersonalBestEditor: View {
             return
         }
         let total = Double(hours * 3600 + minutes * 60 + seconds)
-        personalBest = PersonalBest(durationSeconds: total, year: year)
+        personalBest = PersonalBest(durationSeconds: total, year: year, distance: distance)
     }
 }
 

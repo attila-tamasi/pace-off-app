@@ -152,6 +152,7 @@
 		FEC05ECF181FD31355C62CB7 /* WeekDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC7AA862D1B73A6B0BB1EF0E /* WeekDetailView.swift */; };
 		134EF0EA559B03EAB9B2EED8 /* WeekReviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C38A19F87DCA31C7FFFCED0D /* WeekReviewTests.swift */; };
 		FAF17C2AD374A10B666B74AF /* ReadinessDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53401F72A247AB7C9A480E76 /* ReadinessDetailView.swift */; };
+		FC00DD23C80EBB63AE7F84D6 /* UserProfileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D5862BD2A63DB31A7B892C6 /* UserProfileTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -294,6 +295,7 @@
 		BC7AA862D1B73A6B0BB1EF0E /* WeekDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekDetailView.swift; sourceTree = "<group>"; };
 		C38A19F87DCA31C7FFFCED0D /* WeekReviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeekReviewTests.swift; sourceTree = "<group>"; };
 		53401F72A247AB7C9A480E76 /* ReadinessDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadinessDetailView.swift; sourceTree = "<group>"; };
+		1D5862BD2A63DB31A7B892C6 /* UserProfileTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserProfileTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -353,6 +355,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				1D5862BD2A63DB31A7B892C6 /* UserProfileTests.swift */,
 				C38A19F87DCA31C7FFFCED0D /* WeekReviewTests.swift */,
 				A9A016482D358502B6CAD1CE /* WorkoutProfileTests.swift */,
 				5C9783C9526CA5739ABF593E /* HeartTrendTests.swift */,
@@ -718,6 +721,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FC00DD23C80EBB63AE7F84D6 /* UserProfileTests.swift in Sources */,
 				134EF0EA559B03EAB9B2EED8 /* WeekReviewTests.swift in Sources */,
 				15528F5496188D4DF8EC0B86 /* WeekReview.swift in Sources */,
 				0B7D5ECE770D64B4FD1AC5E5 /* WorkoutProfileTests.swift in Sources */,
