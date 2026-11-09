@@ -147,6 +147,42 @@ final class RunWindowPlannerTests: XCTestCase {
         XCTAssertEqual(three?.isClear, false)
     }
 
+    func test_theNote_namesWhatClosesInOnTheWindow_notJustTheWorstOfTheDay() {
+        // Rain until 09:00, then wind until 14:00: the wind kept the run
+        // back, so the note names it, not the earlier rain.
+        let forecast = day { hour, w in
+            if hour < 9 { w.chance = 0.8 }
+            if hour < 14 { w.wind = 40 }
+        }
+        XCTAssertEqual(window(forecast)?.reason, "Dry and 10 °C 14:00–15:00; strong wind until 14:00")
+    }
+
+    func test_onARainyDay_theLowerChanceWins_beforeTheAmount() {
+        // 10:00 is certain rain, if light; 12:00 may stay dry.
+        let forecast = day { hour, w in
+            switch hour {
+            case 10: w.chance = 1.0; w.mm = 0.6
+            case 12: w.chance = 0.6; w.mm = 1.1
+            default: w.chance = 1.0; w.mm = 3
+            }
+        }
+        XCTAssertEqual(window(forecast)?.start, at(12))
+    }
+
+    func test_rainPossibleOrABreeze_givesWayToAClearerHour_butStillCountsAsClear() {
+        let forecast = day { hour, w in if hour == 7 { w.chance = 0.45; w.wind = 29 } }
+        XCTAssertEqual(window(forecast)?.start, at(8))
+        let showery = day { _, w in w.chance = 0.4 }
+        let w = window(showery)
+        XCTAssertEqual(w?.isClear, true)
+        XCTAssertEqual(w?.reason, "Rain possible and 10 °C 07:00–08:00")
+    }
+
+    func test_aRunAHairOverAnHour_fitsInOne() {
+        XCTAssertEqual(window(day(), minutes: 60.000_001)?.end, at(8))
+        XCTAssertEqual(window(day(), minutes: 61)?.end, at(9))
+    }
+
     func test_aWindowSkipsAMissingHour() {
         let forecast = day().filter { $0.date != at(8) }
         let w = window(forecast, minutes: 120)
@@ -175,8 +211,12 @@ final class RunWindowPlannerTests: XCTestCase {
 
     func test_runMinutes_comeFromThePlanWorkout_elseTheTarget() {
         let easy = Workout(kind: .easy, distanceMeters: 8_000, paceMinSecPerKm: 300, paceMaxSecPerKm: 330)
-        // 8 km at 5:15/km.
-        XCTAssertEqual(RunWindowPlanner.runMinutes(planWorkout: easy, targetKm: 5) ?? 0, 42, accuracy: 1e-9)
+        // 8 km at the slow end of the band, 5:30/km.
+        XCTAssertEqual(RunWindowPlanner.runMinutes(planWorkout: easy, targetKm: 5) ?? 0, 44, accuracy: 1e-9)
+        // A 12 km threshold session: its warm-up, jogs and cool-down go
+        // slower than its 4:40–4:50 band, so 6:00/km.
+        let threshold = Workout(kind: .threshold, distanceMeters: 12_000, paceMinSecPerKm: 280, paceMaxSecPerKm: 290)
+        XCTAssertEqual(RunWindowPlanner.runMinutes(planWorkout: threshold, targetKm: nil) ?? 0, 72, accuracy: 1e-9)
         // No plan: the target at 6:00/km.
         XCTAssertEqual(RunWindowPlanner.runMinutes(planWorkout: nil, targetKm: 6) ?? 0, 36, accuracy: 1e-9)
     }
