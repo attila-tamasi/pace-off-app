@@ -94,7 +94,7 @@ Each is split into one PR per sub-item.
 - **Done when:** tapping it opens a screen with today's HRV and resting HR against their baselines, the thresholds that set the colour, and links to the two F-09a screens.
 
 ### F-10 · Morning weather: what to run, and when
-- **Status:** todo
+- **Status:** blocked: F-10a done (PR #48); F-10b needs the owner to turn on WeatherKit for the App ID first (Owner's part below). Delete this reason once it's on, and the loop builds F-10b
 - **Size:** L   ·   **Merge:** see the sub-items
 - **Problem:** Pace Off says how far to run, not when. The owner wants the app to check each morning's forecast in the background and send a notification saying what to run and when.
 - **Approach:** WeatherKit (Apple's system framework: no third-party service, key or server of ours) and Core Location's When In Use permission at approximate accuracy. The background refresh fetches the day's hourly forecast; a pure planner picks the run's window; the morning push carries it. iOS decides when background refreshes run, so the push uses the last forecast fetched before it and leaves the weather out when that's over 12 hours old.
@@ -105,7 +105,7 @@ Each is split into one PR per sub-item.
   - When the whole day is bad, the push names the least bad window and says so.
   - Heat over 25 °C adds "go by effort, not pace" to the plan workout's pace band.
 - **Sub-items:**
-  - **F-10a · Run-window planner** (M, `auto`): a pure function in `PaceOffShared` that takes an hourly forecast (temperature, feels-like, precipitation chance and amount, wind, daylight) plus the day's run (plan workout or target; none on a rest day) and returns the window and a one-line reason ("Dry and 12 °C 07:00–09:00; rain from 16:00"). Tests: rain all afternoon, a hot midday, strong wind, rain all day, a rest day.
+  - **F-10a · Run-window planner** (M, `auto`), **done (PR #48)**: a pure function in `PaceOffShared` that takes an hourly forecast (temperature, feels-like, precipitation chance and amount, wind, daylight) plus the day's run (plan workout or target; none on a rest day) and returns the window and a one-line reason ("Dry and 12 °C 07:00–09:00; rain from 16:00"). Tests: rain all afternoon, a hot midday, strong wind, rain all day, a rest day.
   - **F-10b · Forecast in the morning push** (M, `auto`; it adds the WeatherKit entitlement and a location privacy string, so its PR says so): the Profile switch and location request, WeatherKit in `BackgroundRefreshService` and the foreground refresh, the forecast cached in the App Group, and `DailyPushPlanner`'s morning body leading with the window. Done when the morning push names the window whenever a fresh forecast exists, and reads exactly as today without location or forecast.
 
 ### F-11 · Cross training: kettlebell or free weights in the plan
@@ -586,6 +586,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-09 · F-10a: RunWindowPlanner picks when to run from an hourly forecast (rain, heat or cold, wind, darkness, in that order) with the morning push's reason line; not wired up until F-10b (PR #48)
 - 2026-11-08 · Q-12: a quality session below the peak is the peak session cut to its distance, so its notes add up in every week (PR #47)
 - 2026-11-08 · R-05b: half and marathon quality sessions are longer, the easy run before the long run keeps to 60% of it and the other to 80%, and a plan that can't build far says so (PR #46)
 - 2026-11-08 · Q-11: yesterday's HRV and average heart rate name their own day when the cached snapshot was synced on an earlier day, and hide from a week back (PR #45)
