@@ -258,4 +258,56 @@ final class DailyPushPlannerTests: XCTestCase {
         let result = allPushes(now: date(day: 7, hour: 6), runs: [run(day: 5)], plan: plan(), planStatus: done)
         XCTAssertEqual(result.map(\.slot), [.nextMorning])
     }
+
+    // MARK: - Strength
+
+    private let kettlebell = StrengthSession(equipment: .kettlebell, minutes: 35, notes: "Swings 3×15")
+
+    /// The week of `plan()`, with a strength session alone on Monday and
+    /// after Tuesday's easy run.
+    private func strengthPlan() -> TrainingPlan {
+        let base = plan()
+        let days = base.weeks[0].days.map { day -> TrainingDay in
+            switch day.weekday {
+            case .monday, .tuesday: return TrainingDay(weekday: day.weekday, workout: day.workout, strength: kettlebell)
+            default:                return day
+            }
+        }
+        return TrainingPlan(goal: base.goal, tier: base.tier, longRunDay: base.longRunDay,
+                            weeks: [TrainingWeek(index: 1, days: days)], vdot: base.vdot,
+                            usedBeginnerDefault: false, createdAt: base.createdAt,
+                            crossTraining: .kettlebell)
+    }
+
+    func test_aStrengthDay_hasNoRunPush_andTheMorningNamesTheSession() {
+        let status = PlanDayStatus(workout: rest, isCompleted: false, strength: kettlebell)
+        let result = pushes(now: date(day: 5, hour: 6), runs: [], plan: strengthPlan(), planStatus: status)
+        XCTAssertEqual(result.map(\.slot), [.morning])
+        XCTAssertEqual(result.first?.body, "Strength day on your plan: Kettlebell · 35 min. No run today.")
+    }
+
+    func test_aRunDayWithStrength_namesTheSessionAfterTheRun() {
+        let status = PlanDayStatus(workout: easy, isCompleted: false, strength: kettlebell)
+        let result = pushes(now: date(day: 6, hour: 6), runs: [], plan: strengthPlan(), planStatus: status)
+        XCTAssertEqual(result.first?.slot, .morning)
+        XCTAssertEqual(result.first?.body,
+                       "Today's plan: \(easy.summary), then strength (Kettlebell · 35 min). Run 8 km.")
+    }
+
+    func test_theNextMorningPush_namesTomorrowsStrength() {
+        // Sunday evening: Monday is a strength-only day.
+        let sunday = allPushes(now: date(day: 4, hour: 22), runs: [], plan: strengthPlan())
+        XCTAssertEqual(sunday.last?.slot, .nextMorning)
+        XCTAssertEqual(sunday.last?.body, "Strength day on your plan: Kettlebell · 35 min. No run today.")
+        // Monday evening: Tuesday's easy run, then strength.
+        let monday = allPushes(now: date(day: 5, hour: 22), runs: [], plan: strengthPlan())
+        XCTAssertEqual(monday.last?.body,
+                       "Today's plan: \(easy.summary), then strength (Kettlebell · 35 min). Open Pace Off for your target.")
+    }
+
+    func test_aStrengthDay_isNoSkip() {
+        // Monday had strength and no run; it's a planned rest day for running.
+        XCTAssertEqual(planner.skippedDaysThisWeek(runs: [run(day: 6)], plan: strengthPlan(),
+                                                   now: date(day: 7, hour: 12)), 0)
+    }
 }

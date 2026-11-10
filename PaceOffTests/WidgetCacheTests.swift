@@ -190,4 +190,35 @@ final class WidgetCacheTests: XCTestCase {
         XCTAssertEqual(WidgetCache.load(from: defaults), .empty)
         XCTAssertEqual(WidgetCache.load(from: nil), .empty)
     }
+
+    // MARK: - The plan line
+
+    func test_planLine_byDay() {
+        let t = target(computedAt: date(day: 7, hour: 7))
+        func line(_ summary: String?, done: Bool = false, strength: String? = nil) -> String? {
+            WidgetCache(target: t, voiceLine: "Go.", planSummary: summary,
+                        planCompletedToday: done, strengthSummary: strength).planLine
+        }
+        XCTAssertNil(line(nil))
+        XCTAssertEqual(line("Rest"), "Rest day")
+        XCTAssertEqual(line("Rest", strength: "Kettlebell · 35 min"), "Strength: Kettlebell · 35 min")
+        XCTAssertEqual(line("8.0 km · 5:25–5:45/km"), "Plan: 8.0 km · 5:25–5:45/km")
+        XCTAssertEqual(line("8.0 km · 5:25–5:45/km", done: true), "Plan: 8.0 km · 5:25–5:45/km ✓")
+        XCTAssertEqual(line("8.0 km · 5:25–5:45/km", strength: "Free weights · 40 min"),
+                       "Plan: 8.0 km · 5:25–5:45/km + strength")
+    }
+
+    func test_strength_comesFromThePlanStatus_andRoundTrips() {
+        let t = target(computedAt: date(day: 7, hour: 7))
+        let session = StrengthSession(equipment: .freeWeights, minutes: 40, notes: "Squats 3×8")
+        let day = WidgetCache(target: t, voiceLine: "Rest.", runCompletedToday: false,
+                              planStatus: PlanDayStatus(workout: .rest, isCompleted: false, strength: session))
+        XCTAssertEqual(day.strengthSummary, "Free weights · 40 min")
+        XCTAssertTrue(day.isPlanRestDay)
+        day.save(to: defaults)
+        XCTAssertEqual(WidgetCache.load(from: defaults), day)
+        // The next day's write without a session clears it.
+        WidgetCache(target: target(computedAt: date(day: 8, hour: 7)), voiceLine: "Run 8 km.").save(to: defaults)
+        XCTAssertNil(WidgetCache.load(from: defaults).strengthSummary)
+    }
 }

@@ -523,10 +523,15 @@ public struct TrainingPlanGenerator: Sendable {
     /// are two sets of each exercise, about 30 minutes; the other tiers'
     /// three sets, 35 or 40. The taper keeps two sets and shortens them:
     /// 25 minutes mid-taper, 20 the week before the race.
+    /// Strength sessions in a full week: Easy 1, Medium and Aggressive 2.
+    public static func strengthSessionsPerWeek(tier: PlanTier) -> Int {
+        tier == .easy ? 1 : 2
+    }
+
     private func strengthWeek(_ equipment: StrengthEquipment,
                               tier: PlanTier,
                               weeksToGo: Int) -> (session: StrengthSession, count: Int)? {
-        let full = tier == .easy ? 1 : 2
+        let full = Self.strengthSessionsPerWeek(tier: tier)
         let shape: (count: Int, sets: Int, minutes: Int)
         switch (weeksToGo, tier) {
         case (...0, _):        return nil

@@ -238,12 +238,17 @@ struct TodayView: View {
         .padding(.trailing, 96)
     }
 
-    /// "Half Marathon plan · Tempo", or "Rest day in your plan". Nil when
-    /// no plan is active today.
+    /// "Half Marathon plan · Tempo", "… · Tempo + strength", "Strength day
+    /// in your plan · Kettlebell" or "Rest day in your plan". Nil when no
+    /// plan is active today.
     private var planLine: String? {
-        guard let plan = planStore.activePlan, let workout = plan.todayWorkout() else { return nil }
-        if workout.kind == .rest { return "Rest day in your plan" }
-        return "\(plan.goal.displayName) plan · \(workout.kind.displayName)"
+        guard let plan = planStore.activePlan, let day = plan.todayDay() else { return nil }
+        if day.workout.kind == .rest {
+            return day.strength.map { "Strength day in your plan · \($0.equipment.displayName)" }
+                ?? "Rest day in your plan"
+        }
+        let line = "\(plan.goal.displayName) plan · \(day.workout.kind.displayName)"
+        return day.strength == nil ? line : "\(line) + strength"
     }
 
     // MARK: - Recovery

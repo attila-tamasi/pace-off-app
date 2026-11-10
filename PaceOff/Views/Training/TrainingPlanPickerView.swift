@@ -13,6 +13,8 @@ struct TrainingPlanPickerView: View {
     @Environment(HealthKitService.self) private var health
 
     @State private var longRunDay: Weekday = .sunday
+    /// Strength work in the plan: none, kettlebell or free weights.
+    @State private var crossTraining: StrengthEquipment?
     @State private var planForDetail: TrainingPlan?
     @State private var detailPresented: Bool = false
     @State private var vo2Max: Double?
@@ -29,6 +31,7 @@ struct TrainingPlanPickerView: View {
                 header
                 goalCard
                 longRunDayPicker
+                crossTrainingPicker
                 ForEach(PlanTier.allCases) { tier in
                     tierCard(tier)
                         .disabled(!healthLoaded)
@@ -137,6 +140,30 @@ struct TrainingPlanPickerView: View {
         }
     }
 
+    // MARK: - Cross training
+
+    private var crossTrainingPicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("CROSS TRAINING")
+                .font(.system(.caption, design: .rounded, weight: .semibold))
+                .kerning(1.1)
+                .foregroundStyle(.secondary)
+            Picker("Cross training", selection: $crossTraining) {
+                Text("None").tag(StrengthEquipment?.none)
+                ForEach(StrengthEquipment.allCases) { kit in
+                    Text(kit.displayName).tag(StrengthEquipment?.some(kit))
+                }
+            }
+            .pickerStyle(.segmented)
+            if crossTraining != nil {
+                Text("About half an hour of running-specific strength work, on days off running where the week allows. None in race week.")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
     // MARK: - Tier card
 
     private func tierCard(_ tier: PlanTier) -> some View {
@@ -174,6 +201,9 @@ struct TrainingPlanPickerView: View {
     private func summaryLine(_ tier: PlanTier) -> some View {
         HStack(spacing: 14) {
             chip("\(tier.runsPerWeek) runs/wk", icon: "figure.run")
+            if crossTraining != nil {
+                chip("\(TrainingPlanGenerator.strengthSessionsPerWeek(tier: tier)) strength/wk", icon: "dumbbell.fill")
+            }
             chip("\(weeksFor(goal)) weeks", icon: "calendar")
         }
     }
@@ -205,7 +235,8 @@ struct TrainingPlanPickerView: View {
             vo2Max: vo2Max,
             personalBest: personalBest,
             goalDate: goalDate,
-            recentLongestRunMeters: recentLongestRunMeters
+            recentLongestRunMeters: recentLongestRunMeters,
+            crossTraining: crossTraining
         )
     }
 

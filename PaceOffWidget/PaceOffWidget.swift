@@ -105,7 +105,7 @@ struct PaceOffWidgetView: View {
                     HStack(spacing: 4) {
                         Image(systemName: today.planCompletedToday
                               ? "checkmark.circle.fill"
-                              : "calendar")
+                              : today.isPlanRestDay && today.strengthSummary != nil ? "dumbbell.fill" : "calendar")
                             .font(.system(.caption2, weight: .semibold))
                             .foregroundStyle(today.planCompletedToday ? Color.green : Color.secondary)
                         Text(planLine)
@@ -130,14 +130,9 @@ struct PaceOffWidgetView: View {
         today.voiceLine ?? "Open Pace Off."
     }
 
-    /// "Plan: 8.0 km · 5:25–5:45/km", "Plan: 8.0 km ✓" once completed,
-    /// "Rest day" on planned rest. Nil when no plan is active.
-    private var planLine: String? {
-        guard let summary = today.planSummary else { return nil }
-        if today.isPlanRestDay { return "Rest day" }
-        if today.planCompletedToday { return "Plan: \(summary) ✓" }
-        return "Plan: \(summary)"
-    }
+    /// Today's plan line (`WidgetCache.planLine`). Nil when no plan is
+    /// active.
+    private var planLine: String? { today.planLine }
 
     private var distanceShort: String {
         guard let t = today.target else { return "—" }
@@ -203,6 +198,15 @@ private extension PaceOffEntry {
         ))
     }
 
+    static var sampleStrengthDay: PaceOffEntry {
+        PaceOffEntry(date: Date(), cache: WidgetCache(
+            target: sampleTarget,
+            voiceLine: "Recovery is training too.",
+            planSummary: "Rest",
+            strengthSummary: "Kettlebell · 35 min"
+        ))
+    }
+
     /// Yesterday's done day, drawn the next morning.
     static var sampleStale: PaceOffEntry {
         PaceOffEntry(
@@ -218,6 +222,7 @@ private extension PaceOffEntry {
     PaceOffEntry.samplePending
     PaceOffEntry.sampleDone
     PaceOffEntry.sampleRestDay
+    PaceOffEntry.sampleStrengthDay
     PaceOffEntry.sampleStale
 }
 
