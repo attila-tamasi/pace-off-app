@@ -193,17 +193,59 @@ public struct Workout: Codable, Sendable, Equatable {
     }
 }
 
+// MARK: - Strength
+
+/// The kit a plan's strength sessions use. A plan without strength work
+/// has none (`TrainingPlan.crossTraining` is nil).
+public enum StrengthEquipment: String, Codable, Sendable, CaseIterable, Identifiable {
+    case kettlebell
+    case freeWeights
+
+    public var id: String { rawValue }
+
+    public var displayName: String {
+        switch self {
+        case .kettlebell:  return "Kettlebell"
+        case .freeWeights: return "Free weights"
+        }
+    }
+}
+
+/// A strength session: about half an hour of full-body, running-specific
+/// work, on a day of its own or after an easy run.
+public struct StrengthSession: Codable, Sendable, Equatable {
+    public let equipment: StrengthEquipment
+    public let minutes: Int
+    /// "Swings 3×15 · goblet squats 3×10 · …"
+    public let notes: String
+
+    public init(equipment: StrengthEquipment, minutes: Int, notes: String) {
+        self.equipment = equipment
+        self.minutes = minutes
+        self.notes = notes
+    }
+
+    /// "Kettlebell · 35 min".
+    public var summary: String { "\(equipment.displayName) · \(minutes) min" }
+}
+
 // MARK: - Training day & week
 
 public struct TrainingDay: Codable, Sendable, Equatable, Identifiable {
     public let weekday: Weekday
+    /// The day's run; `.rest` when there's none.
     public let workout: Workout
+    /// The day's strength session, if any. It rides alongside the run, so
+    /// a strength-only day is still a rest day for running. Nil in plans
+    /// saved before strength work existed.
+    public let strength: StrengthSession?
 
     public var id: Int { weekday.rawValue }
 
-    public init(weekday: Weekday, workout: Workout) {
+    public init(weekday: Weekday, workout: Workout, strength: StrengthSession? = nil) {
         self.weekday = weekday
         self.workout = workout
+        self.strength = strength
     }
 }
 
@@ -257,6 +299,9 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
     /// weeks after it. Optional so plans saved before this field existed
     /// still decode.
     public let startDate: Date?
+    /// The kit for the plan's strength sessions, or nil for a running-only
+    /// plan. Optional so plans saved before strength work still decode.
+    public let crossTraining: StrengthEquipment?
 
     public init(id: UUID = UUID(),
                 goal: RunningGoal,
@@ -266,7 +311,8 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
                 vdot: Double,
                 usedBeginnerDefault: Bool,
                 createdAt: Date = Date(),
-                startDate: Date? = nil) {
+                startDate: Date? = nil,
+                crossTraining: StrengthEquipment? = nil) {
         self.id = id
         self.goal = goal
         self.tier = tier
@@ -276,6 +322,7 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
         self.usedBeginnerDefault = usedBeginnerDefault
         self.createdAt = createdAt
         self.startDate = startDate
+        self.crossTraining = crossTraining
     }
 
     public var weekCount: Int { weeks.count }

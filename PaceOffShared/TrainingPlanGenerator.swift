@@ -195,6 +195,8 @@ public struct TrainingPlanInputs: Sendable {
     /// was none. Week 1 starts from it. Nil when nothing is known, as in
     /// previews: week 1 is then the usual 70% of the peak week.
     public let recentLongestRunMeters: Double?
+    /// The kit for strength sessions, or nil for a running-only plan.
+    public let crossTraining: StrengthEquipment?
     /// Plan generation date (used only for `createdAt`; not for the schedule).
     public let today: Date
 
@@ -205,6 +207,7 @@ public struct TrainingPlanInputs: Sendable {
                 personalBest: PersonalBest? = nil,
                 goalDate: Date? = nil,
                 recentLongestRunMeters: Double? = nil,
+                crossTraining: StrengthEquipment? = nil,
                 today: Date = Date()) {
         self.goal = goal
         self.tier = tier
@@ -213,6 +216,7 @@ public struct TrainingPlanInputs: Sendable {
         self.personalBest = personalBest
         self.goalDate = goalDate
         self.recentLongestRunMeters = recentLongestRunMeters
+        self.crossTraining = crossTraining
         self.today = today
     }
 }
@@ -268,6 +272,7 @@ public struct TrainingPlanGenerator: Sendable {
                 goal: inputs.goal,
                 tier: inputs.tier,
                 longRunDay: inputs.longRunDay,
+                crossTraining: inputs.crossTraining,
                 vdot: vdot
             )
         }
@@ -283,7 +288,8 @@ public struct TrainingPlanGenerator: Sendable {
             vdot: vdot,
             usedBeginnerDefault: fromFallback,
             createdAt: inputs.today,
-            startDate: start
+            startDate: start,
+            crossTraining: inputs.crossTraining
         )
     }
 
@@ -362,6 +368,7 @@ public struct TrainingPlanGenerator: Sendable {
                            goal: RunningGoal,
                            tier: PlanTier,
                            longRunDay: Weekday,
+                           crossTraining: StrengthEquipment?,
                            vdot: Double) -> TrainingWeek {
 
         // Lay out workouts on a Mon..Sun canonical template, with the long
@@ -393,6 +400,9 @@ public struct TrainingPlanGenerator: Sendable {
         // rotation keeps the template's order, so the slot before the long
         // run's is the day before it.
         let dayBeforeLongRun = (longRunDay.rawValue + 6) % 7
+        let session = crossTraining.flatMap { strengthSession($0, tier: tier, weeksToGo: total - index) }
+        let strengthCount = session == nil ? 0 : strengthSessions(tier: tier, weeksToGo: total - index)
+        let strengthDays = Set(Self.strengthDays(in: smoothed, longRunSlot: longRunDay.rawValue, count: strengthCount))
         let days: [TrainingDay] = Weekday.allCases.map { wd in
             let kind = smoothed[wd.rawValue]
             let workout = materialise(
@@ -404,7 +414,8 @@ public struct TrainingPlanGenerator: Sendable {
                 tier: tier,
                 vdot: vdot
             )
-            return TrainingDay(weekday: wd, workout: workout)
+            return TrainingDay(weekday: wd, workout: workout,
+                               strength: strengthDays.contains(wd.rawValue) ? session : nil)
         }
         return TrainingWeek(index: index, days: days)
     }
@@ -501,6 +512,100 @@ public struct TrainingPlanGenerator: Sendable {
     private func distance(from a: Int, to b: Int) -> Int {
         let raw = abs(a - b)
         return min(raw, 7 - raw)
+    }
+
+    // MARK: Strength
+
+    /// Strength sessions in a week: Easy 1, Medium and Aggressive 2, and
+    /// fewer in the taper: the week before the race has one, race week
+    /// none.
+    private func strengthSessions(tier: PlanTier, weeksToGo: Int) -> Int {
+        let full = tier == .easy ? 1 : 2
+        switch weeksToGo {
+        case 0:  return 0
+        case 1:  return 1
+        default: return full
+        }
+    }
+
+    /// The week's session for the kit, or nil in race week. Easy-tier
+    /// sessions are two sets of each exercise, about 30 minutes; the other
+    /// tiers' three sets, 35 or 40. The taper keeps two sets and shortens
+    /// them: 25 minutes mid-taper, 20 the week before the race.
+    private func strengthSession(_ equipment: StrengthEquipment,
+                                 tier: PlanTier,
+                                 weeksToGo: Int) -> StrengthSession? {
+        let sets: Int
+        let minutes: Int
+        switch (weeksToGo, tier) {
+        case (0, _):           return nil
+        case (1, _):           (sets, minutes) = (2, 20)
+        case (2, _):           (sets, minutes) = (2, 25)
+        case (_, .easy):       (sets, minutes) = (2, 30)
+        case (_, .medium):     (sets, minutes) = (3, 35)
+        case (_, .aggressive): (sets, minutes) = (3, 40)
+        }
+        let exercises: [(String, String)]
+        switch equipment {
+        case .kettlebell:
+            exercises = [("Swings", "15"), ("goblet squats", "10"), ("single-leg deadlifts", "8 each"),
+                         ("reverse lunges", "8 each"), ("presses", "8 each"), ("suitcase carries", "30 m each")]
+        case .freeWeights:
+            exercises = [("Squats", "8"), ("Romanian deadlifts", "8"), ("split squats", "8 each"),
+                         ("step-ups", "10 each"), ("calf raises", "15"), ("rows", "10"), ("plank", "40 s")]
+        }
+        let notes = exercises.map { "\($0.0) \(sets)×\($0.1)" }.joined(separator: " · ")
+        return StrengthSession(equipment: equipment, minutes: minutes, notes: notes)
+    }
+
+    /// Which days of a week (0-Mon..6-Sun) get the strength sessions. A
+    /// session never goes on the day before the long run or a quality
+    /// session, never the day after another one (the week repeats, so
+    /// Sunday and Monday are next to each other), and never on the long
+    /// run or the race. It takes, in order:
+    /// 1. a day without a run, while another day stays without a run or a
+    ///    session, so the week keeps a full rest day;
+    /// 2. an easy run's day, after the run;
+    /// 3. a quality session's day, after the session: hard days stay hard
+    ///    and easy days easy. The Aggressive tier's second session lands
+    ///    here, as its rest and easy days all sit before a quality
+    ///    session or the long run.
+    /// Within each, the day furthest from the long run comes first, then
+    /// the one soonest after it. Fewer than `count` when nothing else fits.
+    static func strengthDays(in week: [WorkoutKind], longRunSlot: Int, count: Int) -> [Int] {
+        guard count > 0, week.count == 7 else { return [] }
+        func after(_ slot: Int) -> Int { (slot + 1) % 7 }
+        func before(_ slot: Int) -> Int { (slot + 6) % 7 }
+        func distanceFromLongRun(_ slot: Int) -> Int {
+            let raw = abs(slot - longRunSlot)
+            return min(raw, 7 - raw)
+        }
+        let byPreference: (Int, Int) -> Bool = { a, b in
+            let (da, db) = (distanceFromLongRun(a), distanceFromLongRun(b))
+            if da != db { return da > db }
+            return (a - longRunSlot + 7) % 7 < (b - longRunSlot + 7) % 7
+        }
+        let tiers: [(WorkoutKind) -> Bool] = [
+            { $0 == .rest },
+            { $0 == .easy || $0 == .strides },
+            { $0.isQuality },
+        ]
+        var chosen: [Int] = []
+        for (tierIndex, inTier) in tiers.enumerated() {
+            for slot in (0..<7).filter({ inTier(week[$0]) }).sorted(by: byPreference) {
+                guard chosen.count < count else { return chosen }
+                let next = week[after(slot)]
+                guard next != .long, next != .race, !next.isQuality,
+                      !chosen.contains(after(slot)), !chosen.contains(before(slot))
+                else { continue }
+                if tierIndex == 0 {
+                    let fullRest = (0..<7).filter { $0 != slot && week[$0] == .rest && !chosen.contains($0) }
+                    guard !fullRest.isEmpty else { continue }
+                }
+                chosen.append(slot)
+            }
+        }
+        return chosen
     }
 
     // MARK: Concrete distance + pace
@@ -609,12 +714,14 @@ public struct TrainingPlanGenerator: Sendable {
                                    workout: Workout(kind: w.kind, distanceMeters: w.distanceMeters,
                                                     paceMinSecPerKm: w.paceMinSecPerKm,
                                                     paceMaxSecPerKm: w.paceMaxSecPerKm,
-                                                    notes: notes))
+                                                    notes: notes),
+                                   strength: day.strength)
             })
         }
         return TrainingPlan(id: plan.id, goal: plan.goal, tier: plan.tier, longRunDay: plan.longRunDay,
                             weeks: weeks, vdot: plan.vdot, usedBeginnerDefault: plan.usedBeginnerDefault,
-                            createdAt: plan.createdAt, startDate: plan.startDate)
+                            createdAt: plan.createdAt, startDate: plan.startDate,
+                            crossTraining: plan.crossTraining)
     }
 
     // MARK: Race day
@@ -664,7 +771,8 @@ public struct TrainingPlanGenerator: Sendable {
             let slot = Weekday(date: date, calendar: cal).rawValue
             let day = days[week][slot]
             days[week][slot] = TrainingDay(weekday: day.weekday,
-                                           workout: change(day.workout, week + 1))
+                                           workout: change(day.workout, week + 1),
+                                           strength: day.strength)
         }
         // A session turned into an easy run, never longer than it was, nor
         // than the week's usual easy run.

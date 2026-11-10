@@ -109,7 +109,7 @@ Each is split into one PR per sub-item.
   - **F-10b · Forecast in the morning push** (M, `auto`; it adds the WeatherKit entitlement and a location privacy string, so its PR says so): the Profile switch and location request, WeatherKit in `BackgroundRefreshService` and the foreground refresh, the forecast cached in the App Group, and `DailyPushPlanner`'s morning body leading with the window. Done when the morning push names the window whenever a fresh forecast exists, and reads exactly as today without location or forecast.
 
 ### F-11 · Cross training: kettlebell or free weights in the plan
-- **Status:** todo
+- **Status:** todo (F-11a done, PR #49; F-11b next)
 - **Size:** L   ·   **Merge:** see the sub-items
 - **Problem:** The plan is running only, and the owner wants strength work in it, choosing kettlebell or free weights.
 - **Defaults (the owner can change them here):**
@@ -123,9 +123,12 @@ Each is split into one PR per sub-item.
   - A strength-only day is a rest day for running: no run push, and the morning push names the session.
   - A strength workout recorded in Health that day ticks the session off.
 - **Sub-items:**
-  - **F-11a · Plan model and generator** (M, `auto`): `WorkoutKind.strength`, the cross-training choice on `TrainingPlanInputs` and `TrainingPlan`, placement, session templates and the taper, all in `TrainingPlanGenerator` with tests.
+  - **F-11a · Plan model and generator** (M, `auto`), **done (PR #49)**: the cross-training choice on `TrainingPlanInputs` and `TrainingPlan` (`crossTraining`), a day's session (`TrainingDay.strength`), placement, session templates and the taper, all in `TrainingPlanGenerator` with tests.
   - **F-11b · Showing it** (M, `auto`): the picker option, the Plan tab and plan detail rows, Today's plan line, the push text and the widget.
   - **F-11c · Done from Health** (M, `auto`): `HealthKitService` reads strength workouts (traditional and functional strength training; workouts are already readable, so no new permission) and `TrainingPlanReconciler` ticks the session off.
+- **Decisions (Claude, 2026-11-10, F-11a; the owner can reverse them):**
+  - A session is an optional `TrainingDay.strength` beside the day's run, not a `WorkoutKind.strength`: a day has one workout, and a session paired with an easy run needs both on the same day. A strength-only day stays a `.rest` run day, so the push, completion and widget logic for runs is unchanged.
+  - The Aggressive week has two sessions as asked, but its rest and easy days all sit before a quality session or the long run but one. So the second session follows a quality session ("hard days hard"), never the day before one: with the long run on Sunday, Tuesday after the threshold session, and Friday. The other way out would be one session for Aggressive.
 
 ### F-12 · Plan workouts on Apple Watch
 - **Status:** todo
@@ -586,6 +589,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-10 · F-11a: plans can carry kettlebell or free-weight sessions (1 a week Easy, 2 Medium and Aggressive), placed on free days by the rules, easing off in the taper; in the model only until F-11b shows them (PR #49)
 - 2026-11-09 · F-10a: RunWindowPlanner picks when to run from an hourly forecast (rain, heat or cold, wind, darkness, in that order) with the morning push's reason line; not wired up until F-10b (PR #48)
 - 2026-11-08 · Q-12: a quality session below the peak is the peak session cut to its distance, so its notes add up in every week (PR #47)
 - 2026-11-08 · R-05b: half and marathon quality sessions are longer, the easy run before the long run keeps to 60% of it and the other to 80%, and a plan that can't build far says so (PR #46)
