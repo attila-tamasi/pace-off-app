@@ -13,17 +13,21 @@ public struct WidgetCache: Equatable, Sendable {
     public var planSummary: String?
     /// Whether a recorded run already covered today's plan workout.
     public var planCompletedToday: Bool
+    /// Today's strength session ("Kettlebell · 35 min"), nil without one.
+    public var strengthSummary: String?
 
     public init(target: RunTarget? = nil,
                 voiceLine: String? = nil,
                 runCompletedToday: Bool = false,
                 planSummary: String? = nil,
-                planCompletedToday: Bool = false) {
+                planCompletedToday: Bool = false,
+                strengthSummary: String? = nil) {
         self.target = target
         self.voiceLine = voiceLine
         self.runCompletedToday = runCompletedToday
         self.planSummary = planSummary
         self.planCompletedToday = planCompletedToday
+        self.strengthSummary = strengthSummary
     }
 
     /// The day as a refresh computed it, with today's plan status (nil
@@ -36,12 +40,26 @@ public struct WidgetCache: Equatable, Sendable {
                   voiceLine: voiceLine,
                   runCompletedToday: runCompletedToday,
                   planSummary: planStatus?.workout?.headline,
-                  planCompletedToday: planStatus?.isCompleted ?? false)
+                  planCompletedToday: planStatus?.isCompleted ?? false,
+                  strengthSummary: planStatus?.strength?.summary)
     }
 
     public static let empty = WidgetCache()
 
     public var isPlanRestDay: Bool { planSummary == Workout.rest.summary }
+
+    /// The widget's plan line: "Plan: 8.0 km · 5:25–5:45/km", with " ✓"
+    /// once a run covered it and " + strength" when a session follows;
+    /// "Strength: Kettlebell · 35 min" on a strength-only day; "Rest day"
+    /// on planned rest. Nil when no plan is active.
+    public var planLine: String? {
+        guard let planSummary else { return nil }
+        if isPlanRestDay {
+            return strengthSummary.map { "Strength: \($0)" } ?? "Rest day"
+        }
+        let line = planCompletedToday ? "Plan: \(planSummary) ✓" : "Plan: \(planSummary)"
+        return strengthSummary == nil ? line : "\(line) + strength"
+    }
 
     // MARK: - Reading it at a moment
 
@@ -119,6 +137,11 @@ public struct WidgetCache: Equatable, Sendable {
             defaults.removeObject(forKey: AppGroup.Keys.lastPlanWorkoutSummary)
         }
         defaults.set(planCompletedToday, forKey: AppGroup.Keys.planWorkoutCompletedToday)
+        if let strengthSummary {
+            defaults.set(strengthSummary, forKey: AppGroup.Keys.lastPlanStrengthSummary)
+        } else {
+            defaults.removeObject(forKey: AppGroup.Keys.lastPlanStrengthSummary)
+        }
         return true
     }
 
@@ -131,7 +154,8 @@ public struct WidgetCache: Equatable, Sendable {
             voiceLine: defaults.string(forKey: AppGroup.Keys.lastTodayVoiceLine),
             runCompletedToday: defaults.bool(forKey: AppGroup.Keys.runCompletedToday),
             planSummary: defaults.string(forKey: AppGroup.Keys.lastPlanWorkoutSummary),
-            planCompletedToday: defaults.bool(forKey: AppGroup.Keys.planWorkoutCompletedToday)
+            planCompletedToday: defaults.bool(forKey: AppGroup.Keys.planWorkoutCompletedToday),
+            strengthSummary: defaults.string(forKey: AppGroup.Keys.lastPlanStrengthSummary)
         )
     }
 }

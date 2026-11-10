@@ -24,12 +24,16 @@ public struct PlanDayStatus: Sendable, Equatable {
     /// True when a run recorded today covers the prescription (within
     /// `TrainingPlanReconciler.completionFraction` of the distance).
     public let isCompleted: Bool
+    /// Today's strength session, if the plan has one today.
+    public let strength: StrengthSession?
 
+    /// No run planned today (a strength session may be).
     public var isRestDay: Bool { workout?.kind == .rest }
 
-    public init(workout: Workout?, isCompleted: Bool) {
+    public init(workout: Workout?, isCompleted: Bool, strength: StrengthSession? = nil) {
         self.workout = workout
         self.isCompleted = isCompleted
+        self.strength = strength
     }
 }
 
@@ -57,11 +61,12 @@ public struct TrainingPlanReconciler: Sendable {
     public func todayStatus(plan: TrainingPlan,
                             runs: [RunRecord],
                             today: Date = Date()) -> PlanDayStatus {
-        guard let workout = plan.todayWorkout(today: today) else {
+        guard let day = plan.todayDay(today: today) else {
             return PlanDayStatus(workout: nil, isCompleted: false)
         }
+        let workout = day.workout
         guard workout.kind != .rest, workout.distanceMeters > 0 else {
-            return PlanDayStatus(workout: workout, isCompleted: false)
+            return PlanDayStatus(workout: workout, isCompleted: false, strength: day.strength)
         }
         let cal = Calendar.current
         let longestToday = runs
@@ -69,7 +74,7 @@ public struct TrainingPlanReconciler: Sendable {
             .map(\.distanceMeters)
             .max() ?? 0
         let done = longestToday >= workout.distanceMeters * Self.completionFraction
-        return PlanDayStatus(workout: workout, isCompleted: done)
+        return PlanDayStatus(workout: workout, isCompleted: done, strength: day.strength)
     }
 
     // MARK: Before the start

@@ -87,7 +87,9 @@ private struct ActivePlanView: View {
     // MARK: - Today
 
     private var todayHero: some View {
-        let workout = plan.todayWorkout(today: now)
+        let day = plan.todayDay(today: now)
+        let workout = day?.workout
+        let strength = startsLater ? nil : day?.strength
 
         return VStack(alignment: .leading, spacing: 8) {
             Text("TODAY")
@@ -95,13 +97,13 @@ private struct ActivePlanView: View {
                 .kerning(1.1)
                 .foregroundStyle(.white.opacity(0.85))
 
-            Text(heroTitle(workout))
+            Text(heroTitle(workout, strength: strength))
                 .scaledFont(size: 40, weight: .heavy, design: .rounded)
                 .foregroundStyle(.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
 
-            Text(heroDetail(workout))
+            Text(heroDetail(workout, strength: strength))
                 .font(.system(.body, design: .rounded, weight: .medium))
                 .foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
@@ -109,6 +111,16 @@ private struct ActivePlanView: View {
 
             if let notes = workout?.notes, workout?.kind != .rest {
                 Text(notes)
+                    .font(.system(.footnote, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.85))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.trailing, 96)
+            }
+
+            if let strength {
+                // After the run on a run day; the day's whole session on a
+                // strength-only day.
+                Text(workout?.kind == .rest ? strength.notes : "Then strength, \(strength.summary): \(strength.notes)")
                     .font(.system(.footnote, design: .rounded))
                     .foregroundStyle(.white.opacity(0.85))
                     .fixedSize(horizontal: false, vertical: true)
@@ -129,13 +141,14 @@ private struct ActivePlanView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func heroTitle(_ workout: Workout?) -> String {
+    private func heroTitle(_ workout: Workout?, strength: StrengthSession?) -> String {
         if startsLater { return "Starts \(plan.firstDayText(today: now))" }
         guard let workout else { return "No session" }
-        return workout.kind == .rest ? "Rest day" : workout.kind.displayName
+        if workout.kind == .rest { return strength == nil ? "Rest day" : "Strength" }
+        return workout.kind.displayName
     }
 
-    private func heroDetail(_ workout: Workout?) -> String {
+    private func heroDetail(_ workout: Workout?, strength: StrengthSession?) -> String {
         if startsLater {
             return "Week 1 of \(plan.weekCount) begins on \(plan.firstDayText(long: true, today: now)), so the plan ends on race day. Until then, Today's target keeps you running."
         }
@@ -144,7 +157,10 @@ private struct ActivePlanView: View {
                 ? "This plan isn't running this week."
                 : "Nothing planned today."
         }
-        return workout.kind == .rest ? "Recovery is part of the plan." : workout.summary
+        if workout.kind == .rest {
+            return strength.map { "\($0.summary). No run today." } ?? "Recovery is part of the plan."
+        }
+        return workout.summary
     }
 
     // MARK: - This week
@@ -166,7 +182,7 @@ private struct ActivePlanView: View {
 
     private func dayRow(_ day: TrainingDay, marksToday: Bool) -> some View {
         let isToday = marksToday && day.weekday == today
-        let isRest = day.workout.kind == .rest
+        let isRest = day.workout.kind == .rest && day.strength == nil
 
         return HStack(spacing: 12) {
             Text(day.weekday.shortName)
@@ -180,11 +196,17 @@ private struct ActivePlanView: View {
                 }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(day.workout.kind.displayName)
+                Text(day.isStrengthOnly ? "Strength" : day.workout.kind.displayName)
                     .font(.system(.subheadline, weight: isRest ? .regular : .semibold))
                     .foregroundStyle(isRest ? .secondary : .primary)
-                if !isRest {
+                if day.workout.kind != .rest {
                     Text(day.workout.summary)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                if let strength = day.strength {
+                    Label(day.isStrengthOnly ? strength.summary : "Then \(strength.summary)",
+                          systemImage: "dumbbell.fill")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -225,6 +247,11 @@ private struct ActivePlanView: View {
             planRow("Runs per week", value: "\(plan.tier.runsPerWeek)")
             Divider().padding(.leading, 16)
             planRow("Long run", value: plan.longRunDay.displayName)
+            if let kit = plan.crossTraining {
+                Divider().padding(.leading, 16)
+                planRow("Strength per week",
+                        value: "\(TrainingPlanGenerator.strengthSessionsPerWeek(tier: plan.tier)) · \(kit.displayName)")
+            }
         }
         .background(
             Color(.secondarySystemGroupedBackground),

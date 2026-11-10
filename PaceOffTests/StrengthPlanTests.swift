@@ -238,4 +238,24 @@ final class StrengthPlanTests: XCTestCase {
         // Recomputing session notes on load leaves it as it is.
         XCTAssertEqual(generator.withSessionNotes(p), p)
     }
+
+    // MARK: - Today
+
+    func test_todayStatus_andTodayDay_carryTheDaysSession() {
+        let p = plan(.halfMarathon, .medium)
+        let reconciler = TrainingPlanReconciler()
+        var sessions = 0
+        for offset in 0..<7 {
+            let noon = Calendar.current.date(byAdding: .day, value: offset, to: p.firstDay)!
+                .addingTimeInterval(12 * 3_600)
+            let day = p.todayDay(today: noon)
+            let status = reconciler.todayStatus(plan: p, runs: [], today: noon)
+            XCTAssertEqual(status.workout, day?.workout, "day \(offset)")
+            XCTAssertEqual(status.strength, day?.strength, "day \(offset)")
+            XCTAssertEqual(p.todayWorkout(today: noon), day?.workout, "day \(offset)")
+            if day?.strength != nil { sessions += 1 }
+            XCTAssertEqual(day?.isStrengthOnly, day.map { $0.workout.kind == .rest && $0.strength != nil })
+        }
+        XCTAssertEqual(sessions, 2)
+    }
 }

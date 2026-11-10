@@ -247,6 +247,9 @@ public struct TrainingDay: Codable, Sendable, Equatable, Identifiable {
         self.workout = workout
         self.strength = strength
     }
+
+    /// No run, but a strength session: a rest day for running.
+    public var isStrengthOnly: Bool { workout.kind == .rest && strength != nil }
 }
 
 public struct TrainingWeek: Codable, Sendable, Equatable, Identifiable {
@@ -384,8 +387,14 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
 
     /// Today's prescribed workout, or nil when the plan isn't active today.
     public func todayWorkout(today: Date = Date()) -> Workout? {
+        todayDay(today: today)?.workout
+    }
+
+    /// Today's whole day: its run and any strength session. Nil when the
+    /// plan doesn't cover today.
+    public func todayDay(today: Date = Date()) -> TrainingDay? {
         guard let weekIdx = currentWeekIndex(today: today) else { return nil }
         let weekday = Weekday(date: today)
-        return weeks[weekIdx].days.first(where: { $0.weekday == weekday })?.workout
+        return weeks[weekIdx].days.first(where: { $0.weekday == weekday })
     }
 }

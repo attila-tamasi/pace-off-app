@@ -66,7 +66,8 @@ final class AppGroupTests: XCTestCase {
                     AppGroup.Keys.notificationMorningHour, AppGroup.Keys.notificationAfternoonHour,
                     AppGroup.Keys.notificationEveningHour, AppGroup.Keys.userProfile,
                     AppGroup.Keys.lastPlanWorkoutSummary, AppGroup.Keys.planWorkoutCompletedToday,
-                    AppGroup.Keys.hasSeenRun, AppGroup.Keys.notificationsEnabled]
+                    AppGroup.Keys.hasSeenRun, AppGroup.Keys.notificationsEnabled,
+                    AppGroup.Keys.lastPlanStrengthSummary]
         for key in keys {
             XCTAssertTrue(key.hasPrefix(AppGroup.keyPrefix), key)
         }

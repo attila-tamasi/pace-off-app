@@ -21,6 +21,7 @@ struct TrainingPlanSettingsView: View {
                         LabeledContent("Name", value: plan.displayName)
                         LabeledContent("Weeks", value: "\(plan.weekCount)")
                         LabeledContent("Long-run day", value: plan.longRunDay.displayName)
+                        LabeledContent("Cross training", value: plan.crossTraining?.displayName ?? "None")
                         LabeledContent("VDOT", value: String(format: "%.0f", plan.vdot))
                         LabeledContent(
                             plan.startsLater() ? "Starts" : "Started",
@@ -35,7 +36,7 @@ struct TrainingPlanSettingsView: View {
                             Label("End this plan", systemImage: "stop.circle")
                         }
                     } footer: {
-                        Text("To change the long-run day or intensity, end this plan and pick a new one. Your run history is untouched.")
+                        Text("To change the long-run day, intensity or cross training, end this plan and pick a new one. Your run history is untouched.")
                     }
                 } else {
                     Text("No active plan.")

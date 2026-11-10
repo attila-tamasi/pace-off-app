@@ -127,18 +127,20 @@ public struct DailyPushPlanner: Sendable {
             ? (inputs.planStatus?.isCompleted ?? false)
             : inputs.runs.contains(where: { calendar.isDate($0.startDate, inSameDayAs: inputs.now) })
 
+        let strength = inputs.planStatus?.strength
         var body = inputs.body
         if let planWorkout {
-            body = "Today's plan: \(planWorkout.summary). \(body)"
+            body = "\(Self.planLine(planWorkout, then: strength)). \(body)"
         }
 
         var pushes: [DailyPush] = []
 
         if isPlanRestDay {
+            // No run push; a strength day's morning push names the session.
             pushes.append(DailyPush(
                 slot: .morning,
                 fireDate: time(of: .morning, in: inputs.schedule, on: inputs.now),
-                body: Self.restDayBody
+                body: strength.map(Self.strengthDayBody) ?? Self.restDayBody
             ))
         } else if let planWorkout, planWorkout.kind == .race {
             // Race day: one morning push about the race, no daily target
@@ -185,6 +187,18 @@ public struct DailyPushPlanner: Sendable {
     static let restDayBody = "Rest day on your plan. Recovery is training too."
     static let newDayBody = "New day, new target. Open Pace Off to see yours."
 
+    /// "Strength day on your plan: Kettlebell · 35 min. No run today."
+    static func strengthDayBody(_ session: StrengthSession) -> String {
+        "Strength day on your plan: \(session.summary). No run today."
+    }
+
+    /// "Today's plan: 8.0 km · 5:25–5:45/km", with ", then strength
+    /// (Kettlebell · 35 min)" when a session follows the run.
+    static func planLine(_ workout: Workout, then strength: StrengthSession?) -> String {
+        let line = "Today's plan: \(workout.summary)"
+        return strength.map { "\(line), then strength (\($0.summary))" } ?? line
+    }
+
     /// "Race day · 21.1 km. Start controlled and let the taper work."
     static func raceDayBody(_ race: Workout) -> String {
         "\(race.headline). Start controlled and let the taper work."
@@ -195,10 +209,11 @@ public struct DailyPushPlanner: Sendable {
     private func nextMorningBody(plan: TrainingPlan?, tomorrow: Date) -> String {
         // Midday, so the plan's own calendar lands on the same day.
         let midday = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: tomorrow) ?? tomorrow
-        guard let workout = plan?.todayWorkout(today: midday) else { return Self.newDayBody }
-        if workout.kind == .rest { return Self.restDayBody }
+        guard let day = plan?.todayDay(today: midday) else { return Self.newDayBody }
+        let workout = day.workout
+        if workout.kind == .rest { return day.strength.map(Self.strengthDayBody) ?? Self.restDayBody }
         if workout.kind == .race { return Self.raceDayBody(workout) }
-        return "Today's plan: \(workout.summary). Open Pace Off for your target."
+        return "\(Self.planLine(workout, then: day.strength)). Open Pace Off for your target."
     }
 
     /// Days earlier this week (Monday-based, as the training plan's weeks)

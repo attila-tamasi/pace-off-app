@@ -54,6 +54,9 @@ struct TrainingPlanDetailView: View {
                 chip("\(plan.weekCount) weeks", icon: "calendar")
                 chip("\(plan.tier.runsPerWeek) runs/wk", icon: "figure.run")
                 chip("Long: \(plan.longRunDay.shortName)", icon: "flame.fill")
+                if let kit = plan.crossTraining {
+                    chip(kit.displayName, icon: "dumbbell.fill")
+                }
             }
             HStack(spacing: 6) {
                 Image(systemName: plan.usedBeginnerDefault ? "info.circle" : "speedometer")
@@ -153,20 +156,40 @@ struct TrainingPlanDetailView: View {
                 .frame(width: 36, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 2) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(day.workout.kind.displayName)
-                        .font(.system(.subheadline, design: .rounded,
-                                      weight: day.workout.kind.isKeySession ? .semibold : .regular))
-                        .foregroundStyle(day.workout.kind == .rest ? .secondary : .primary)
-                    if day.workout.kind != .rest {
-                        Text("· \(day.workout.summary)")
-                            .font(.system(.subheadline, design: .rounded))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
+                // A strength-only day leads with its session, not "Rest".
+                if !day.isStrengthOnly {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text(day.workout.kind.displayName)
+                            .font(.system(.subheadline, design: .rounded,
+                                          weight: day.workout.kind.isKeySession ? .semibold : .regular))
+                            .foregroundStyle(day.workout.kind == .rest ? .secondary : .primary)
+                        if day.workout.kind != .rest {
+                            Text("· \(day.workout.summary)")
+                                .font(.system(.subheadline, design: .rounded))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                        }
+                    }
+                    if let notes = day.workout.notes {
+                        Text(notes)
+                            .font(.system(.caption, design: .rounded))
+                            .foregroundStyle(.tertiary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                if let notes = day.workout.notes {
-                    Text(notes)
+                if let strength = day.strength {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Image(systemName: "dumbbell.fill")
+                            .font(.system(.caption, weight: .semibold))
+                            .foregroundStyle(Color.accentColor)
+                            .accessibilityHidden(true)
+                        Text(day.isStrengthOnly ? "Strength" : "Then strength")
+                            .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                        Text("· \(strength.summary)")
+                            .font(.system(.subheadline, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
+                    Text(strength.notes)
                         .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.tertiary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -211,6 +234,15 @@ private extension TrainingPlan {
 #Preview("Plan detail — Medium half") {
     NavigationStack {
         TrainingPlanDetailView(plan: .preview)
+    }
+    .environment(TrainingPlanStore.shared)
+}
+
+#Preview("Plan detail — Medium half with kettlebell") {
+    NavigationStack {
+        TrainingPlanDetailView(plan: TrainingPlanGenerator().generate(TrainingPlanInputs(
+            goal: .halfMarathon, tier: .medium, vo2Max: 49.2, crossTraining: .kettlebell
+        )))
     }
     .environment(TrainingPlanStore.shared)
 }
