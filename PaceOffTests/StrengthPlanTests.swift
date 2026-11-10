@@ -86,7 +86,11 @@ final class StrengthPlanTests: XCTestCase {
         for goal in RunningGoal.allCases {
             for tier in PlanTier.allCases {
                 for longDay in Weekday.allCases {
-                    for week in plan(goal, tier, longDay: longDay).weeks {
+                    // With a race date too: weeks then run back from race
+                    // day, and the race reshapes its last days.
+                    let plans = [plan(goal, tier, longDay: longDay)]
+                        + [4, 9, 13].map { plan(goal, tier, longDay: longDay, raceWeeksOut: $0) }
+                    for week in plans.flatMap(\.weeks) {
                         let label = "\(goal) \(tier), long run \(longDay), week \(week.index)"
                         let d = days(week)
                         let slots = strengthSlots(week)
@@ -94,6 +98,8 @@ final class StrengthPlanTests: XCTestCase {
                             let kind = d[slot].workout.kind
                             let next = d[(slot + 1) % 7].workout.kind
                             XCTAssertNotEqual(kind, .long, "\(label): not on the long run")
+                            XCTAssertNotEqual(kind, .race, "\(label): not on the race")
+                            XCTAssertNotEqual(next, .race, "\(label): not the day before the race")
                             XCTAssertNotEqual(next, .long, "\(label): not the day before the long run")
                             XCTAssertFalse(next.isQuality, "\(label): not the day before a quality session")
                             XCTAssertFalse(slots.contains((slot + 1) % 7), "\(label): never two days in a row")
@@ -180,11 +186,33 @@ final class StrengthPlanTests: XCTestCase {
     // MARK: - Saved plans
 
     func test_aPlanSavedBeforeStrength_decodesAsRunningOnly() throws {
-        let p = plan(.tenK, .medium, kit: nil)
-        let json = String(data: try JSONEncoder().encode(p), encoding: .utf8) ?? ""
-        XCTAssertFalse(json.contains("strength"))
+        // training-plan.json as it was written before strength existed,
+        // with the store's ISO 8601 dates; one week shown.
+        let saved = """
+        {"id":"7B3C0A52-3B1F-4D0E-9C55-1E7A2B6F0C11","goal":"tenK","tier":"medium","longRunDay":6,
+         "weeks":[{"index":1,"days":[
+           {"weekday":0,"workout":{"kind":"rest","distanceMeters":0,"paceMinSecPerKm":0,"paceMaxSecPerKm":0}},
+           {"weekday":1,"workout":{"kind":"threshold","distanceMeters":5600,"paceMinSecPerKm":265,"paceMaxSecPerKm":275,
+                                   "notes":"WU 2 km · 4 × 1 km @ T w/ 60 s jog · CD 2 km"}},
+           {"weekday":2,"workout":{"kind":"rest","distanceMeters":0,"paceMinSecPerKm":0,"paceMaxSecPerKm":0}},
+           {"weekday":3,"workout":{"kind":"easy","distanceMeters":7200,"paceMinSecPerKm":315,"paceMaxSecPerKm":345}},
+           {"weekday":4,"workout":{"kind":"rest","distanceMeters":0,"paceMinSecPerKm":0,"paceMaxSecPerKm":0}},
+           {"weekday":5,"workout":{"kind":"easy","distanceMeters":7200,"paceMinSecPerKm":315,"paceMaxSecPerKm":345}},
+           {"weekday":6,"workout":{"kind":"long","distanceMeters":9800,"paceMinSecPerKm":315,"paceMaxSecPerKm":345}}
+         ]}],
+         "vdot":49.2,"usedBeginnerDefault":false,"createdAt":"2026-10-01T08:00:00Z"}
+        """
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let p = try decoder.decode(TrainingPlan.self, from: Data(saved.utf8))
+        XCTAssertNil(p.crossTraining)
+        XCTAssertNil(p.startDate)
+        XCTAssertEqual(p.weeks.first?.days.count, 7)
+        XCTAssertTrue(p.weeks.flatMap(\.days).allSatisfy { $0.strength == nil })
+        // And a running-only plan still writes nothing new.
+        let json = String(data: try JSONEncoder().encode(plan(.tenK, .medium, kit: nil)), encoding: .utf8) ?? ""
+        XCTAssertFalse(json.contains("\"strength\""))
         XCTAssertFalse(json.contains("crossTraining"))
-        XCTAssertEqual(try JSONDecoder().decode(TrainingPlan.self, from: Data(json.utf8)), p)
     }
 
     func test_aPlanWithStrength_roundTrips() throws {
