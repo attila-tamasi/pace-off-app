@@ -94,6 +94,7 @@ public struct TrainingPlanReconciler: Sendable {
             personalBest: personalBest,
             goalDate: plan.lastDay,
             recentLongestRunMeters: recentLongestRunMeters,
+            crossTraining: plan.crossTraining,
             today: today
         ))
         guard fresh.weeks != plan.weeks
@@ -109,7 +110,8 @@ public struct TrainingPlanReconciler: Sendable {
             vdot: fresh.vdot,
             usedBeginnerDefault: fresh.usedBeginnerDefault,
             createdAt: plan.createdAt,
-            startDate: fresh.startDate
+            startDate: fresh.startDate,
+            crossTraining: plan.crossTraining
         )
     }
 
@@ -136,7 +138,8 @@ public struct TrainingPlanReconciler: Sendable {
             guard week.index - 1 >= currentWeek else { return week }
             let days = week.days.map { day in
                 TrainingDay(weekday: day.weekday,
-                            workout: retuned(day.workout, vdot: newVDOT))
+                            workout: retuned(day.workout, vdot: newVDOT),
+                            strength: day.strength)
             }
             return TrainingWeek(index: week.index, days: days)
         }
@@ -150,7 +153,8 @@ public struct TrainingPlanReconciler: Sendable {
             vdot: newVDOT,
             usedBeginnerDefault: false,
             createdAt: plan.createdAt,
-            startDate: plan.startDate
+            startDate: plan.startDate,
+            crossTraining: plan.crossTraining
         )
     }
 
