@@ -26,15 +26,22 @@ public struct PlanDayStatus: Sendable, Equatable {
     public let isCompleted: Bool
     /// Today's strength session, if the plan has one today.
     public let strength: StrengthSession?
+    /// True when a strength workout recorded today covers the session.
+    public let isStrengthCompleted: Bool
 
     /// No run planned today (a strength session may be).
     public var isRestDay: Bool { workout?.kind == .rest }
 
-    public init(workout: Workout?, isCompleted: Bool, strength: StrengthSession? = nil) {
+    public init(workout: Workout?, isCompleted: Bool, strength: StrengthSession? = nil,
+                isStrengthCompleted: Bool = false) {
         self.workout = workout
         self.isCompleted = isCompleted
         self.strength = strength
+        self.isStrengthCompleted = strength != nil && isStrengthCompleted
     }
+
+    /// Today's strength session while it's still to do.
+    public var pendingStrength: StrengthSession? { isStrengthCompleted ? nil : strength }
 }
 
 // MARK: - Reconciler
@@ -60,13 +67,16 @@ public struct TrainingPlanReconciler: Sendable {
     /// same disambiguation TodayViewModel uses for the "you ran today" card.
     public func todayStatus(plan: TrainingPlan,
                             runs: [RunRecord],
+                            strengthWorkouts: [StrengthWorkout] = [],
                             today: Date = Date()) -> PlanDayStatus {
         guard let day = plan.todayDay(today: today) else {
             return PlanDayStatus(workout: nil, isCompleted: false)
         }
         let workout = day.workout
+        let strengthDone = Self.coversStrength(strengthWorkouts, on: today)
         guard workout.kind != .rest, workout.distanceMeters > 0 else {
-            return PlanDayStatus(workout: workout, isCompleted: false, strength: day.strength)
+            return PlanDayStatus(workout: workout, isCompleted: false, strength: day.strength,
+                                 isStrengthCompleted: strengthDone)
         }
         let cal = Calendar.current
         let longestToday = runs
@@ -74,7 +84,21 @@ public struct TrainingPlanReconciler: Sendable {
             .map(\.distanceMeters)
             .max() ?? 0
         let done = longestToday >= workout.distanceMeters * Self.completionFraction
-        return PlanDayStatus(workout: workout, isCompleted: done, strength: day.strength)
+        return PlanDayStatus(workout: workout, isCompleted: done, strength: day.strength,
+                             isStrengthCompleted: strengthDone)
+    }
+
+    /// A strength workout counts once it's this long, so a session started
+    /// by mistake doesn't tick the day off.
+    static let strengthMinimumSeconds: Double = 10 * 60
+
+    /// Whether a strength workout started on `day` and lasted at least
+    /// `strengthMinimumSeconds`.
+    static func coversStrength(_ workouts: [StrengthWorkout], on day: Date) -> Bool {
+        let cal = Calendar.current
+        return workouts.contains {
+            cal.isDate($0.startDate, inSameDayAs: day) && $0.durationSeconds >= strengthMinimumSeconds
+        }
     }
 
     // MARK: Before the start

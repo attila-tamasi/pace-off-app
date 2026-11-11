@@ -29,6 +29,8 @@ public enum AppGroup {
         public static let planWorkoutCompletedToday = "paceoff.planWorkoutCompletedToday"
         /// Today's strength session for the widget ("Kettlebell · 35 min").
         public static let lastPlanStrengthSummary = "paceoff.lastPlanStrengthSummary"
+        /// Whether a strength workout in Health covered today's session.
+        public static let strengthCompletedToday = "paceoff.strengthCompletedToday"
         /// Set once a Health read has held a run. A runner back after more
         /// than the 90-day window gets a restart target, not the first-run
         /// card a new runner gets.

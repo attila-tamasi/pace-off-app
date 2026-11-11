@@ -15,19 +15,23 @@ public struct WidgetCache: Equatable, Sendable {
     public var planCompletedToday: Bool
     /// Today's strength session ("Kettlebell · 35 min"), nil without one.
     public var strengthSummary: String?
+    /// Whether a strength workout in Health already covered it.
+    public var strengthCompletedToday: Bool
 
     public init(target: RunTarget? = nil,
                 voiceLine: String? = nil,
                 runCompletedToday: Bool = false,
                 planSummary: String? = nil,
                 planCompletedToday: Bool = false,
-                strengthSummary: String? = nil) {
+                strengthSummary: String? = nil,
+                strengthCompletedToday: Bool = false) {
         self.target = target
         self.voiceLine = voiceLine
         self.runCompletedToday = runCompletedToday
         self.planSummary = planSummary
         self.planCompletedToday = planCompletedToday
         self.strengthSummary = strengthSummary
+        self.strengthCompletedToday = strengthSummary != nil && strengthCompletedToday
     }
 
     /// The day as a refresh computed it, with today's plan status (nil
@@ -41,12 +45,22 @@ public struct WidgetCache: Equatable, Sendable {
                   runCompletedToday: runCompletedToday,
                   planSummary: planStatus?.workout?.headline,
                   planCompletedToday: planStatus?.isCompleted ?? false,
-                  strengthSummary: planStatus?.strength?.summary)
+                  strengthSummary: planStatus?.strength?.summary,
+                  strengthCompletedToday: planStatus?.isStrengthCompleted ?? false)
     }
 
     public static let empty = WidgetCache()
 
     public var isPlanRestDay: Bool { planSummary == Workout.rest.summary }
+
+    /// A planned day without a run but with a strength session.
+    public var isStrengthOnlyDay: Bool { isPlanRestDay && strengthSummary != nil }
+
+    /// The plan's day is done: its run, or on a strength-only day its
+    /// session (or a run the runner did instead). False without a plan.
+    public var isPlanDayDone: Bool {
+        isStrengthOnlyDay ? strengthCompletedToday || runCompletedToday : planCompletedToday
+    }
 
     /// The widget's plan line: "Plan: 8.0 km · 5:25–5:45/km", with " ✓"
     /// once a run covered it and " + strength" when a session follows;
@@ -54,11 +68,12 @@ public struct WidgetCache: Equatable, Sendable {
     /// on planned rest. Nil when no plan is active.
     public var planLine: String? {
         guard let planSummary else { return nil }
+        let tick = strengthCompletedToday ? " ✓" : ""
         if isPlanRestDay {
-            return strengthSummary.map { "Strength: \($0)" } ?? "Rest day"
+            return strengthSummary.map { "Strength: \($0)\(tick)" } ?? "Rest day"
         }
         let line = planCompletedToday ? "Plan: \(planSummary) ✓" : "Plan: \(planSummary)"
-        return strengthSummary == nil ? line : "\(line) + strength"
+        return strengthSummary == nil ? line : "\(line) + strength\(tick)"
     }
 
     // MARK: - Reading it at a moment
@@ -75,7 +90,8 @@ public struct WidgetCache: Equatable, Sendable {
     public enum Dot: Equatable, Sendable {
         /// No target for today.
         case neutral
-        /// Today's run or plan workout is done, or it's a planned rest day.
+        /// Today's run or plan workout is done, it's a planned rest day, or
+        /// a strength-only day's session is logged.
         case green
         /// Still to run, before noon.
         case orange
@@ -86,7 +102,11 @@ public struct WidgetCache: Equatable, Sendable {
     public func dot(at now: Date, calendar: Calendar = .current) -> Dot {
         let today = asOf(now, calendar: calendar)
         guard today.target != nil else { return .neutral }
-        if today.runCompletedToday || today.planCompletedToday || today.isPlanRestDay { return .green }
+        if today.isStrengthOnlyDay {
+            if today.isPlanDayDone { return .green }
+        } else if today.runCompletedToday || today.planCompletedToday || today.isPlanRestDay {
+            return .green
+        }
         return calendar.component(.hour, from: now) >= 12 ? .red : .orange
     }
 
@@ -142,6 +162,7 @@ public struct WidgetCache: Equatable, Sendable {
         } else {
             defaults.removeObject(forKey: AppGroup.Keys.lastPlanStrengthSummary)
         }
+        defaults.set(strengthCompletedToday, forKey: AppGroup.Keys.strengthCompletedToday)
         return true
     }
 
@@ -155,7 +176,8 @@ public struct WidgetCache: Equatable, Sendable {
             runCompletedToday: defaults.bool(forKey: AppGroup.Keys.runCompletedToday),
             planSummary: defaults.string(forKey: AppGroup.Keys.lastPlanWorkoutSummary),
             planCompletedToday: defaults.bool(forKey: AppGroup.Keys.planWorkoutCompletedToday),
-            strengthSummary: defaults.string(forKey: AppGroup.Keys.lastPlanStrengthSummary)
+            strengthSummary: defaults.string(forKey: AppGroup.Keys.lastPlanStrengthSummary),
+            strengthCompletedToday: defaults.bool(forKey: AppGroup.Keys.strengthCompletedToday)
         )
     }
 }

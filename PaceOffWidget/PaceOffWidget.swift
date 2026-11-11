@@ -103,11 +103,11 @@ struct PaceOffWidgetView: View {
                     .font(.system(.largeTitle, design: .rounded, weight: .bold))
                 if let planLine {
                     HStack(spacing: 4) {
-                        Image(systemName: today.planCompletedToday
+                        Image(systemName: today.isPlanDayDone
                               ? "checkmark.circle.fill"
-                              : today.isPlanRestDay && today.strengthSummary != nil ? "dumbbell.fill" : "calendar")
+                              : today.isStrengthOnlyDay ? "dumbbell.fill" : "calendar")
                             .font(.system(.caption2, weight: .semibold))
-                            .foregroundStyle(today.planCompletedToday ? Color.green : Color.secondary)
+                            .foregroundStyle(today.isPlanDayDone ? Color.green : Color.secondary)
                         Text(planLine)
                             .font(.system(.caption2, design: .rounded, weight: .semibold))
                             .lineLimit(1)

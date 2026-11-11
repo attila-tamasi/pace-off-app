@@ -258,4 +258,53 @@ final class StrengthPlanTests: XCTestCase {
         }
         XCTAssertEqual(sessions, 2)
     }
+
+    // MARK: - Done from Health
+
+    func test_aStrengthWorkoutToday_ticksTheSessionOff() {
+        let p = plan(.halfMarathon, .medium)
+        let reconciler = TrainingPlanReconciler()
+        // The plan's first strength day, at noon.
+        let noon = (0..<7).lazy
+            .map { Calendar.current.date(byAdding: .day, value: $0, to: p.firstDay)!.addingTimeInterval(12 * 3_600) }
+            .first { p.todayDay(today: $0)?.strength != nil }!
+        func lifted(hoursBefore: Double, minutes: Double) -> StrengthWorkout {
+            let start = noon.addingTimeInterval(-hoursBefore * 3_600)
+            return StrengthWorkout(startDate: start, endDate: start.addingTimeInterval(minutes * 60))
+        }
+        func done(_ workouts: [StrengthWorkout]) -> Bool {
+            reconciler.todayStatus(plan: p, runs: [], strengthWorkouts: workouts, today: noon).isStrengthCompleted
+        }
+        XCTAssertFalse(done([]))
+        XCTAssertTrue(done([lifted(hoursBefore: 3, minutes: 35)]))
+        XCTAssertFalse(done([lifted(hoursBefore: 3, minutes: 5)]), "a few minutes started by mistake")
+        XCTAssertFalse(done([lifted(hoursBefore: 24, minutes: 40)]), "yesterday's")
+        XCTAssertNil(reconciler.todayStatus(plan: p, runs: [], strengthWorkouts: [lifted(hoursBefore: 3, minutes: 35)],
+                                            today: noon).pendingStrength)
+        // A day without a session has nothing to tick off.
+        let runningOnly = plan(.halfMarathon, .medium, kit: nil)
+        let status = reconciler.todayStatus(plan: runningOnly, runs: [],
+                                            strengthWorkouts: [lifted(hoursBefore: 3, minutes: 35)], today: noon)
+        XCTAssertFalse(status.isStrengthCompleted)
+    }
+
+    func test_aSnapshotSavedBeforeStrengthWorkouts_decodes() throws {
+        let old = HealthDataSnapshot(lastSyncedAt: today)
+        let json = String(data: try JSONEncoder().encode(old), encoding: .utf8) ?? ""
+        XCTAssertFalse(json.contains("strengthWorkouts"))
+        let decoded = try JSONDecoder().decode(HealthDataSnapshot.self, from: Data(json.utf8))
+        XCTAssertEqual(decoded.strengthWorkoutsOrEmpty, [])
+        let fresh = HealthDataSnapshot(lastSyncedAt: today, strengthWorkouts: [
+            StrengthWorkout(startDate: today, endDate: today.addingTimeInterval(1_800))
+        ])
+        XCTAssertEqual(try JSONDecoder().decode(HealthDataSnapshot.self, from: JSONEncoder().encode(fresh)), fresh)
+    }
+
+    func test_aReadOfOnlyStrengthWorkouts_hasReadings() {
+        let lifted = HealthDataSnapshot(lastSyncedAt: today, strengthWorkouts: [
+            StrengthWorkout(startDate: today, endDate: today.addingTimeInterval(1_800))
+        ])
+        XCTAssertTrue(lifted.hasReadings)
+        XCTAssertFalse(HealthDataSnapshot(lastSyncedAt: today, strengthWorkouts: []).hasReadings)
+    }
 }
