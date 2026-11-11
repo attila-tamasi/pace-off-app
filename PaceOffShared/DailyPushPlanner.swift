@@ -157,12 +157,18 @@ public struct DailyPushPlanner: Sendable {
                 ))
             }
         } else if doneToday, let strength {
-            // The run is done and the session isn't: one reminder for it.
-            pushes.append(DailyPush(
-                slot: .afternoon,
-                fireDate: time(of: .afternoon, in: inputs.schedule, on: inputs.now),
-                body: Self.strengthLeftBody(strength)
-            ))
+            // The run is done and the session isn't: one reminder for it,
+            // in the afternoon slot, or the evening one once that's passed.
+            let slot = [DailyPush.Slot.afternoon, .evening].first {
+                time(of: $0, in: inputs.schedule, on: inputs.now) > inputs.now
+            }
+            if let slot {
+                pushes.append(DailyPush(
+                    slot: slot,
+                    fireDate: time(of: slot, in: inputs.schedule, on: inputs.now),
+                    body: Self.strengthLeftBody(strength)
+                ))
+            }
         } else if !doneToday {
             pushes.append(DailyPush(
                 slot: .morning,

@@ -299,4 +299,12 @@ final class StrengthPlanTests: XCTestCase {
         ])
         XCTAssertEqual(try JSONDecoder().decode(HealthDataSnapshot.self, from: JSONEncoder().encode(fresh)), fresh)
     }
+
+    func test_aReadOfOnlyStrengthWorkouts_hasReadings() {
+        let lifted = HealthDataSnapshot(lastSyncedAt: today, strengthWorkouts: [
+            StrengthWorkout(startDate: today, endDate: today.addingTimeInterval(1_800))
+        ])
+        XCTAssertTrue(lifted.hasReadings)
+        XCTAssertFalse(HealthDataSnapshot(lastSyncedAt: today, strengthWorkouts: []).hasReadings)
+    }
 }

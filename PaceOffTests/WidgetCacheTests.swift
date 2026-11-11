@@ -251,4 +251,12 @@ final class WidgetCacheTests: XCTestCase {
         // Without a session, nothing can be ticked.
         XCTAssertFalse(WidgetCache(target: t, strengthCompletedToday: true).strengthCompletedToday)
     }
+
+    func test_aRunOnAStrengthOnlyDay_greensTheDot() {
+        let t = target(computedAt: date(day: 6, hour: 7))
+        let ranInstead = WidgetCache(target: t, voiceLine: "Rest.", runCompletedToday: true,
+                                     planSummary: Workout.rest.summary, strengthSummary: "Kettlebell · 35 min")
+        XCTAssertTrue(ranInstead.isPlanDayDone)
+        XCTAssertEqual(ranInstead.dot(at: date(day: 6, hour: 18)), .green)
+    }
 }

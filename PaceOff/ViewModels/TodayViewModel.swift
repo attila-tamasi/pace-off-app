@@ -15,6 +15,8 @@ public final class TodayViewModel {
     /// True once Health has been read and holds no run to base a target
     /// on. Today then shows how to log a first run, and nothing is pushed.
     public private(set) var needsFirstRun: Bool = false
+    /// A strength workout in Health already covered today's plan session.
+    public private(set) var strengthDoneToday: Bool = false
     public private(set) var voiceLine: String = "Sync with Apple Health to compute your push."
     public private(set) var notificationLine: String = ""
     public private(set) var yesterday: RunRecord?
@@ -104,6 +106,7 @@ public final class TodayViewModel {
             TrainingPlanReconciler().todayStatus(plan: $0, runs: snapshot.runs,
                                                  strengthWorkouts: snapshot.strengthWorkoutsOrEmpty)
         }
+        self.strengthDoneToday = planStatus?.isStrengthCompleted ?? false
 
         let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak, planStatus: planStatus)
         let cannedCard = voice.todayCard(for: state)

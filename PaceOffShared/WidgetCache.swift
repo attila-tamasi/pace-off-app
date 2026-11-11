@@ -56,6 +56,12 @@ public struct WidgetCache: Equatable, Sendable {
     /// A planned day without a run but with a strength session.
     public var isStrengthOnlyDay: Bool { isPlanRestDay && strengthSummary != nil }
 
+    /// The plan's day is done: its run, or on a strength-only day its
+    /// session (or a run the runner did instead). False without a plan.
+    public var isPlanDayDone: Bool {
+        isStrengthOnlyDay ? strengthCompletedToday || runCompletedToday : planCompletedToday
+    }
+
     /// The widget's plan line: "Plan: 8.0 km · 5:25–5:45/km", with " ✓"
     /// once a run covered it and " + strength" when a session follows;
     /// "Strength: Kettlebell · 35 min" on a strength-only day; "Rest day"
@@ -97,7 +103,7 @@ public struct WidgetCache: Equatable, Sendable {
         let today = asOf(now, calendar: calendar)
         guard today.target != nil else { return .neutral }
         if today.isStrengthOnlyDay {
-            if today.strengthCompletedToday { return .green }
+            if today.isPlanDayDone { return .green }
         } else if today.runCompletedToday || today.planCompletedToday || today.isPlanRestDay {
             return .green
         }

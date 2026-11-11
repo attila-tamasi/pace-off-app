@@ -135,7 +135,7 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
     public var hasReadings: Bool {
         !(runs.isEmpty && vo2Max.isEmpty && restingHR.isEmpty && hrv.isEmpty
             && yesterdayHRV == nil && yesterdayAvgHeartRate == nil
-            && latestRestingHeartRate == nil)
+            && latestRestingHeartRate == nil && strengthWorkoutsOrEmpty.isEmpty)
     }
 }
 

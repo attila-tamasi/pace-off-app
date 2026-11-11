@@ -333,4 +333,15 @@ final class DailyPushPlannerTests: XCTestCase {
         let result = pushes(now: date(day: 6, hour: 6), runs: [], plan: strengthPlan(), planStatus: status)
         XCTAssertEqual(result.first?.body, "Today's plan: \(easy.summary). Run 8 km.")
     }
+
+    func test_aRunDoneAfterTheAfternoonSlot_remindsOfTheSessionInTheEvening() {
+        let status = PlanDayStatus(workout: easy, isCompleted: true, strength: kettlebell)
+        let result = pushes(now: date(day: 6, hour: 18, minute: 15), runs: [run(day: 6, km: 8)],
+                            plan: strengthPlan(), planStatus: status)
+        XCTAssertEqual(result.map(\.slot), [.evening])
+        XCTAssertEqual(result.first?.body, "Run done. Strength left today: Kettlebell · 35 min.")
+        // After the evening slot too: nothing left to send today.
+        XCTAssertEqual(pushes(now: date(day: 6, hour: 21, minute: 30), runs: [run(day: 6, km: 8)],
+                              plan: strengthPlan(), planStatus: status), [])
+    }
 }

@@ -243,12 +243,13 @@ struct TodayView: View {
     /// plan is active today.
     private var planLine: String? {
         guard let plan = planStore.activePlan, let day = plan.todayDay() else { return nil }
+        let tick = todayVM.strengthDoneToday ? " ✓" : ""
         if day.workout.kind == .rest {
-            return day.strength.map { "Strength day in your plan · \($0.equipment.displayName)" }
+            return day.strength.map { "Strength day in your plan · \($0.equipment.displayName)\(tick)" }
                 ?? "Rest day in your plan"
         }
         let line = "\(plan.goal.displayName) plan · \(day.workout.kind.displayName)"
-        return day.strength == nil ? line : "\(line) + strength"
+        return day.strength == nil ? line : "\(line) + strength\(tick)"
     }
 
     // MARK: - Recovery
