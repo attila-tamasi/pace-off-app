@@ -130,6 +130,7 @@ public final class HealthKitService {
             async let hrv  = fetchHRV(on: yesterday, log: log)
             async let yAvg = fetchAverageHeartRate(on: yesterday, log: log)
             async let lRHR = fetchLatestRestingHeartRate(asOf: now, log: log)
+            async let strength = fetchStrengthWorkouts(log: log)
 
             fresh.runs = await runs
             fresh.vo2Max = await vo2
@@ -138,6 +139,7 @@ public final class HealthKitService {
             fresh.yesterdayHRV = await hrv
             fresh.yesterdayAvgHeartRate = await yAvg
             fresh.latestRestingHeartRate = await lRHR
+            fresh.strengthWorkouts = await strength
             fresh.userAge = userAge()
         }
 
@@ -160,6 +162,41 @@ public final class HealthKitService {
     }
 
     // MARK: - Reads
+
+    /// Traditional and functional strength training: the workouts that
+    /// tick off a plan's strength session.
+    static var strengthWorkoutsPredicate: NSPredicate {
+        NSCompoundPredicate(orPredicateWithSubpredicates: [
+            HKQuery.predicateForWorkouts(with: .traditionalStrengthTraining),
+            HKQuery.predicateForWorkouts(with: .functionalStrengthTraining),
+        ])
+    }
+
+    /// Strength workouts in the trailing window, oldest first. Workouts are
+    /// already readable, so this asks for no new permission.
+    public func fetchStrengthWorkouts(daysBack: Int = 14, log: HealthReadLog? = nil) async -> [StrengthWorkout] {
+        guard let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date()) else { return [] }
+        let datePredicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
+        let combined = NSCompoundPredicate(andPredicateWithSubpredicates: [Self.strengthWorkoutsPredicate, datePredicate])
+
+        return await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: .workoutType(),
+                predicate: combined,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true)]
+            ) { _, samples, error in
+                let workouts = ((samples as? [HKWorkout]) ?? []).map {
+                    StrengthWorkout(startDate: $0.startDate, endDate: $0.endDate)
+                }
+                Task { @MainActor in
+                    log?.note(error)
+                    continuation.resume(returning: workouts)
+                }
+            }
+            store.execute(query)
+        }
+    }
 
     /// All running workouts in the trailing window.
     public func fetchRuns(daysBack: Int = 90, log: HealthReadLog? = nil) async -> [RunRecord] {
@@ -697,10 +734,13 @@ public final class HealthKitService {
     ) {
         guard !observersStarted else { return }
         observersStarted = true
-        // Runs only: other workouts, and the app's own writes, change
-        // nothing a refresh reads.
+        // Runs and strength workouts only: other workouts, and the app's
+        // own writes, change nothing a refresh reads.
+        let workouts = NSCompoundPredicate(orPredicateWithSubpredicates: [
+            HKQuery.predicateForWorkouts(with: .running), Self.strengthWorkoutsPredicate,
+        ])
         var types: [(HKSampleType, NSPredicate?, HKUpdateFrequency)] = [
-            (HKObjectType.workoutType(), HKQuery.predicateForWorkouts(with: .running), .immediate)
+            (HKObjectType.workoutType(), workouts, .immediate)
         ]
         if let vo2 = HKQuantityType.quantityType(forIdentifier: .vo2Max) {
             types.append((vo2, nil, .hourly))

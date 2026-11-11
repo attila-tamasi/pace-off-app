@@ -221,4 +221,34 @@ final class WidgetCacheTests: XCTestCase {
         WidgetCache(target: target(computedAt: date(day: 8, hour: 7)), voiceLine: "Run 8 km.").save(to: defaults)
         XCTAssertNil(WidgetCache.load(from: defaults).strengthSummary)
     }
+
+    // MARK: - Strength done from Health
+
+    func test_aStrengthOnlyDay_isPendingUntilTheSessionIsLogged() {
+        let t = target(computedAt: date(day: 6, hour: 7))
+        let pending = WidgetCache(target: t, voiceLine: "Rest.", planSummary: Workout.rest.summary,
+                                  strengthSummary: "Kettlebell · 35 min")
+        XCTAssertTrue(pending.isStrengthOnlyDay)
+        XCTAssertEqual(pending.dot(at: date(day: 6, hour: 10)), .orange)
+        XCTAssertEqual(pending.dot(at: date(day: 6, hour: 18)), .red)
+        XCTAssertEqual(pending.planLine, "Strength: Kettlebell · 35 min")
+
+        let done = WidgetCache(target: t, voiceLine: "Rest.", planSummary: Workout.rest.summary,
+                               strengthSummary: "Kettlebell · 35 min", strengthCompletedToday: true)
+        XCTAssertEqual(done.dot(at: date(day: 6, hour: 18)), .green)
+        XCTAssertEqual(done.planLine, "Strength: Kettlebell · 35 min ✓")
+        done.save(to: defaults)
+        XCTAssertEqual(WidgetCache.load(from: defaults), done)
+    }
+
+    func test_aRunDayWithStrength_ticksEachPart() {
+        let t = target(computedAt: date(day: 6, hour: 7))
+        let day = WidgetCache(target: t, voiceLine: "Go.", planSummary: "8.0 km · 5:25–5:45/km",
+                              planCompletedToday: true, strengthSummary: "Kettlebell · 35 min",
+                              strengthCompletedToday: true)
+        XCTAssertEqual(day.planLine, "Plan: 8.0 km · 5:25–5:45/km ✓ + strength ✓")
+        XCTAssertEqual(day.dot(at: date(day: 6, hour: 18)), .green)
+        // Without a session, nothing can be ticked.
+        XCTAssertFalse(WidgetCache(target: t, strengthCompletedToday: true).strengthCompletedToday)
+    }
 }

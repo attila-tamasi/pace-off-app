@@ -127,7 +127,8 @@ public struct DailyPushPlanner: Sendable {
             ? (inputs.planStatus?.isCompleted ?? false)
             : inputs.runs.contains(where: { calendar.isDate($0.startDate, inSameDayAs: inputs.now) })
 
-        let strength = inputs.planStatus?.strength
+        // A session already logged in Health drops out of the pushes.
+        let strength = inputs.planStatus?.pendingStrength
         var body = inputs.body
         if let planWorkout {
             body = "\(Self.planLine(planWorkout, then: strength)). \(body)"
@@ -136,12 +137,15 @@ public struct DailyPushPlanner: Sendable {
         var pushes: [DailyPush] = []
 
         if isPlanRestDay {
-            // No run push; a strength day's morning push names the session.
-            pushes.append(DailyPush(
-                slot: .morning,
-                fireDate: time(of: .morning, in: inputs.schedule, on: inputs.now),
-                body: strength.map(Self.strengthDayBody) ?? Self.restDayBody
-            ))
+            // No run push; a strength day's morning push names the session,
+            // and once it's logged there's nothing to say.
+            if !(inputs.planStatus?.isStrengthCompleted ?? false) {
+                pushes.append(DailyPush(
+                    slot: .morning,
+                    fireDate: time(of: .morning, in: inputs.schedule, on: inputs.now),
+                    body: strength.map(Self.strengthDayBody) ?? Self.restDayBody
+                ))
+            }
         } else if let planWorkout, planWorkout.kind == .race {
             // Race day: one morning push about the race, no daily target
             // and no reminders.
@@ -152,6 +156,13 @@ public struct DailyPushPlanner: Sendable {
                     body: Self.raceDayBody(planWorkout)
                 ))
             }
+        } else if doneToday, let strength {
+            // The run is done and the session isn't: one reminder for it.
+            pushes.append(DailyPush(
+                slot: .afternoon,
+                fireDate: time(of: .afternoon, in: inputs.schedule, on: inputs.now),
+                body: Self.strengthLeftBody(strength)
+            ))
         } else if !doneToday {
             pushes.append(DailyPush(
                 slot: .morning,
@@ -190,6 +201,11 @@ public struct DailyPushPlanner: Sendable {
     /// "Strength day on your plan: Kettlebell · 35 min. No run today."
     static func strengthDayBody(_ session: StrengthSession) -> String {
         "Strength day on your plan: \(session.summary). No run today."
+    }
+
+    /// "Run done. Strength left today: Kettlebell · 35 min."
+    static func strengthLeftBody(_ session: StrengthSession) -> String {
+        "Run done. Strength left today: \(session.summary)."
     }
 
     /// "Today's plan: 8.0 km · 5:25–5:45/km", with ", then strength

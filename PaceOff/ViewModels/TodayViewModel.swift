@@ -101,7 +101,8 @@ public final class TodayViewModel {
         // only the background task re-reads disk.
         let plan = TrainingPlanStore.shared.activePlan
         let planStatus = plan.map {
-            TrainingPlanReconciler().todayStatus(plan: $0, runs: snapshot.runs)
+            TrainingPlanReconciler().todayStatus(plan: $0, runs: snapshot.runs,
+                                                 strengthWorkouts: snapshot.strengthWorkoutsOrEmpty)
         }
 
         let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak, planStatus: planStatus)

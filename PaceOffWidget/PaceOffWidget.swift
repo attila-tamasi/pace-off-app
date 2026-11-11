@@ -103,11 +103,11 @@ struct PaceOffWidgetView: View {
                     .font(.system(.largeTitle, design: .rounded, weight: .bold))
                 if let planLine {
                     HStack(spacing: 4) {
-                        Image(systemName: today.planCompletedToday
+                        Image(systemName: dayDone
                               ? "checkmark.circle.fill"
-                              : today.isPlanRestDay && today.strengthSummary != nil ? "dumbbell.fill" : "calendar")
+                              : today.isStrengthOnlyDay ? "dumbbell.fill" : "calendar")
                             .font(.system(.caption2, weight: .semibold))
-                            .foregroundStyle(today.planCompletedToday ? Color.green : Color.secondary)
+                            .foregroundStyle(dayDone ? Color.green : Color.secondary)
                         Text(planLine)
                             .font(.system(.caption2, design: .rounded, weight: .semibold))
                             .lineLimit(1)
@@ -133,6 +133,11 @@ struct PaceOffWidgetView: View {
     /// Today's plan line (`WidgetCache.planLine`). Nil when no plan is
     /// active.
     private var planLine: String? { today.planLine }
+
+    /// The plan's day is done: its run, or a strength-only day's session.
+    private var dayDone: Bool {
+        today.isStrengthOnlyDay ? today.strengthCompletedToday : today.planCompletedToday
+    }
 
     private var distanceShort: String {
         guard let t = today.target else { return "—" }

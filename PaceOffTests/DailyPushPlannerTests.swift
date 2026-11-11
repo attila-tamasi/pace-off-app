@@ -310,4 +310,27 @@ final class DailyPushPlannerTests: XCTestCase {
         XCTAssertEqual(planner.skippedDaysThisWeek(runs: [run(day: 6)], plan: strengthPlan(),
                                                    now: date(day: 7, hour: 12)), 0)
     }
+
+    // MARK: - Strength done from Health
+
+    func test_aStrengthDay_withTheSessionLogged_sendsNothingMore() {
+        let status = PlanDayStatus(workout: rest, isCompleted: false, strength: kettlebell, isStrengthCompleted: true)
+        XCTAssertEqual(pushes(now: date(day: 5, hour: 6), runs: [], plan: strengthPlan(), planStatus: status), [])
+    }
+
+    func test_aRunDone_withTheSessionStillToDo_getsOneAfternoonReminder() {
+        let status = PlanDayStatus(workout: easy, isCompleted: true, strength: kettlebell)
+        let result = pushes(now: date(day: 6, hour: 9), runs: [run(day: 6, km: 8)], plan: strengthPlan(), planStatus: status)
+        XCTAssertEqual(result.map(\.slot), [.afternoon])
+        XCTAssertEqual(result.first?.body, "Run done. Strength left today: Kettlebell · 35 min.")
+        // Both done: nothing.
+        let both = PlanDayStatus(workout: easy, isCompleted: true, strength: kettlebell, isStrengthCompleted: true)
+        XCTAssertEqual(pushes(now: date(day: 6, hour: 9), runs: [run(day: 6, km: 8)], plan: strengthPlan(), planStatus: both), [])
+    }
+
+    func test_theSessionLoggedFirst_dropsOutOfTheRunPushes() {
+        let status = PlanDayStatus(workout: easy, isCompleted: false, strength: kettlebell, isStrengthCompleted: true)
+        let result = pushes(now: date(day: 6, hour: 6), runs: [], plan: strengthPlan(), planStatus: status)
+        XCTAssertEqual(result.first?.body, "Today's plan: \(easy.summary). Run 8 km.")
+    }
 }

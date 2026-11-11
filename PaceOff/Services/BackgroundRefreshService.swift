@@ -253,7 +253,8 @@ public final class BackgroundRefreshService {
         // against the data we just pulled. The voice line needs today's
         // status too.
         if Task.isCancelled { return false }
-        let planStatus = reconcileTrainingPlan(runs: runs, vo2Max: vo2, now: now)
+        let planStatus = reconcileTrainingPlan(runs: runs, strengthWorkouts: snapshot.strengthWorkoutsOrEmpty,
+                                               vo2Max: vo2, now: now)
 
         let state = VoiceState(target: target, yesterday: yesterday, currentStreak: streak, planStatus: planStatus)
         let voice = VoiceCopy()
@@ -310,13 +311,14 @@ public final class BackgroundRefreshService {
     /// beginner-default fallback VDOT never overwrites a real anchor. A plan
     /// that hasn't started yet is rebuilt instead, without a push. Only
     /// called with a fresh Health read, so a locked-phone read never retunes.
-    private func reconcileTrainingPlan(runs: [RunRecord], vo2Max: [VO2MaxSnapshot], now: Date) -> PlanDayStatus? {
+    private func reconcileTrainingPlan(runs: [RunRecord], strengthWorkouts: [StrengthWorkout],
+                                       vo2Max: [VO2MaxSnapshot], now: Date) -> PlanDayStatus? {
         let store = TrainingPlanStore.shared
         store.load() // re-read disk — the app may have written since our launch
         guard let plan = store.activePlan else { return nil }
 
         let reconciler = TrainingPlanReconciler()
-        let status = reconciler.todayStatus(plan: plan, runs: runs, today: now)
+        let status = reconciler.todayStatus(plan: plan, runs: runs, strengthWorkouts: strengthWorkouts, today: now)
 
         // Resolve the runner's current VDOT the same way the picker does.
         // The PB counts whatever its distance: its VDOT is distance-free.

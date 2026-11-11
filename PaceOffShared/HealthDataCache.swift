@@ -43,6 +43,10 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
     public var vo2Max: [VO2MaxSnapshot]
     public var restingHR: [RestingHeartRateSnapshot]
     public var hrv: [HRVSnapshot]
+    /// Strength workouts of the last two weeks. Optional so a snapshot
+    /// saved before they were read still decodes; read it as
+    /// `strengthWorkoutsOrEmpty`.
+    public var strengthWorkouts: [StrengthWorkout]?
 
     // Recovery snapshot — small scalars, all optional because HealthKit may
     // have nothing recorded for the day.
@@ -66,6 +70,7 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
         vo2Max: [VO2MaxSnapshot] = [],
         restingHR: [RestingHeartRateSnapshot] = [],
         hrv: [HRVSnapshot] = [],
+        strengthWorkouts: [StrengthWorkout]? = nil,
         yesterdayHRV: Double? = nil,
         yesterdayAvgHeartRate: Double? = nil,
         latestRestingHeartRate: Double? = nil,
@@ -81,11 +86,16 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
         self.vo2Max = vo2Max
         self.restingHR = restingHR
         self.hrv = hrv
+        self.strengthWorkouts = strengthWorkouts
         self.yesterdayHRV = yesterdayHRV
         self.yesterdayAvgHeartRate = yesterdayAvgHeartRate
         self.latestRestingHeartRate = latestRestingHeartRate
         self.userAge = userAge
     }
+
+    /// The strength workouts, none for a snapshot saved before they were
+    /// read.
+    public var strengthWorkoutsOrEmpty: [StrengthWorkout] { strengthWorkouts ?? [] }
 
     /// True if no real sync has happened yet (the snapshot was constructed
     /// from defaults). Lets callers tell "have I ever synced?" apart from

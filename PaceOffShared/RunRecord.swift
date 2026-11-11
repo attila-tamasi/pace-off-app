@@ -80,3 +80,18 @@ public struct RunRecord: Codable, Sendable, Identifiable, Equatable {
         return String(format: "%d:%02d", m, s)
     }
 }
+
+/// A strength workout from Health: traditional or functional strength
+/// training. Only its times matter: a session that day ticks off the
+/// plan's strength session.
+public struct StrengthWorkout: Codable, Sendable, Equatable {
+    public let startDate: Date
+    public let endDate: Date
+
+    public init(startDate: Date, endDate: Date) {
+        self.startDate = startDate
+        self.endDate = endDate
+    }
+
+    public var durationSeconds: Double { endDate.timeIntervalSince(startDate) }
+}
