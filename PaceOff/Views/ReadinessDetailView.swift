@@ -1,8 +1,9 @@
 // ReadinessDetailView.swift
 // How today's readiness came about, opened from Today's Readiness card:
-// the verdict, HRV and resting heart rate each against its baseline with
-// what it says on its own (each opens its detail screen), how the two
-// combine, and what each colour does to today's target.
+// the verdict, HRV, resting heart rate and last night's sleep each against
+// its baseline with what it says on its own (the heart signals open their
+// detail screens), how the three combine, and what each colour does to
+// today's target.
 
 import SwiftUI
 
@@ -19,6 +20,7 @@ struct ReadinessDetailView: View {
                     VStack(spacing: 10) {
                         signalCard(.hrv, value: readiness.hrvMs, baseline: readiness.hrvBaselineMs)
                         signalCard(.restingHeartRate, value: readiness.restingHR, baseline: readiness.restingHRBaseline)
+                        sleepCard(hours: readiness.sleepHours, baseline: readiness.sleepBaselineHours)
                     }
                 } else {
                     notYet
@@ -104,11 +106,46 @@ struct ReadinessDetailView: View {
         .buttonStyle(.plain)
     }
 
+    /// Last night's time asleep against the 14-night average, and what it
+    /// says on its own.
+    private func sleepCard(hours: Double?, baseline: Double?) -> some View {
+        let level = hours.flatMap { h in baseline.map { ReadinessEngine.sleepLevel(hours: h, baseline: $0) } }
+        let note: String
+        if let hours, let baseline, baseline > 0 {
+            let change = hours / baseline - 1
+            // Rounded toward zero, so the shown percent never crosses a
+            // threshold the grade hasn't.
+            let percent = Int((abs(change) * 100).rounded(.towardZero))
+            let direction = percent == 0 ? "on" : (change > 0 ? "\(percent)% above" : "\(percent)% below")
+            note = "\(direction) your \(ReadinessEngine.sleepBaselineWindowDays)-night average of \(ReadinessEngine.sleepText(hours: baseline))"
+        } else {
+            note = "Not counted today: no night recorded, or fewer than \(ReadinessEngine.minSleepBaselineNights) nights for an average"
+        }
+        return MetricCard(
+            title: "Sleep",
+            systemImage: "bed.double.fill",
+            tint: .teal,
+            detail: level.map { label($0) },
+            showsChevron: false,
+            value: hours.map { ReadinessEngine.sleepText(hours: $0) } ?? "—",
+            unit: "asleep",
+            note: note
+        ) {
+            if let level {
+                Circle()
+                    .fill(dotColor(level))
+                    .frame(width: 14, height: 14)
+                    .padding(.bottom, 6)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
     private var notYet: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("No readiness today")
                 .font(.system(.title2, design: .rounded, weight: .bold))
-            Text("Readiness needs a reading from Apple Watch since yesterday, and \(ReadinessEngine.minHRVBaselineDays) days of HRV or \(ReadinessEngine.minRHRBaselineDays) days of resting heart rate to compare it with. Until it has both, the card stays hidden and today's target ignores it.")
+            Text("Readiness needs a reading from Apple Watch since yesterday, and \(ReadinessEngine.minHRVBaselineDays) days of HRV, \(ReadinessEngine.minRHRBaselineDays) days of resting heart rate or \(ReadinessEngine.minSleepBaselineNights) nights of sleep to compare it with. Until it has both, the card stays hidden and today's target ignores it.")
                 .font(.system(.body, design: .rounded))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -122,22 +159,24 @@ struct ReadinessDetailView: View {
         let hrvRed = percent(HeartTrend.redThreshold(for: .hrv))
         let rhrYellow = percent(HeartTrend.yellowThreshold(for: .restingHeartRate))
         let rhrRed = percent(HeartTrend.redThreshold(for: .restingHeartRate))
+        let sleepYellow = percent(ReadinessEngine.sleepYellowShort)
+        let sleepRed = percent(ReadinessEngine.sleepRedShort)
         return VStack(alignment: .leading, spacing: 12) {
             Text("HOW IT'S DECIDED")
                 .font(.system(.caption, design: .rounded, weight: .semibold))
                 .kerning(1.2)
                 .foregroundStyle(.secondary)
 
-            Text("Each signal is graded against your own baseline. The worse of the two sets the day, and when both are off the day turns red.")
+            Text("Each signal is graded against your own baseline. The worst one sets the day, and when two are off the day turns red.")
                 .font(.system(.body, design: .rounded))
                 .fixedSize(horizontal: false, vertical: true)
 
             ruleRow(.green, "Ready",
-                    "HRV less than \(hrvYellow)% below and resting HR less than \(rhrYellow)% above. Today's target is set as usual.")
+                    "HRV less than \(hrvYellow)% below, resting HR less than \(rhrYellow)% above and sleep less than \(sleepYellow)% short. Today's target is set as usual.")
             ruleRow(.yellow, "Ease off",
-                    "HRV \(hrvYellow)% or more below, or resting HR \(rhrYellow)% or more above. The target goes no higher than your usual distance and an aggressive tone softens.")
+                    "HRV \(hrvYellow)% or more below, resting HR \(rhrYellow)% or more above, or sleep \(sleepYellow)% or more short. The target goes no higher than your usual distance and an aggressive tone softens.")
             ruleRow(.red, "Rest",
-                    "HRV \(hrvRed)% or more below, resting HR \(rhrRed)% or more above, or both signals off. The target is capped at \(Int((PushTargetEngine.redReadinessCapFactor * 100).rounded()))% of your usual distance and the day turns to recovery.")
+                    "HRV \(hrvRed)% or more below, resting HR \(rhrRed)% or more above, sleep \(sleepRed)% or more short, or two signals off. The target is capped at \(Int((PushTargetEngine.redReadinessCapFactor * 100).rounded()))% of your usual distance and the day turns to recovery.")
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)

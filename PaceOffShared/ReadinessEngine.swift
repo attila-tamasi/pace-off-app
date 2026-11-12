@@ -214,6 +214,22 @@ public struct ReadinessEngine: Sendable {
             .sorted { $0.day < $1.day }
     }
 
+    /// The grade a night of `hours` asleep gets against a `baseline` of
+    /// hours, as the engine grades it.
+    public static func sleepLevel(hours: Double, baseline: Double) -> ReadinessLevel {
+        guard baseline > 0 else { return .green }
+        let short = 1.0 - hours / baseline
+        if short >= sleepRedShort { return .red }
+        if short >= sleepYellowShort { return .yellow }
+        return .green
+    }
+
+    /// "7:05": hours and minutes.
+    public static func sleepText(hours: Double) -> String {
+        let minutes = Int((hours * 60).rounded())
+        return String(format: "%d:%02d", minutes / 60, minutes % 60)
+    }
+
     /// Last night's time asleep (the night that ended today) and the mean
     /// of the 14 nights before it, in seconds. Nil without last night or
     /// with fewer than 5 nights behind it.
