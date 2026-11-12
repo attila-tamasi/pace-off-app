@@ -36,6 +36,8 @@ public enum AppGroup {
         public static let lastDayDistanceKm = "paceoff.lastDayDistanceKm"
         /// The Plan tab's "Send workouts to Apple Watch" switch.
         public static let sendWorkoutsToWatch = "paceoff.watch.sendWorkouts"
+        /// The best efforts kept across runs (`BestEffortLog`, JSON).
+        public static let bestEfforts = "paceoff.bestEfforts"
         /// Set once a Health read has held a run. A runner back after more
         /// than the 90-day window gets a restart target, not the first-run
         /// card a new runner gets.

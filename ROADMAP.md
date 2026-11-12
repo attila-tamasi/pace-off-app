@@ -150,12 +150,12 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - **F-12b · Scheduling** (M), **done (PR #59)**: `WorkoutScheduler` authorization, building `CustomWorkout`s from the blocks, scheduling and removing them, and the Plan tab switch. The cloud can't prove this one: its Visual check line asks the owner to run one scheduled workout on a real watch.
 
 ### F-14 · Best efforts and automatic PBs
-- **Status:** todo (F-14a done, PR #60; F-14b next)
+- **Status:** done (F-14a PR #60, F-14b PR #61)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** A PB is only what the runner types in. Faster efforts inside ordinary runs never improve the race prediction or the plan's VDOT.
 - **Sub-items:**
   - **F-14a · Finding them** (M), **done (PR #60)**: a pure, tested function (`BestEfforts`) finds a run's fastest 1 km, 5 km, 10 km and half marathon from its route, interpolating between points and leaving out GPS jumps (over 10 m/s); and the merge that keeps the faster of each across runs and says which improved.
-  - **F-14b · Keeping them** (M): `HealthKitService` reads the routes of runs not yet looked at (the last 90 days at first, then each new run), the bests are kept in App Group defaults (with the runs already looked at, so a route is read once), a new best gets one notification, it becomes the PB for its distance (5 km, 10 km, half; Q-04's PB tied to its distance) when faster than the stored one, and Profile and run detail show the bests.
+  - **F-14b · Keeping them** (M), **done (PR #61)**: `HealthKitService` reads the routes of runs not yet looked at (the last 90 days at first, then each new run), the bests are kept in App Group defaults (with the runs already looked at, so a route is read once), a new best gets one notification, it becomes the PB for its distance (5 km, 10 km, half; Q-04's PB tied to its distance) when faster than the stored one, and Profile and run detail show the bests.
 
 ### F-17 · Paces from what the runner actually ran
 - **Status:** todo
@@ -968,6 +968,7 @@ All done.
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #61: Profile's "Best efforts" card (under goal and prediction), run detail's "Best efforts" section under the splits with the orange "Best" mark, and the "New best: …" notification after a fast run
 - [ ] PR #59 (needs a real iPhone and Apple Watch): the Plan tab's "Send workouts to Apple Watch" row and its permission prompt; the next seven days' runs in the watch's Workout app under Pace Off; start a threshold session and check the warm-up, the reps with their pace alerts, the jogs and the cool-down; how many workouts the watch accepts; whether Workout Buddy speaks during one; switching off removes them
 - [ ] PR #57: on a fresh install, the Health permission sheet lists only read access (no "Pace Off would like to update" section); the background refresh and the workout observer still wake the app (Q-07's check)
 - [ ] PR #56: Today's hero on a capped day: the footnote "Kept to 11 km: 10% past your longest run of the last 30 days." and the plan line's "(plan: 18.0 km)"
@@ -1000,6 +1001,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · F-14b: the app reads the routes of runs not yet looked at, keeps the fastest 1 km, 5 km, 10 km and half, makes a faster one the PB for its distance, sends one notification for a new best, and shows the bests in Profile and run detail (PR #61)
 - 2026-11-12 · F-14a: `BestEfforts` finds a run's fastest 1 km, 5 km, 10 km and half marathon from its route and keeps the faster across runs; not wired up until F-14b (PR #60)
 - 2026-11-12 · F-12b: the Plan tab's "Send workouts to Apple Watch" switch schedules the next seven days' runs into Apple's Workout app through WorkoutKit, with pace alerts; today's follows the day's prescription; removed when the switch, the plan or the runner's data goes (PR #59)
 - 2026-11-12 · F-12a: `WorkoutBlocks` turns a plan workout into the steps a watch runs (warm-up, repeated work and recovery, cool-down, with pace bands); quality sessions follow their notes and add up to their distance; not sent anywhere until F-12b (PR #58)

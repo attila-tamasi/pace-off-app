@@ -198,6 +198,12 @@
 		687E9160E43533DFB556C19E /* BestEfforts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2202FC7680E4565178C1EA64 /* BestEfforts.swift */; };
 		642A64249A0B2E5A2A4E50CF /* BestEfforts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2202FC7680E4565178C1EA64 /* BestEfforts.swift */; };
 		546ACED05652DC169D20F00C /* BestEffortsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99A8870C60324AA56463B0DF /* BestEffortsTests.swift */; };
+		26B11D1E989E813E7684565D /* BestEffortLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1685EA8B9FF81FA34B89EAEF /* BestEffortLog.swift */; };
+		A3946B4E579D65B47551CFB5 /* BestEffortLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1685EA8B9FF81FA34B89EAEF /* BestEffortLog.swift */; };
+		BC28105A61BC924B39234887 /* BestEffortLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1685EA8B9FF81FA34B89EAEF /* BestEffortLog.swift */; };
+		A116D7301E83578DC210FF11 /* BestEffortLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1685EA8B9FF81FA34B89EAEF /* BestEffortLog.swift */; };
+		DDEECAA73EBB6EBA57DD27B7 /* BestEffortLogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6370549CF90F6DE04E7D67 /* BestEffortLogTests.swift */; };
+		BDE101524AB3A1182AFE7D9D /* BestEffortService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCADC1E50B454347CF2CF453 /* BestEffortService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -362,6 +368,9 @@
 		2CB192416B06DF96163DA831 /* WatchWorkoutScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchWorkoutScheduler.swift; sourceTree = "<group>"; };
 		2202FC7680E4565178C1EA64 /* BestEfforts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BestEfforts.swift; sourceTree = "<group>"; };
 		99A8870C60324AA56463B0DF /* BestEffortsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BestEffortsTests.swift; sourceTree = "<group>"; };
+		1685EA8B9FF81FA34B89EAEF /* BestEffortLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BestEffortLog.swift; sourceTree = "<group>"; };
+		EA6370549CF90F6DE04E7D67 /* BestEffortLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BestEffortLogTests.swift; sourceTree = "<group>"; };
+		FCADC1E50B454347CF2CF453 /* BestEffortService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BestEffortService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -393,6 +402,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				1685EA8B9FF81FA34B89EAEF /* BestEffortLog.swift */,
 				2202FC7680E4565178C1EA64 /* BestEfforts.swift */,
 				323336F95589D3FBBAB3AE03 /* WatchSchedulePlanner.swift */,
 				A8746BA3E7C2CABAFD631EE5 /* WorkoutBlocks.swift */,
@@ -429,6 +439,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				EA6370549CF90F6DE04E7D67 /* BestEffortLogTests.swift */,
 				99A8870C60324AA56463B0DF /* BestEffortsTests.swift */,
 				22019F8B52F0E38F42AE2787 /* WatchSchedulePlannerTests.swift */,
 				F264373C5F8459D641A34C10 /* WorkoutBlocksTests.swift */,
@@ -474,6 +485,7 @@
 		20A1D8614B0C28D9D51ABD4D /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				FCADC1E50B454347CF2CF453 /* BestEffortService.swift */,
 				2CB192416B06DF96163DA831 /* WatchWorkoutScheduler.swift */,
 				5EFBD02A6FEE9098969290F2 /* AppleIntelligenceCopy.swift */,
 				28B2707B22E9FF547E90D53F /* AppleSignInService.swift */,
@@ -808,6 +820,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DDEECAA73EBB6EBA57DD27B7 /* BestEffortLogTests.swift in Sources */,
+				BC28105A61BC924B39234887 /* BestEffortLog.swift in Sources */,
 				546ACED05652DC169D20F00C /* BestEffortsTests.swift in Sources */,
 				687E9160E43533DFB556C19E /* BestEfforts.swift in Sources */,
 				220EB1E9A44DD0979B6883A1 /* WatchSchedulePlannerTests.swift in Sources */,
@@ -869,6 +883,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A3946B4E579D65B47551CFB5 /* BestEffortLog.swift in Sources */,
 				5210E10D4DE7974C1E2EB4C0 /* BestEfforts.swift in Sources */,
 				D056DE66E8283C3271D9B7EF /* WatchSchedulePlanner.swift in Sources */,
 				24FC1D8EB6C572C709847E80 /* WorkoutBlocks.swift in Sources */,
@@ -907,6 +922,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A116D7301E83578DC210FF11 /* BestEffortLog.swift in Sources */,
 				642A64249A0B2E5A2A4E50CF /* BestEfforts.swift in Sources */,
 				808DAE50E85B46241EB1110A /* WatchSchedulePlanner.swift in Sources */,
 				5C5B1F4E72E03AE4A4139226 /* WorkoutBlocks.swift in Sources */,
@@ -948,6 +964,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BDE101524AB3A1182AFE7D9D /* BestEffortService.swift in Sources */,
+				26B11D1E989E813E7684565D /* BestEffortLog.swift in Sources */,
 				E310CDAAFFA20548859C90BF /* BestEfforts.swift in Sources */,
 				FC1ED647B7C95EFBF80A7595 /* WatchWorkoutScheduler.swift in Sources */,
 				339C557DD7AF9760F0484C77 /* WatchSchedulePlanner.swift in Sources */,

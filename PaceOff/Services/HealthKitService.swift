@@ -560,6 +560,13 @@ public final class HealthKitService {
         return await routeLocations(for: workout)
     }
 
+    /// The run's route as plain points, for `BestEfforts`.
+    public func fetchRoutePoints(for record: RunRecord) async -> [RoutePoint] {
+        await fetchRunLocations(for: record).map {
+            RoutePoint(time: $0.timestamp, latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude)
+        }
+    }
+
     /// What Health keeps on the workout behind `record`: indoor or outdoor,
     /// its own elevation gain, the weather, steps and average METs. Nil when
     /// the workout can't be found; each value is nil when it isn't stored.
