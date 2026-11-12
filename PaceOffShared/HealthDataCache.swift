@@ -47,6 +47,10 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
     /// saved before they were read still decodes; read it as
     /// `strengthWorkoutsOrEmpty`.
     public var strengthWorkouts: [StrengthWorkout]?
+    /// Time asleep per night, the last ~16 nights (`SleepNight`). Optional
+    /// so a snapshot saved before sleep was read still decodes; read it as
+    /// `sleepOrEmpty`.
+    public var sleep: [SleepNight]?
 
     // Recovery snapshot — small scalars, all optional because HealthKit may
     // have nothing recorded for the day.
@@ -71,6 +75,7 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
         restingHR: [RestingHeartRateSnapshot] = [],
         hrv: [HRVSnapshot] = [],
         strengthWorkouts: [StrengthWorkout]? = nil,
+        sleep: [SleepNight]? = nil,
         yesterdayHRV: Double? = nil,
         yesterdayAvgHeartRate: Double? = nil,
         latestRestingHeartRate: Double? = nil,
@@ -87,6 +92,7 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
         self.restingHR = restingHR
         self.hrv = hrv
         self.strengthWorkouts = strengthWorkouts
+        self.sleep = sleep
         self.yesterdayHRV = yesterdayHRV
         self.yesterdayAvgHeartRate = yesterdayAvgHeartRate
         self.latestRestingHeartRate = latestRestingHeartRate
@@ -96,6 +102,9 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
     /// The strength workouts, none for a snapshot saved before they were
     /// read.
     public var strengthWorkoutsOrEmpty: [StrengthWorkout] { strengthWorkouts ?? [] }
+
+    /// The nights of sleep, none for a snapshot saved before sleep was read.
+    public var sleepOrEmpty: [SleepNight] { sleep ?? [] }
 
     /// True if no real sync has happened yet (the snapshot was constructed
     /// from defaults). Lets callers tell "have I ever synced?" apart from
@@ -135,7 +144,8 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
     public var hasReadings: Bool {
         !(runs.isEmpty && vo2Max.isEmpty && restingHR.isEmpty && hrv.isEmpty
             && yesterdayHRV == nil && yesterdayAvgHeartRate == nil
-            && latestRestingHeartRate == nil && strengthWorkoutsOrEmpty.isEmpty)
+            && latestRestingHeartRate == nil && strengthWorkoutsOrEmpty.isEmpty
+            && sleepOrEmpty.isEmpty)
     }
 }
 

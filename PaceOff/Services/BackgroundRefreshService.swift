@@ -223,7 +223,7 @@ public final class BackgroundRefreshService {
 
         // Same readiness → target pipeline the foreground refresh uses.
         let readiness = ReadinessEngine().compute(
-            ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr)
+            ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr, sleep: snapshot.sleepOrEmpty)
         )
 
         let inputs = PushTargetEngine.Inputs(
