@@ -12,7 +12,7 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 
 ### 2. Onboarding
 - Short flow: value prop → HealthKit permission → weekly cadence + goal setup
-- HealthKit read access: workouts, VO₂ max, resting HR, running dynamics, date of birth
+- HealthKit read access: workouts, VO₂ max, resting HR, running dynamics, date of birth. Read only: the iPhone app records nothing, so it asks for no write access, and declares no motion use and no remote-notification or processing background mode (the background refresh needs `fetch` only; HealthKit's background delivery needs no push). The watch app, which records workouts, asks for its own access
 - Notification permission requested at the end; "Not now" moves on without asking iOS. The app works the same without it (the pushes just don't show), "Not now" leaves the Profile "Daily pushes" switch off, and turning it on asks iOS then
 
 ### Accessibility

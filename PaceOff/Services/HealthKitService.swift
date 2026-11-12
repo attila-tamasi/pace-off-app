@@ -66,10 +66,6 @@ public final class HealthKitService {
         return types
     }
 
-    private var writeTypes: Set<HKSampleType> {
-        [HKObjectType.workoutType()]
-    }
-
     // MARK: - Authorization
 
     public var isHealthDataAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
@@ -80,7 +76,9 @@ public final class HealthKitService {
             return
         }
         do {
-            try await store.requestAuthorization(toShare: writeTypes, read: readTypes)
+            // Read only: the iPhone app records nothing. Apple's Workout app
+            // (or the watch app, which asks for its own access) saves runs.
+            try await store.requestAuthorization(toShare: [], read: readTypes)
             isAuthorized = true
         } catch {
             lastError = error.localizedDescription
