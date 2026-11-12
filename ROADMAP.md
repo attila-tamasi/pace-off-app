@@ -242,7 +242,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - **F-15b · Showing it** (M), **done (PR #71)**: run detail's zone bar and note, and the week screen's easy/hard balance with the notes.
 
 ### F-16 · Siri, Shortcuts and Control Center
-- **Status:** todo
+- **Status:** done (PR #72)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** Today's prescription needs the app or the widget; there's no voice or one-tap way. App Intents have no fitness schema, and custom actions for Siri's AI reach the App Store only in spring 2027 (not in the EU), but the entities and actions built now are what it will use.
 - **Done when:**
@@ -981,6 +981,7 @@ All done.
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #72: "Hey Siri, what's my run today in Pace Off" and "How ready am I in Pace Off" (the Shortcuts app lists both), and the "Today's Run" control in Control Center opening Today
 - [ ] PR #71: run detail's "Heart rate zones" card (one bar, five rows with bpm ranges and minutes, the orange tortoise note on an easy run run too hard), and the week screen's "Easy and hard" card ("78% easy · 22% hard", its bar and notes)
 - [ ] PR #69: after answering Unwell on Today: the hero reads Rest, the voice line "You said you're unwell. Rest today: …", the plan line "…, rest today: you're unwell", the widget shows Rest, and today's workout leaves the watch's Workout app
 - [ ] PR #68: Today's "How do you feel?" card above Readiness (five buttons in a grid, at large text sizes too), the folded "You feel tired today · Change" row, Clear, and the readiness screen's "How you feel" card; after an answer the readiness card and hero update
@@ -1021,6 +1022,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · F-16: Siri and Shortcuts answer "What's my run today?" and "How ready am I?" from the cached day, and a Control Center control opens Today (PR #72)
 - 2026-11-12 · F-15b: run detail shows time in heart-rate zones with the easy-run note, and the week screen the week's easy/hard balance with the notes (PR #71)
 - 2026-11-12 · F-15a: heart-rate zones from the 90-day max HR (else age), time in zones, and the easy-run check against the day's ledger row; not shown until F-15b (PR #70)
 - 2026-11-12 · F-20c: on Unwell the day is rest everywhere: Today's hero and voice line, one morning push and no reminders, the widget, and no run sent to the watch; the race is left alone (PR #69)

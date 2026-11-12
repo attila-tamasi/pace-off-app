@@ -8,5 +8,6 @@ import SwiftUI
 struct PaceOffWidgetBundle: WidgetBundle {
     var body: some Widget {
         PaceOffWidget()
+        TodayControl()
     }
 }

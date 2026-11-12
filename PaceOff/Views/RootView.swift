@@ -26,6 +26,9 @@ struct RootView: View {
             }
         }
         .environment(navigation)
+        .onReceive(NotificationCenter.default.publisher(for: .paceOffOpenToday)) { _ in
+            navigation.tab = .today
+        }
     }
 }
 
