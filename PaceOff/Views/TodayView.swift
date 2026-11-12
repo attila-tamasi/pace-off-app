@@ -175,6 +175,13 @@ struct TodayView: View {
             if let planLine {
                 planLineRow(planLine)
             }
+            if let capNote = todayVM.prescription?.capNote {
+                Text("\(capNote).")
+                    .font(.system(.footnote, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.85))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.trailing, 96)
+            }
         }
         .heroSurface(trackSize: 150)
         .accessibilityElement(children: .combine)
@@ -267,6 +274,9 @@ struct TodayView: View {
         case .easedForYellow?: line += ", run easy today"
         case .cutForRed?: line += ", cut to an easy run"
         case nil: break
+        }
+        if todayVM.prescription?.cappedAtMeters != nil {
+            line += " (plan: \(String(format: "%.1f km", day.workout.distanceKm)))"
         }
         return day.strength == nil ? line : "\(line) + strength\(tick)"
     }

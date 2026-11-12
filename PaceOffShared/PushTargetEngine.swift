@@ -85,9 +85,13 @@ public struct PushTargetEngine: Sendable {
     /// pushes, and Today shows how to log a first run. `hasRunBefore` is
     /// true once any Health read has held a run; such a runner, back after
     /// more than the 90-day window, gets the restart target as before.
+    ///
+    /// The PRD rules (`compute`) set the target; then no run may be longer
+    /// than 110% of the longest of the previous 30 days (`SingleRunCap`).
     public func target(_ inputs: Inputs, hasRunBefore: Bool = false) -> RunTarget? {
         guard hasRunBefore || Self.hasRunHistory(inputs.runs, today: inputs.today) else { return nil }
-        return compute(inputs)
+        return SingleRunCap.apply(to: compute(inputs),
+                                  cap: SingleRunCap.capMeters(runs: inputs.runs, today: inputs.today))
     }
 
     public func compute(_ inputs: Inputs) -> RunTarget {

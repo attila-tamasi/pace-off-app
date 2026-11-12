@@ -54,11 +54,13 @@ final class PushTargetEngineTests: XCTestCase {
         XCTAssertEqual(target?.distanceMeters, 3_000)
     }
 
-    func test_target_withARun_isTheComputedTarget() {
+    func test_target_withARun_isTheComputedTarget_keptWithinTheSingleRunCap() {
         let today = Date()
         let inputs = PushTargetEngine.Inputs(today: today, runs: [run(daysAgo: 1, km: 5, today: today)],
                                              vo2Max: [], restingHeartRate: [])
-        XCTAssertEqual(engine.target(inputs), engine.compute(inputs))
+        XCTAssertEqual(engine.target(inputs),
+                       SingleRunCap.apply(to: engine.compute(inputs),
+                                          cap: SingleRunCap.capMeters(runs: inputs.runs, today: today)))
         XCTAssertNotNil(engine.target(inputs))
     }
 

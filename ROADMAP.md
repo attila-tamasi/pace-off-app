@@ -102,7 +102,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - **R-10b · Every surface reads it** (M), **done (PR #55)**: Today's hero, its badge and its voice line, the pushes, the widget and its cache. Done when no screen or push shows the engine's number on a plan-run day, a push never names two distances, and a plan rest day shows as rest.
 
 ### R-11 · One run can jump far past anything recent
-- **Status:** todo
+- **Status:** done (PR #56)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** The daily target is capped at 1.4× the median run of the last 14 days, so it can ask for a run well past the runner's longest recent one: a runner whose runs are all about 5 km can be sent 6.4 km, a 29% jump (the PRD's own example, pinned in `PushTargetEngineTests`). A plan workout isn't checked against what was actually run: after three missed long runs, the fourth is still the plan's number. The largest study of running load (BJSM 2025; 5,205 runners, 588,071 runs) found the overuse-injury rate 64% higher after a run more than 10% longer than the longest of the previous 30 days, and 128% higher when it more than doubled. Week-to-week change showed no link.
 - **Defaults (the owner can change them here):**
@@ -969,6 +969,7 @@ All done.
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #56: Today's hero on a capped day: the footnote "Kept to 11 km: 10% past your longest run of the last 30 days." and the plan line's "(plan: 18.0 km)"
 - [ ] PR #55: on a plan run day Today's hero shows the plan's distance with decimals ("10.8 km"), on a plan rest day "Rest" with no "km"; the plan line's ", run easy today" / ", cut to an easy run" on a yellow or red day; the run card's "Target hit" against the plan run; the widget (all families) showing the same distance, and "Rest" on a rest day
 - [ ] PR #51: on a strength-only day, the widget dot stays orange/red until a strength workout is in Health, then green with "Strength: … ✓"; after a run on a strength day, the 17:30 push "Run done. Strength left today: …"
 - [ ] PR #50: the plan picker's Cross training control and the "N strength/wk" chip; the plan detail's strength rows (preview "Plan detail — Medium half with kettlebell"); the Plan tab hero on a strength day and the week rows; Plan Settings' Cross training row; Today's plan line on a strength day; the widget's "Strength: Kettlebell · 35 min" (systemSmall preview)
@@ -998,6 +999,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · R-11: no prescribed run is longer than 110% of the longest run of the previous 30 days: the daily target and today's plan run are kept to it, and Today and the push say so; the race is never cut (PR #56)
 - 2026-11-12 · R-10b: Today's hero, its badge, the voice line, the pushes and the widget show the day's one prescription: the plan's run as readiness changed it, "Rest" on a plan rest day, the daily target without a plan workout; a push never names two distances (PR #55)
 - 2026-11-12 · R-10a: `DayPrescription` gives the one prescription for today (the plan's workout as readiness changes it, rest on a plan rest day, the daily target without one); nothing shows it until R-10b (PR #54)
 - 2026-11-12 · R-12: an Apple Intelligence rewording is shown only when it carries exactly the canned line's numbers (`NarrationCheck`); accepted rewordings are reused, and the background refresh no longer calls the model (PR #53)
