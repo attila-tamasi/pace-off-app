@@ -134,7 +134,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
 ## Step 1 · One coach: on the wrist, adapting, explaining itself
 
 ### F-12 · Plan workouts on Apple Watch
-- **Status:** todo
+- **Status:** todo (F-12a done, PR #58; F-12b next)
 - **Size:** L   ·   **Merge:** auto
 - **Problem:** The plan's paces only live on the phone. During the run nothing tells the runner they're too fast or too slow. Sending the workout to the watch is the baseline for plan apps on Apple Watch: Runna and TrainingPeaks do it, and Run With Hal is marked down for not doing it.
 - **Approach:** WorkoutKit (Apple's framework, iOS 17+) schedules custom workouts into the Watch's own Workout app, with pace alerts, under Pace Off's name and icon. No watch app of ours is involved. If this works well, D-01 can be settled by hiding our watch app. Workout Buddy can't be driven by an app; whether it speaks during a scheduled workout is one of the owner's checks.
@@ -145,7 +145,8 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - Rest days, races and strength sessions aren't sent. Ending the plan removes them.
   - The number of workouts the system accepts isn't documented (15 in Apple's 2023 talk, 50 in developer reports from 2024): read `WorkoutScheduler.maxAllowedScheduledWorkoutCount` at run time and never schedule more.
 - **Sub-items:**
-  - **F-12a · Workout to blocks** (M): a pure function in `PaceOffShared`, with no WorkoutKit import. It turns a plan `Workout` into warm-up, work and recovery blocks and cool-down, each with its distance and pace band. Interval sessions repeat their work block; easy, long, tempo and marathon-pace runs are one work block with the pace alert. Tested.
+  - **F-12a · Workout to blocks** (M), **done (PR #58)**: a pure function in `PaceOffShared`, with no WorkoutKit import. It turns a plan `Workout` into warm-up, work and recovery blocks and cool-down, each with its distance and pace band. Interval sessions repeat their work block; easy, long, tempo and marathon-pace runs are one work block with the pace alert. Tested.
+  - **Decision (Claude, 2026-11-12, F-12a; the owner can reverse it):** a tempo run follows the threshold session, as its notes and distance already do in the generator, rather than one work block. No plan generates a tempo run today, so nothing changes for a runner.
   - **F-12b · Scheduling** (M): `WorkoutScheduler` authorization, building `CustomWorkout`s from the blocks, scheduling and removing them, and the Plan tab switch. The cloud can't prove this one: its Visual check line asks the owner to run one scheduled workout on a real watch.
 
 ### F-14 · Best efforts and automatic PBs
@@ -1000,6 +1001,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · F-12a: `WorkoutBlocks` turns a plan workout into the steps a watch runs (warm-up, repeated work and recovery, cool-down, with pace bands); quality sessions follow their notes and add up to their distance; not sent anywhere until F-12b (PR #58)
 - 2026-11-12 · Q-13: the iPhone app asks Health for read access only and no longer declares a Health write string, a motion string or the remote-notification and processing background modes it never used; Step 0 is done (PR #57)
 - 2026-11-12 · R-11: no prescribed run is longer than 110% of the longest run of the previous 30 days: the daily target and today's plan run are kept to it, and Today and the push say so; the race is never cut (PR #56)
 - 2026-11-12 · R-10b: Today's hero, its badge, the voice line, the pushes and the widget show the day's one prescription: the plan's run as readiness changed it, "Rest" on a plan rest day, the daily target without a plan workout; a push never names two distances (PR #55)
