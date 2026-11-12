@@ -45,7 +45,7 @@ The owner can change these here.
 
 ### 1 · Understand the item
 
-1. Read every file in **Where**, and anything they call that the change could touch.
+1. Read every file in **Where**, and anything they call that the change could touch. When the item touches persistence, Apple Intelligence, sync or sharing, read `ARCHITECTURE.md` too: it holds the rules those items share.
 2. **Confirm the problem still exists** in the current code. If it's already fixed, set the status to `done (already fixed)`, add a Done line naming the commit that fixed it, ship that as a small docs PR, and pick the next item. This counts as the run's item only if it was the last one.
 3. If the item is size L, split it first: replace it in `ROADMAP.md` with `R-xxa`, `R-xxb`… sub-items, each one PR, with their own **Done when**. Work on the first; the split ships in the same PR.
 4. If **Done when** is ambiguous, or the right fix needs a product decision, don't guess. Set `blocked: <the question>`, ship that edit, and pick the next item.
@@ -58,7 +58,7 @@ The owner can change these here.
 
 ### 3 · Build it
 
-- Keep to the item's scope. If you notice other problems, add them to `ROADMAP.md` as new `todo` items in the right wave; don't fix them in this PR.
+- Keep to the item's scope. If you notice other problems, add them to `ROADMAP.md` as new `todo` items in the right step; don't fix them in this PR.
 - Follow `CLAUDE.md`:
   - Observation, not `ObservableObject`.
   - Views stay dumb; logic goes in `PaceOffShared`.

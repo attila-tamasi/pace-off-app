@@ -101,6 +101,8 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 
 Everything below came out of a brainstorm and would extend Pace Off's positioning toward accountability. **None of these are approved.** Each is tagged with the dependency cost so a decision can be made deliberately.
 
+Since 2026-11-12 the decisions they need are tracked in `ROADMAP.md` under **Needs a decision** (buddy features are D-09), and `ARCHITECTURE.md` says what each boundary costs.
+
 ### A. Daily traffic-light (HRV + resting HR) — ✅ shipped
 Shipped as **§11** above (decision: augments the tone display). The follow-up question — should a red day cap the prescribed distance? — was answered **yes**: readiness now feeds `PushTargetEngine` (see §11).
 
@@ -108,7 +110,7 @@ Shipped as **§11** above (decision: augments the tone display). The follow-up q
 - Invite a running buddy via share link (iMessage flow); no random matching
 - Both see each other's *counts only* — did you hit 2 / 3 runs this week — never run details
 - Unpair path
-- **Cost:** requires **CloudKit** (CKShare for the pair, private database per user + shared zone). CloudKit is currently not a dependency; adding it changes the privacy label from *Data Not Collected* and requires an iCloud account for buddy features. Users without iCloud must keep the app fully functional in solo mode.
+- **Cost:** requires **CloudKit** (CKShare for the pair, private database per user + shared zone) and an iCloud account for buddy features. CloudKit is currently not a dependency. Users without iCloud must keep the app fully functional in solo mode. Read literally, Apple's privacy-label definition keeps *Data Not Collected* for the private database and `CKShare`, but Apple hasn't confirmed it, and App Review Guideline 5.1.3(ii) forbids storing personal health information in iCloud without saying whether a count of runs is that. An App Review consultation comes first (ROADMAP D-09).
 
 ### C. Accountability push notifications
 - If the week is slipping vs. the shared weekly goal, buddy receives a push ("Attila hasn't run yet this week 👀")
@@ -127,9 +129,9 @@ Shipped as **§11** above (decision: augments the tone display). The follow-up q
 
 ### F. Notes on scope
 Explicitly **out of scope** for the current milestone unless the user explicitly opens the door:
-- ACWR trend surface
+- The acute:chronic load ratio as a safety gauge (ROADMAP "Not building"; F-27 describes load without it)
 - watchOS complications
-- Social feed
-- In-app chat
-- Android client
-- Subscriptions / paywall
+- Social feed (ROADMAP "Not building")
+- In-app chat (a one-sentence plan change is ROADMAP D-12, the owner's decision)
+- Android client (ROADMAP D-14)
+- Subscriptions / paywall (ROADMAP D-11)
