@@ -49,12 +49,15 @@ public struct LedgerDay: Codable, Equatable, Sendable {
     /// The start of the day.
     public let day: Date
     public let prescription: LedgerPrescription?
+    /// The runner's check-in answer that day, nil when skipped.
+    public let feeling: CheckInFeeling?
     /// When the row was last written.
     public let recordedAt: Date
 
-    public init(day: Date, prescription: LedgerPrescription?, recordedAt: Date) {
+    public init(day: Date, prescription: LedgerPrescription?, feeling: CheckInFeeling? = nil, recordedAt: Date) {
         self.day = day
         self.prescription = prescription
+        self.feeling = feeling
         self.recordedAt = recordedAt
     }
 }
@@ -113,6 +116,7 @@ public struct RunLedgerFile: Codable, Equatable, Sendable {
     /// and each run not seen before is filed under the day it started on.
     public func recording(prescription: DayPrescription?,
                           readiness: ReadinessLevel?,
+                          feeling: CheckInFeeling? = nil,
                           runs newRuns: [RunRecord],
                           now: Date,
                           calendar: Calendar = .current) -> RunLedgerFile {
@@ -121,6 +125,7 @@ public struct RunLedgerFile: Codable, Equatable, Sendable {
         file.days.removeAll { $0.day == today }
         file.days.append(LedgerDay(day: today,
                                    prescription: prescription.map { LedgerPrescription($0, readiness: readiness) },
+                                   feeling: feeling,
                                    recordedAt: now))
         let known = Set(file.runs.map(\.id))
         for run in newRuns.sorted(by: { $0.startDate < $1.startDate }) where !known.contains(run.id) {
@@ -164,9 +169,11 @@ public actor RunLedger {
     @discardableResult
     public func record(prescription: DayPrescription?,
                        readiness: ReadinessLevel?,
+                       feeling: CheckInFeeling? = nil,
                        runs: [RunRecord],
                        now: Date = Date()) -> RunLedgerFile {
-        let file = load().recording(prescription: prescription, readiness: readiness, runs: runs, now: now)
+        let file = load().recording(prescription: prescription, readiness: readiness, feeling: feeling,
+                                    runs: runs, now: now)
         if let fileURL, let data = try? JSONEncoder().encode(file) {
             try? data.write(to: fileURL, options: .atomic)
         }

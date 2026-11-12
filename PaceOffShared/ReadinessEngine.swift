@@ -30,6 +30,8 @@ public struct DailyReadiness: Codable, Sendable, Equatable {
     /// hours. Nil without enough nights.
     public let sleepHours: Double?
     public let sleepBaselineHours: Double?
+    /// The runner's own answer this morning (`CheckIn`), nil when skipped.
+    public let feeling: CheckInFeeling?
     public let computedAt: Date
 
     public init(
@@ -41,6 +43,7 @@ public struct DailyReadiness: Codable, Sendable, Equatable {
         restingHRBaseline: Double? = nil,
         sleepHours: Double? = nil,
         sleepBaselineHours: Double? = nil,
+        feeling: CheckInFeeling? = nil,
         computedAt: Date = Date()
     ) {
         self.level = level
@@ -51,6 +54,7 @@ public struct DailyReadiness: Codable, Sendable, Equatable {
         self.restingHRBaseline = restingHRBaseline
         self.sleepHours = sleepHours
         self.sleepBaselineHours = sleepBaselineHours
+        self.feeling = feeling
         self.computedAt = computedAt
     }
 }
@@ -64,17 +68,21 @@ public struct ReadinessEngine: Sendable {
         public let hrv: [HRVSnapshot]                            // trailing ~35 days
         public let restingHeartRate: [RestingHeartRateSnapshot]  // trailing 14 days
         public let sleep: [SleepNight]                           // trailing ~16 nights
+        /// Today's check-in answer, nil when the runner skipped it.
+        public let feeling: CheckInFeeling?
 
         public init(
             today: Date = Date(),
             hrv: [HRVSnapshot],
             restingHeartRate: [RestingHeartRateSnapshot],
-            sleep: [SleepNight] = []
+            sleep: [SleepNight] = [],
+            feeling: CheckInFeeling? = nil
         ) {
             self.today = today
             self.hrv = hrv
             self.restingHeartRate = restingHeartRate
             self.sleep = sleep
+            self.feeling = feeling
         }
     }
 
@@ -140,11 +148,16 @@ public struct ReadinessEngine: Sendable {
             return 0
         }
 
-        guard hrvSeverity != nil || rhrSeverity != nil || sleepSeverity != nil else { return nil }
+        // The runner's word: tired or sore is one signal off, unwell is red
+        // on its own, and fresh never lifts what the watch says.
+        let feelingSeverity = inputs.feeling?.severity
+
+        guard hrvSeverity != nil || rhrSeverity != nil || sleepSeverity != nil || feelingSeverity != nil
+        else { return nil }
 
         // Worst signal wins; two independently degraded signals escalate to
         // red even if each alone is only yellow.
-        let known = [hrvSeverity, rhrSeverity, sleepSeverity].compactMap { $0 }
+        let known = [hrvSeverity, rhrSeverity, sleepSeverity, feelingSeverity].compactMap { $0 }
         var combined = known.max() ?? 0
         if known.filter({ $0 >= 1 }).count >= 2 {
             combined = 2
@@ -160,13 +173,14 @@ public struct ReadinessEngine: Sendable {
         return DailyReadiness(
             level: level,
             sentence: sentence(level: level, hrvSeverity: hrvSeverity, rhrSeverity: rhrSeverity,
-                               sleepSeverity: sleepSeverity),
+                               sleepSeverity: sleepSeverity, feeling: inputs.feeling),
             hrvMs: hrvReading?.value,
             hrvBaselineMs: hrvReading?.baseline,
             restingHR: rhrReading?.value,
             restingHRBaseline: rhrReading?.baseline,
             sleepHours: sleepReading.map { $0.value / 3600 },
             sleepBaselineHours: sleepReading.map { $0.baseline / 3600 },
+            feeling: inputs.feeling,
             computedAt: inputs.today
         )
     }
@@ -174,21 +188,30 @@ public struct ReadinessEngine: Sendable {
     // MARK: - Copy
 
     private func sentence(level: ReadinessLevel, hrvSeverity: Int?, rhrSeverity: Int?,
-                          sleepSeverity: Int?) -> String {
+                          sleepSeverity: Int?, feeling: CheckInFeeling?) -> String {
         let hrvOff = (hrvSeverity ?? 0) >= 1
         let rhrOff = (rhrSeverity ?? 0) >= 1
         let sleepOff = (sleepSeverity ?? 0) >= 1
+        if feeling == .unwell { return "You said you're unwell — rest today." }
+        let feelingCause: String? = switch feeling {
+        case .tired?: "you feel tired"
+        case .sore?: "you feel sore"
+        default: nil
+        }
         switch level {
         case .green:
             return "Recovery is on baseline — you're clear to push."
         case .yellow:
             if hrvOff { return "HRV below your baseline — easy day." }
             if rhrOff { return "Resting heart rate above your baseline — keep it easy." }
-            return "Less sleep than usual last night — keep it easy."
+            if sleepOff { return "Less sleep than usual last night — keep it easy." }
+            if let feeling { return "You said you're \(feeling.displayName.lowercased()) — keep it easy." }
+            return "Recovery is a little off — keep it easy."
         case .red:
             let causes = [hrvOff ? "HRV down" : nil,
                           rhrOff ? "resting heart rate up" : nil,
-                          sleepOff ? "short sleep" : nil].compactMap { $0 }
+                          sleepOff ? "short sleep" : nil,
+                          feelingCause].compactMap { $0 }
             if causes.count >= 2 {
                 let list = causes.dropLast().joined(separator: ", ") + " and " + causes[causes.count - 1]
                 return String(list.prefix(1)).uppercased() + String(list.dropFirst()) + " — your body is asking for rest."

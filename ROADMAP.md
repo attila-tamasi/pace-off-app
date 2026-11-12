@@ -207,7 +207,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - Tests: write and read, the same-day replacement, a past day kept, a corrupt file.
 
 ### F-20 · The runner's own word in readiness
-- **Status:** todo
+- **Status:** todo (F-20a done, PR #67; F-20b next)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** Readiness hears the watch, never the runner. Sore legs, a cold or a rough night with a child never reach HealthKit. Self-reported measures follow training load more sensitively and consistently than objective ones (a review of 56 studies), and the one trial in which HRV-guided training beat a fixed plan for recreational runners (10 km time down 6.2% against 2.9%) combined HRV with how recovered the runners felt.
 - **Defaults (the owner can change them here):**
@@ -220,6 +220,9 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - `ReadinessEngine` takes the answer, with tests.
   - Today asks once a day, and the answer can be changed.
   - The readiness screen shows it as its own signal card.
+- **Sub-items:**
+  - **F-20a · The signal** (S), **done (PR #67)**: `CheckIn` (the answer, kept in App Group defaults for today only), `ReadinessEngine` grades it (tired or sore one signal off, unwell red with "rest today", fresh never lifts the watch) and the run ledger keeps it with the day. Both refreshes read it.
+  - **F-20b · The question** (M): Today's one-tap question each morning, changeable, recomputing the day on an answer; the readiness screen's signal card; on Unwell the day's prescription becomes rest on every surface (Today, pushes, widget, watch schedule).
 
 ### F-15 · Easy runs that weren't easy
 - **Status:** todo
@@ -1011,6 +1014,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · F-20a: the runner's morning answer (Fresh, Normal, Tired, Sore, Unwell) is a readiness signal and goes into the run ledger; nothing asks yet (PR #67)
 - 2026-11-12 · F-18: `RunLedger` keeps each day's prescription as shown and the day each run belongs to in `run-ledger.json`; a run's `id` is its Health workout UUID (PR #66)
 - 2026-11-12 · F-13b: the readiness screen shows last night's sleep as its third signal card, and its rules name the three signals (PR #65)
 - 2026-11-12 · F-13a: readiness reads last night's time asleep against the 14-night average (15% short yellow, 30% red), with HRV and resting HR; Health's sleep is read, and asked for once (PR #64)
