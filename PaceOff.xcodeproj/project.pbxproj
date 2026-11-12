@@ -224,6 +224,11 @@
 		84CB8BA7C953DE048E0F92F4 /* CheckIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E3DBF426AAEA692AB38242 /* CheckIn.swift */; };
 		7174D33755854042F1579F38 /* CheckIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E3DBF426AAEA692AB38242 /* CheckIn.swift */; };
 		38A5089EA83CA519A2BEEBD9 /* CheckInTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E483C461ADBAF6CAF2ACBA15 /* CheckInTests.swift */; };
+		162C7F9EDA158FDF84D3AA86 /* HeartRateZones.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77E5D9D281AF2B79EA41ED0A /* HeartRateZones.swift */; };
+		28A270EDDDC7D87680086960 /* HeartRateZones.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77E5D9D281AF2B79EA41ED0A /* HeartRateZones.swift */; };
+		489A24F0375F9FDF1FEABA0A /* HeartRateZones.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77E5D9D281AF2B79EA41ED0A /* HeartRateZones.swift */; };
+		C07D7AD62A8FC30A358EAD65 /* HeartRateZones.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77E5D9D281AF2B79EA41ED0A /* HeartRateZones.swift */; };
+		4C036D37DA3465DFC37B5AA7 /* HeartRateZonesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC6ED6BC961B01E7C70DE776 /* HeartRateZonesTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -399,6 +404,8 @@
 		124E6E33DD8F50C1FFF88693 /* RunLedgerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunLedgerTests.swift; sourceTree = "<group>"; };
 		92E3DBF426AAEA692AB38242 /* CheckIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckIn.swift; sourceTree = "<group>"; };
 		E483C461ADBAF6CAF2ACBA15 /* CheckInTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckInTests.swift; sourceTree = "<group>"; };
+		77E5D9D281AF2B79EA41ED0A /* HeartRateZones.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateZones.swift; sourceTree = "<group>"; };
+		DC6ED6BC961B01E7C70DE776 /* HeartRateZonesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeartRateZonesTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -430,6 +437,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				77E5D9D281AF2B79EA41ED0A /* HeartRateZones.swift */,
 				92E3DBF426AAEA692AB38242 /* CheckIn.swift */,
 				3D1E87A6F904D6001EFF7734 /* RunLedger.swift */,
 				E8EC03694CC7A684972F82BB /* SleepNight.swift */,
@@ -471,6 +479,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				DC6ED6BC961B01E7C70DE776 /* HeartRateZonesTests.swift */,
 				E483C461ADBAF6CAF2ACBA15 /* CheckInTests.swift */,
 				124E6E33DD8F50C1FFF88693 /* RunLedgerTests.swift */,
 				431B0DCA6DBA50446A2D7898 /* SleepReadinessTests.swift */,
@@ -856,6 +865,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4C036D37DA3465DFC37B5AA7 /* HeartRateZonesTests.swift in Sources */,
+				489A24F0375F9FDF1FEABA0A /* HeartRateZones.swift in Sources */,
 				38A5089EA83CA519A2BEEBD9 /* CheckInTests.swift in Sources */,
 				84CB8BA7C953DE048E0F92F4 /* CheckIn.swift in Sources */,
 				923024391FE38BDC23308C63 /* RunLedgerTests.swift in Sources */,
@@ -927,6 +938,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				28A270EDDDC7D87680086960 /* HeartRateZones.swift in Sources */,
 				7070E59446CCD749458F85BA /* CheckIn.swift in Sources */,
 				A1065B18229EE953DD8B6D6C /* RunLedger.swift in Sources */,
 				FBB66CB3907CE499FCDCD94D /* SleepNight.swift in Sources */,
@@ -970,6 +982,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C07D7AD62A8FC30A358EAD65 /* HeartRateZones.swift in Sources */,
 				7174D33755854042F1579F38 /* CheckIn.swift in Sources */,
 				583861246CC4431DAF6B4C0D /* RunLedger.swift in Sources */,
 				4ED3C4D6F3CFD100B6E1A7E8 /* SleepNight.swift in Sources */,
@@ -1016,6 +1029,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				162C7F9EDA158FDF84D3AA86 /* HeartRateZones.swift in Sources */,
 				24441B5F48FC21FA0547965A /* CheckIn.swift in Sources */,
 				0043B2109DBAC1D43A3D1CC5 /* RunLedger.swift in Sources */,
 				D8B2A676718B503573D0916B /* SleepNight.swift in Sources */,

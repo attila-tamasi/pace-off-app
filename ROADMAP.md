@@ -226,7 +226,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - **F-20c · Unwell means rest** (S), **done (PR #69)**: on Unwell the day's prescription becomes rest on every surface (Today's hero, the pushes, the widget, the watch schedule), with "You said you're unwell, so today is rest"; the race day is left alone.
 
 ### F-15 · Easy runs that weren't easy
-- **Status:** todo
+- **Status:** todo (F-15a done, PR #70; F-15b next)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** The most common amateur mistake, running easy days too hard, goes unnoticed.
 - **Defaults (the owner can change them here):**
@@ -237,6 +237,9 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - Run detail shows a zone bar.
   - The week screen shows the week's easy/hard balance.
   - The notes above appear.
+- **Sub-items:**
+  - **F-15a · The zones** (S), **done (PR #70)**: `HeartRateZones` (max HR from the 90-day peak Health now reads, else 208 − 0.7 × age; five zones at 50/60/70/80/90%; time in zones from samples, a pause counting at most a minute) and `EasyRunCheck` (meant easy from the day's ledger row; the note above 20%).
+  - **F-15b · Showing it** (M): run detail's zone bar and note, and the week screen's easy/hard balance with the notes.
 
 ### F-16 · Siri, Shortcuts and Control Center
 - **Status:** todo
@@ -1017,6 +1020,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · F-15a: heart-rate zones from the 90-day max HR (else age), time in zones, and the easy-run check against the day's ledger row; not shown until F-15b (PR #70)
 - 2026-11-12 · F-20c: on Unwell the day is rest everywhere: Today's hero and voice line, one morning push and no reminders, the widget, and no run sent to the watch; the race is left alone (PR #69)
 - 2026-11-12 · F-20b: Today asks "How do you feel?" (one tap, changeable), the answer reworks the day, and the readiness screen shows it as a signal card (PR #68)
 - 2026-11-12 · F-20a: the runner's morning answer (Fresh, Normal, Tired, Sore, Unwell) is a readiness signal and goes into the run ledger; nothing asks yet (PR #67)

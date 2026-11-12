@@ -143,6 +143,7 @@ public final class HealthKitService {
             async let lRHR = fetchLatestRestingHeartRate(asOf: now, log: log)
             async let strength = fetchStrengthWorkouts(log: log)
             async let sleep = fetchSleep(log: log)
+            async let maxHR = fetchMaxHeartRate(log: log)
 
             fresh.runs = await runs
             fresh.vo2Max = await vo2
@@ -153,6 +154,7 @@ public final class HealthKitService {
             fresh.latestRestingHeartRate = await lRHR
             fresh.strengthWorkouts = await strength
             fresh.sleep = await sleep
+            fresh.maxHeartRate = await maxHR
             fresh.userAge = userAge()
         }
 
@@ -175,6 +177,26 @@ public final class HealthKitService {
     }
 
     // MARK: - Reads
+
+    /// The highest heart rate recorded over the trailing window, for the
+    /// heart-rate zones. Heart rate is already readable.
+    public func fetchMaxHeartRate(daysBack: Int = 90, log: HealthReadLog? = nil) async -> Double? {
+        guard let type = HKQuantityType.quantityType(forIdentifier: .heartRate),
+              let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date())
+        else { return nil }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: [])
+        let unit = HKUnit.count().unitDivided(by: .minute())
+
+        let (peak, failure): (Double?, Error?) = await withCheckedContinuation { continuation in
+            let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate,
+                                          options: .discreteMax) { _, statistics, error in
+                continuation.resume(returning: (statistics?.maximumQuantity()?.doubleValue(for: unit), error))
+            }
+            store.execute(query)
+        }
+        log?.note(failure)
+        return peak
+    }
 
     /// Time asleep per night over the trailing window (`SleepNight`), from
     /// the asleep stages of Health's sleep analysis.
