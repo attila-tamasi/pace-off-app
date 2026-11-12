@@ -86,7 +86,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - Tests: a changed number, an added one, a dropped one, a number written as a word ("six"), decimals, and a pace band ("5:25–5:45/km").
 
 ### R-10 · A plan day has two prescriptions
-- **Status:** todo
+- **Status:** todo (R-10a done, PR #54; R-10b next)
 - **Size:** L   ·   **Merge:** auto
 - **Problem:** With a plan active, Today's big number is the daily-target engine's distance and the plan's workout is a label under it. "Target hit" is judged against the engine's number. A push can name two distances: "Today's plan: 8.0 km · 5:25–5:45/km. Yesterday: done. Today: 6 km." On a plan rest day the push says rest while Today still shows a target. Once F-12 sends the plan's workout to the watch, the wrist and the phone would disagree as well.
 - **Decision (Claude, 2026-11-12; the owner can reverse it):** on a day with a plan run, the plan's workout is the day's prescription, and readiness changes that workout instead of a second number. A plan rest day shows as rest. Without a plan, or before a plan's first week, the daily target works as today.
@@ -98,7 +98,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - "Target hit" is the plan's completion rule, 85% of the day's prescribed distance.
 - **Where:** `TodayView` (the hero's `displayedDistanceKm`, the "Target hit" badge), `TodayViewModel.refresh`, `VoiceState` / `VoiceCopy`, `DailyPushPlanner` (the body joins the plan line and the voice line), `WidgetCache`, `PaceOffWidget`.
 - **Sub-items:**
-  - **R-10a · The day's prescription** (M): a pure function in `PaceOffShared` (`DayPrescription`) takes the plan day's status, the readiness verdict and the engine's target, and returns the one prescription for today: its kind (run, rest, strength, race), distance, pace band or "easy", and what changed it. Tests cover each default above, no plan, a plan that hasn't started, a rest day and a strength-only day.
+  - **R-10a · The day's prescription** (M), **done (PR #54)**: a pure function in `PaceOffShared` (`DayPrescription`) takes the plan day's status, the readiness verdict and the engine's target, and returns the one prescription for today: its kind (run, rest, strength, race), distance, pace band or "easy", and what changed it. Tests cover each default above, no plan, a plan that hasn't started, a rest day and a strength-only day.
   - **R-10b · Every surface reads it** (M): Today's hero, its badge and its voice line, the pushes, the widget and its cache. Done when no screen or push shows the engine's number on a plan-run day, a push never names two distances, and a plan rest day shows as rest.
 
 ### R-11 · One run can jump far past anything recent
@@ -997,6 +997,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · R-10a: `DayPrescription` gives the one prescription for today (the plan's workout as readiness changes it, rest on a plan rest day, the daily target without one); nothing shows it until R-10b (PR #54)
 - 2026-11-12 · R-12: an Apple Intelligence rewording is shown only when it carries exactly the canned line's numbers (`NarrationCheck`); accepted rewordings are reused, and the background refresh no longer calls the model (PR #53)
 - 2026-11-12 · Roadmap re-ordered after the competitor research: Steps 0 to 3 replace the waves, with the no-backend architecture plan (`ARCHITECTURE.md`) and the research report (`docs/research-2026-11.md`); no code changed (PR #52)
 - 2026-11-11 · F-11c: a strength workout in Health ticks off the plan's session: it leaves the pushes, a run day with the session still to do gets one afternoon reminder, and the widget dot waits for it on a strength-only day (PR #51)
