@@ -223,7 +223,8 @@ public final class BackgroundRefreshService {
 
         // Same readiness → target pipeline the foreground refresh uses.
         let readiness = ReadinessEngine().compute(
-            ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr, sleep: snapshot.sleepOrEmpty)
+            ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr, sleep: snapshot.sleepOrEmpty,
+                                  feeling: CheckIn.todayFeeling(in: AppGroup.sharedDefaults, now: now))
         )
 
         let inputs = PushTargetEngine.Inputs(
@@ -284,7 +285,8 @@ public final class BackgroundRefreshService {
         if day.save(to: AppGroup.sharedDefaults) {
             WidgetCenter.shared.reloadAllTimelines()
         }
-        await RunLedger.shared.record(prescription: prescription, readiness: readiness?.level, runs: runs)
+        await RunLedger.shared.record(prescription: prescription, readiness: readiness?.level,
+                                      feeling: readiness?.feeling, runs: runs)
 
         // Reschedule today's notifications with the freshly enriched body so
         // the user gets the updated copy on the next push.

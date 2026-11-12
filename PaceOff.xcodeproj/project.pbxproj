@@ -219,6 +219,11 @@
 		9E8783C329D631BEF46C87BC /* RunLedger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D1E87A6F904D6001EFF7734 /* RunLedger.swift */; };
 		583861246CC4431DAF6B4C0D /* RunLedger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D1E87A6F904D6001EFF7734 /* RunLedger.swift */; };
 		923024391FE38BDC23308C63 /* RunLedgerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124E6E33DD8F50C1FFF88693 /* RunLedgerTests.swift */; };
+		24441B5F48FC21FA0547965A /* CheckIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E3DBF426AAEA692AB38242 /* CheckIn.swift */; };
+		7070E59446CCD749458F85BA /* CheckIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E3DBF426AAEA692AB38242 /* CheckIn.swift */; };
+		84CB8BA7C953DE048E0F92F4 /* CheckIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E3DBF426AAEA692AB38242 /* CheckIn.swift */; };
+		7174D33755854042F1579F38 /* CheckIn.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E3DBF426AAEA692AB38242 /* CheckIn.swift */; };
+		38A5089EA83CA519A2BEEBD9 /* CheckInTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E483C461ADBAF6CAF2ACBA15 /* CheckInTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -392,6 +397,8 @@
 		431B0DCA6DBA50446A2D7898 /* SleepReadinessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepReadinessTests.swift; sourceTree = "<group>"; };
 		3D1E87A6F904D6001EFF7734 /* RunLedger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunLedger.swift; sourceTree = "<group>"; };
 		124E6E33DD8F50C1FFF88693 /* RunLedgerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunLedgerTests.swift; sourceTree = "<group>"; };
+		92E3DBF426AAEA692AB38242 /* CheckIn.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckIn.swift; sourceTree = "<group>"; };
+		E483C461ADBAF6CAF2ACBA15 /* CheckInTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckInTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -423,6 +430,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				92E3DBF426AAEA692AB38242 /* CheckIn.swift */,
 				3D1E87A6F904D6001EFF7734 /* RunLedger.swift */,
 				E8EC03694CC7A684972F82BB /* SleepNight.swift */,
 				601B741519DC3C7A9F13F8A5 /* PaceSource.swift */,
@@ -463,6 +471,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				E483C461ADBAF6CAF2ACBA15 /* CheckInTests.swift */,
 				124E6E33DD8F50C1FFF88693 /* RunLedgerTests.swift */,
 				431B0DCA6DBA50446A2D7898 /* SleepReadinessTests.swift */,
 				2E2CD1DC437E1CA3D002F0D4 /* PaceSourceTests.swift */,
@@ -847,6 +856,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				38A5089EA83CA519A2BEEBD9 /* CheckInTests.swift in Sources */,
+				84CB8BA7C953DE048E0F92F4 /* CheckIn.swift in Sources */,
 				923024391FE38BDC23308C63 /* RunLedgerTests.swift in Sources */,
 				9E8783C329D631BEF46C87BC /* RunLedger.swift in Sources */,
 				5D3C33C4D0CF0F71EA410527 /* SleepReadinessTests.swift in Sources */,
@@ -916,6 +927,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7070E59446CCD749458F85BA /* CheckIn.swift in Sources */,
 				A1065B18229EE953DD8B6D6C /* RunLedger.swift in Sources */,
 				FBB66CB3907CE499FCDCD94D /* SleepNight.swift in Sources */,
 				34D9BA4642903FD196CF7639 /* PaceSource.swift in Sources */,
@@ -958,6 +970,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7174D33755854042F1579F38 /* CheckIn.swift in Sources */,
 				583861246CC4431DAF6B4C0D /* RunLedger.swift in Sources */,
 				4ED3C4D6F3CFD100B6E1A7E8 /* SleepNight.swift in Sources */,
 				06C5513710F8E6EF55FC3573 /* PaceSource.swift in Sources */,
@@ -1003,6 +1016,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				24441B5F48FC21FA0547965A /* CheckIn.swift in Sources */,
 				0043B2109DBAC1D43A3D1CC5 /* RunLedger.swift in Sources */,
 				D8B2A676718B503573D0916B /* SleepNight.swift in Sources */,
 				26665B995CE016D091B06EDF /* PaceSource.swift in Sources */,

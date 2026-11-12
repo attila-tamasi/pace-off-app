@@ -148,7 +148,7 @@ public final class TodayViewModel {
                 WidgetCenter.shared.reloadAllTimelines()
             }
             await RunLedger.shared.record(prescription: prescription, readiness: readiness?.level,
-                                          runs: snapshot.runs)
+                                          feeling: readiness?.feeling, runs: snapshot.runs)
         }
 
         // Schedule today's notifications using the (possibly AI-rewritten) body.
@@ -177,7 +177,8 @@ public final class TodayViewModel {
         // Readiness first — its verdict feeds the target computation (red
         // caps the day, yellow holds the baseline).
         self.readiness = readinessEngine.compute(
-            ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr, sleep: snapshot.sleepOrEmpty)
+            ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr, sleep: snapshot.sleepOrEmpty,
+                                  feeling: CheckIn.todayFeeling(in: AppGroup.sharedDefaults, now: now))
         )
 
         let inputs = PushTargetEngine.Inputs(
