@@ -34,6 +34,12 @@ final class NarrationCheckTests: XCTestCase {
         XCTAssertFalse(NarrationCheck.accepts("Rest today, two days to go.", for: "Rest today."))
     }
 
+    func testOrdinalOrMultiplierWordIsRejected() {
+        XCTAssertFalse(NarrationCheck.accepts("Easy run, twice today.", for: "Easy run today."))
+        XCTAssertFalse(NarrationCheck.accepts("Second easy run today.", for: "Easy run today."))
+        XCTAssertTrue(NarrationCheck.accepts("21.1 km: your half marathon.", for: "Half marathon day: 21.1 km."))
+    }
+
     func testNumberWordKeptFromTheOriginalIsAccepted() {
         XCTAssertTrue(NarrationCheck.accepts("Two easy days, then 5 km.",
                                              for: "5 km after two easy days."))

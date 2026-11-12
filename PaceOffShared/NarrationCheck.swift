@@ -46,7 +46,8 @@ public enum NarrationCheck {
         return found.sorted()
     }
 
-    /// Numbers written as English words ("six", "twenty"), sorted. A
+    /// Numbers written as English words ("six", "twenty", "second",
+    /// "twice"), sorted. A
     /// rewrite that spells out a number, or adds one in words, changes
     /// what the line says.
     static func numberWords(in text: String) -> [String] {
@@ -66,5 +67,6 @@ public enum NarrationCheck {
         "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
         "seventeen", "eighteen", "nineteen", "twenty", "thirty", "forty", "fifty",
         "sixty", "seventy", "eighty", "ninety", "hundred", "thousand", "dozen",
+        "first", "second", "third", "fourth", "fifth", "twice", "double", "triple", "half",
     ]
 }
