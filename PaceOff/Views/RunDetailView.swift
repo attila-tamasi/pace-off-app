@@ -28,6 +28,10 @@ struct RunDetailView: View {
     @State private var extras: WorkoutExtras?
     /// This run's fastest 1 km, 5 km, 10 km and half, from its route.
     @State private var efforts: [BestEffort] = []
+    /// Time in each heart-rate zone, with the zones it was worked out on.
+    @State private var zoneTime: (zones: HeartRateZones, seconds: [TimeInterval])?
+    /// "35% of this easy run was in zone 3 or above. …" when it applies.
+    @State private var easyNote: String?
 
     /// Map height as a fraction of the available screen height. Matches the
     /// proportion used on the Today screen so the experience feels consistent.
@@ -46,6 +50,9 @@ struct RunDetailView: View {
                         summaryGrid
                         if let heartRate, heartRate.points.count >= 2 {
                             heartRateCard(heartRate)
+                        }
+                        if let zoneTime {
+                            zonesCard(zoneTime.zones, seconds: zoneTime.seconds)
                         }
                         if let elevation, elevation.high - elevation.low >= 1 {
                             elevationCard(elevation)
@@ -168,6 +175,17 @@ struct RunDetailView: View {
         isLoadingSplits = false
 
         heartRate = WorkoutHeartRate(samples: hrRaw, start: run.startDate, end: run.endDate)
+        let snapshot = await HealthDataCache.shared.load()
+        if let maxHR = HeartRateZones.maxHR(observed: snapshot?.maxHeartRate,
+                                            age: snapshot?.userAge ?? HealthKitService.shared.userAge()) {
+            let zones = HeartRateZones(maxHR: maxHR)
+            let seconds = zones.timeInZones(samples: hrRaw, start: run.startDate, end: run.endDate)
+            if seconds.reduce(0, +) > 0 {
+                zoneTime = (zones: zones, seconds: seconds)
+                let day = await RunLedger.shared.load().day(run.startDate)
+                easyNote = EasyRunCheck.note(timeInZones: seconds, meantEasy: EasyRunCheck.isMeantEasy(day))
+            }
+        }
         // Distances along the whole route; a negative vertical accuracy
         // marks a point without a valid altitude, which the profile skips.
         elevation = WorkoutElevation(samples: zip(locations, locationSamples)
@@ -314,6 +332,79 @@ struct RunDetailView: View {
         }
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    // MARK: - Heart-rate zones
+
+    /// Time in each zone as one bar, a row per zone, and the easy-run note
+    /// when a run meant to be easy wasn't.
+    private func zonesCard(_ zones: HeartRateZones, seconds: [TimeInterval]) -> some View {
+        let total = max(seconds.reduce(0, +), 1)
+        return VStack(alignment: .leading, spacing: 12) {
+            sectionLabel("HEART RATE ZONES")
+            GeometryReader { geo in
+                HStack(spacing: 2) {
+                    ForEach(0..<5, id: \.self) { i in
+                        if seconds[i] > 0 {
+                            Rectangle()
+                                .fill(Self.zoneColor(i + 1))
+                                .frame(width: max(2, (geo.size.width - 8) * seconds[i] / total))
+                        }
+                    }
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+            }
+            .frame(height: 14)
+            .accessibilityHidden(true)
+            VStack(spacing: 6) {
+                ForEach((0..<5).reversed(), id: \.self) { i in
+                    let range = zones.range(of: i + 1)
+                    HStack(spacing: 8) {
+                        Circle().fill(Self.zoneColor(i + 1)).frame(width: 8, height: 8)
+                            .accessibilityHidden(true)
+                        Text("Zone \(i + 1)")
+                            .font(.system(.subheadline, design: .rounded, weight: .medium))
+                        Text(i == 0 ? "under \(Int(range.upperBound.rounded())) bpm"
+                                    : "\(Int(range.lowerBound.rounded()))–\(Int(range.upperBound.rounded())) bpm")
+                            .font(.system(.footnote, design: .rounded))
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(Self.minutesText(seconds[i]))
+                            .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                            .monospacedDigit()
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            if let easyNote {
+                Label(easyNote, systemImage: "tortoise.fill")
+                    .font(.system(.footnote, design: .rounded, weight: .medium))
+                    .foregroundStyle(BrandPalette.track)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Text("Zones from a max heart rate of \(Int(zones.maxHR.rounded())) bpm.")
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(.secondary)
+        }
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    static func zoneColor(_ zone: Int) -> Color {
+        switch zone {
+        case 1: return .gray
+        case 2: return .blue
+        case 3: return .green
+        case 4: return .orange
+        default: return .red
+        }
+    }
+
+    /// "24 min", "1 h 05 min", "<1 min".
+    static func minutesText(_ seconds: TimeInterval) -> String {
+        let minutes = Int((seconds / 60).rounded())
+        if seconds > 0 && minutes == 0 { return "<1 min" }
+        return minutes >= 60 ? String(format: "%d h %02d min", minutes / 60, minutes % 60) : "\(minutes) min"
     }
 
     // MARK: - Elevation profile

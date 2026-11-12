@@ -13,6 +13,10 @@ struct WeekDetailView: View {
     @Environment(TrainingPlanStore.self) private var planStore
     @Environment(AppNavigation.self) private var navigation
 
+    /// The week's time in zones 1–2 across its runs, and the notes for runs
+    /// meant easy that weren't. Nil until worked out, or without heart rate.
+    @State private var balance: (easyShare: Double, notes: [String])?
+
     var body: some View {
         let week = WeekReview(runs: todayVM.recentRuns, plan: planStore.activePlan)
         ScrollView {
@@ -21,6 +25,9 @@ struct WeekDetailView: View {
                 chartCard(week)
                 if week.hasPlan {
                     planCard(week)
+                }
+                if let balance {
+                    balanceCard(balance.easyShare, notes: balance.notes)
                 }
                 MetricSectionHeader(title: "Day by day")
                 VStack(spacing: 10) {
@@ -34,6 +41,7 @@ struct WeekDetailView: View {
             .padding(.bottom, 40)
         }
         .background(Color(.systemGroupedBackground))
+        .task(id: todayVM.recentRuns.map(\.id)) { await loadBalance(week) }
         .navigationTitle("Last 7 Days")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -66,6 +74,66 @@ struct WeekDetailView: View {
             parts.append("\(week.streak)-day streak")
         }
         return parts.joined(separator: " · ")
+    }
+
+    // MARK: - Easy and hard
+
+    /// Reads each run's heart rate, adds up its time in zones, and finds
+    /// the runs meant easy (by the day's ledger row) that weren't.
+    private func loadBalance(_ week: WeekReview) async {
+        let snapshot = await HealthDataCache.shared.load()
+        guard let maxHR = HeartRateZones.maxHR(observed: snapshot?.maxHeartRate,
+                                               age: snapshot?.userAge ?? HealthKitService.shared.userAge())
+        else { return }
+        let zones = HeartRateZones(maxHR: maxHR)
+        let ledger = await RunLedger.shared.load()
+        var perRun: [[TimeInterval]] = []
+        var notes: [String] = []
+        for run in week.days.flatMap(\.runs) {
+            let samples = await HealthKitService.shared.fetchHeartRateSamples(from: run.startDate, to: run.endDate)
+            let seconds = zones.timeInZones(samples: samples, start: run.startDate, end: run.endDate)
+            guard seconds.reduce(0, +) > 0 else { continue }
+            perRun.append(seconds)
+            if let note = EasyRunCheck.note(timeInZones: seconds,
+                                            meantEasy: EasyRunCheck.isMeantEasy(ledger.day(run.startDate))) {
+                notes.append("\(run.startDate.formatted(.dateTime.weekday(.wide))): \(note)")
+            }
+        }
+        balance = EasyRunCheck.easyShare(perRun).map { (easyShare: $0, notes: notes) }
+    }
+
+    /// "78% easy · 22% hard": time in zones 1–2 against zone 3 and above.
+    private func balanceCard(_ easyShare: Double, notes: [String]) -> some View {
+        let easy = Int((easyShare * 100).rounded())
+        return VStack(alignment: .leading, spacing: 12) {
+            Label("Easy and hard", systemImage: "heart.fill")
+                .font(.system(.subheadline, weight: .semibold))
+                .foregroundStyle(.pink)
+            Text("\(easy)% easy · \(100 - easy)% hard")
+                .font(.system(.title3, design: .rounded, weight: .bold))
+            GeometryReader { geo in
+                HStack(spacing: 2) {
+                    Rectangle().fill(Color.blue).frame(width: max(2, (geo.size.width - 2) * easyShare))
+                    Rectangle().fill(Color.orange)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+            }
+            .frame(height: 12)
+            .accessibilityHidden(true)
+            Text("Time in heart-rate zones 1–2 against zone 3 and above, across this week's runs.")
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach(notes, id: \.self) { note in
+                Label(note, systemImage: "tortoise.fill")
+                    .font(.system(.footnote, design: .rounded, weight: .medium))
+                    .foregroundStyle(BrandPalette.track)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     // MARK: - Chart

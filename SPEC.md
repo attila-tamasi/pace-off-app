@@ -64,6 +64,8 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 - `WeekDetailView` — opened from Today's Last 7 days card: the week's distance and streak, a bar per day with the plan's distance dashed across it, sessions done and distance against the plan with a button to the Plan tab, and each day with its plan workout (done, still to do, missed or rest) and its runs, which open their detail (`WeekReview` in `PaceOffShared`)
 - `HeartTrendDetailView` — HRV and resting heart rate, opened from their Today cards: the latest reading against the baseline the readiness card uses (30-day HRV, 14-day resting HR), a Week / Month / 3 Months chart with the baseline marked, the readiness thresholds, and what the number means (`HeartTrend` in `PaceOffShared`)
 
+- **Heart-rate zones and easy runs** (`HeartRateZones`, `EasyRunCheck`, in `PaceOffShared`, unit-tested): five zones at 50/60/70/80/90% of max HR, the highest heart rate in Health over the last 90 days (read in each sync) or else 208 − 0.7 × age. Run detail shows a "Heart rate zones" card: the run's time in each zone as one bar and a row per zone with its bpm range and minutes. A run meant to be easy (the day's `RunLedger` row: an easy or long plan run, or readiness yellow or red) with more than 20% of its time above zone 2 gets "35% of this easy run was in zone 3 or above. Slow down to keep it easy." The week screen adds "Easy and hard": the week's time in zones 1–2 against zone 3 and above across its runs, with the same note per run
+
 ### 7. Watch app
 - `WatchTodayView` mirrors today's push target
 - Live workout via `HKWorkoutSession` + `HKLiveWorkoutBuilder` (running dynamics: power, stride, vertical oscillation, ground contact, cadence)

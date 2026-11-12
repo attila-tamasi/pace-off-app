@@ -226,7 +226,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - **F-20c · Unwell means rest** (S), **done (PR #69)**: on Unwell the day's prescription becomes rest on every surface (Today's hero, the pushes, the widget, the watch schedule), with "You said you're unwell, so today is rest"; the race day is left alone.
 
 ### F-15 · Easy runs that weren't easy
-- **Status:** todo (F-15a done, PR #70; F-15b next)
+- **Status:** done (F-15a PR #70, F-15b PR #71)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** The most common amateur mistake, running easy days too hard, goes unnoticed.
 - **Defaults (the owner can change them here):**
@@ -239,7 +239,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - The notes above appear.
 - **Sub-items:**
   - **F-15a · The zones** (S), **done (PR #70)**: `HeartRateZones` (max HR from the 90-day peak Health now reads, else 208 − 0.7 × age; five zones at 50/60/70/80/90%; time in zones from samples, a pause counting at most a minute) and `EasyRunCheck` (meant easy from the day's ledger row; the note above 20%).
-  - **F-15b · Showing it** (M): run detail's zone bar and note, and the week screen's easy/hard balance with the notes.
+  - **F-15b · Showing it** (M), **done (PR #71)**: run detail's zone bar and note, and the week screen's easy/hard balance with the notes.
 
 ### F-16 · Siri, Shortcuts and Control Center
 - **Status:** todo
@@ -981,6 +981,7 @@ All done.
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #71: run detail's "Heart rate zones" card (one bar, five rows with bpm ranges and minutes, the orange tortoise note on an easy run run too hard), and the week screen's "Easy and hard" card ("78% easy · 22% hard", its bar and notes)
 - [ ] PR #69: after answering Unwell on Today: the hero reads Rest, the voice line "You said you're unwell. Rest today: …", the plan line "…, rest today: you're unwell", the widget shows Rest, and today's workout leaves the watch's Workout app
 - [ ] PR #68: Today's "How do you feel?" card above Readiness (five buttons in a grid, at large text sizes too), the folded "You feel tired today · Change" row, Clear, and the readiness screen's "How you feel" card; after an answer the readiness card and hero update
 - [ ] PR #65: the readiness screen's Sleep card (teal bed, "6:42 asleep", "18% below your 14-night average of 8:10", its grade dot) under HRV and Resting HR, and the three-signal rules card
@@ -1020,6 +1021,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · F-15b: run detail shows time in heart-rate zones with the easy-run note, and the week screen the week's easy/hard balance with the notes (PR #71)
 - 2026-11-12 · F-15a: heart-rate zones from the 90-day max HR (else age), time in zones, and the easy-run check against the day's ledger row; not shown until F-15b (PR #70)
 - 2026-11-12 · F-20c: on Unwell the day is rest everywhere: Today's hero and voice line, one morning push and no reminders, the widget, and no run sent to the watch; the race is left alone (PR #69)
 - 2026-11-12 · F-20b: Today asks "How do you feel?" (one tap, changeable), the answer reworks the day, and the readiness screen shows it as a signal card (PR #68)
