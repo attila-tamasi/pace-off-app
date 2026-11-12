@@ -22,6 +22,8 @@ struct TodayView: View {
     @Environment(TrainingPlanStore.self) private var planStore
 
     @State private var profilePresented = false
+    /// The answer's buttons are open again after "Change".
+    @State private var changingFeeling = false
     @Environment(\.openURL) private var openURL
 
     var body: some View {
@@ -288,6 +290,7 @@ struct TodayView: View {
         MetricSectionHeader(title: "Recovery")
 
         VStack(spacing: 10) {
+            if !todayVM.needsFirstRun { checkInCard }
             if let readiness = todayVM.readiness {
                 NavigationLink(value: TodayDestination.readiness) {
                     readinessCard(readiness)
@@ -336,6 +339,67 @@ struct TodayView: View {
                 .buttonStyle(.plain)
             }
             .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// "How do you feel?": one optional tap, Fresh to Unwell, that joins
+    /// readiness (`CheckIn`). Once answered it folds to one line with a
+    /// way to change it. Skipping it changes nothing.
+    @ViewBuilder
+    private var checkInCard: some View {
+        if let feeling = todayVM.feeling, !changingFeeling {
+            HStack(spacing: 8) {
+                Image(systemName: "hand.raised.fill")
+                    .foregroundStyle(BrandPalette.track)
+                    .accessibilityHidden(true)
+                Text("You feel \(feeling.displayName.lowercased()) today")
+                    .font(.system(.subheadline, design: .rounded, weight: .medium))
+                Spacer()
+                Button("Change") { changingFeeling = true }
+                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                    .accessibilityLabel("Change how you feel")
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Label("How do you feel?", systemImage: "hand.raised.fill")
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                        .foregroundStyle(BrandPalette.track)
+                    Spacer()
+                    if todayVM.feeling != nil {
+                        Button("Clear") {
+                            changingFeeling = false
+                            Task { await todayVM.answer(nil) }
+                        }
+                        .font(.system(.subheadline, design: .rounded))
+                        .accessibilityLabel("Clear today's answer")
+                    }
+                }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 8)], spacing: 8) {
+                    ForEach(CheckInFeeling.allCases, id: \.self) { option in
+                        Button {
+                            changingFeeling = false
+                            Task { await todayVM.answer(option) }
+                        } label: {
+                            Text(option.displayName)
+                                .font(.system(.subheadline, design: .rounded, weight: .medium))
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(todayVM.feeling == option ? BrandPalette.track : .secondary)
+                        .accessibilityAddTraits(todayVM.feeling == option ? .isSelected : [])
+                    }
+                }
+                Text("Optional. It joins today's readiness with the watch.")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
     }
 

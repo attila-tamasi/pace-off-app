@@ -73,6 +73,7 @@ public final class TodayViewModel {
         guard let snapshot = await HealthDataCache.shared.load(),
               !snapshot.isEmpty
         else { return }
+        lastSnapshot = (snapshot, false)
         applySnapshot(snapshot)
     }
 
@@ -98,6 +99,32 @@ public final class TodayViewModel {
             ? await HealthKitService.shared.fetchTodayRunRoute()
             : []
 
+        lastSnapshot = (snapshot, sync.isFresh)
+        await handOffDay(snapshot, isFresh: sync.isFresh)
+    }
+
+    /// Today's answer to "How do you feel?", nil until the runner answers.
+    public private(set) var feeling: CheckInFeeling?
+
+    /// The last snapshot the screen worked from, and whether it was a
+    /// fresh read, so an answer can recompute the day without a new read.
+    @ObservationIgnored private var lastSnapshot: (snapshot: HealthDataSnapshot, isFresh: Bool)?
+
+    /// Saves the runner's answer (nil clears it) and works the day out
+    /// again: readiness, the target, the prescription, the pushes, the
+    /// widget and the watch all follow it.
+    public func answer(_ feeling: CheckInFeeling?) async {
+        CheckIn.save(feeling, in: AppGroup.sharedDefaults)
+        self.feeling = feeling
+        guard AppGroup.isRunnerSetUp, let last = lastSnapshot else { return }
+        applySnapshot(last.snapshot)
+        await handOffDay(last.snapshot, isFresh: last.isFresh)
+    }
+
+    /// Hands the worked-out day to the voice line, the widget, the ledger,
+    /// the pushes and the watch. The widget and the ledger take only a
+    /// fresh read's day.
+    private func handOffDay(_ snapshot: HealthDataSnapshot, isFresh: Bool) async {
         // No run in Health yet: no target, so no voice line, widget day or
         // pushes. Clear any pushes left from an earlier day.
         guard let target else {
@@ -140,7 +167,7 @@ public final class TodayViewModel {
         // rather than at its next scheduled entry. Only a fresh read does:
         // the kept cache may predate today's run, and stamping it with
         // today's date would pass it off as current.
-        if sync.isFresh {
+        if isFresh {
             let day = WidgetCache(target: target, voiceLine: self.voiceLine,
                                   runCompletedToday: todayRun != nil, planStatus: planStatus,
                                   prescription: prescription)
@@ -176,6 +203,7 @@ public final class TodayViewModel {
 
         // Readiness first — its verdict feeds the target computation (red
         // caps the day, yellow holds the baseline).
+        self.feeling = CheckIn.todayFeeling(in: AppGroup.sharedDefaults, now: now)
         self.readiness = readinessEngine.compute(
             ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr, sleep: snapshot.sleepOrEmpty,
                                   feeling: CheckIn.todayFeeling(in: AppGroup.sharedDefaults, now: now))
