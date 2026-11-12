@@ -75,7 +75,7 @@ What only the owner can do. None of it stops the loop's next item; each holds so
 These tell the runner the wrong thing, or prescribe a load the evidence warns against. They go before any feature.
 
 ### R-12 · The Apple Intelligence rewrite can change the numbers
-- **Status:** todo
+- **Status:** done (PR #53)
 - **Size:** S   ·   **Merge:** auto
 - **Problem:** Today's voice line and the push text are rewritten by the on-device model, and the result is accepted on its length alone. A rewrite that turns "6 km" into "8 km", or adds a number, would go out as the day's advice. The code's comment says such lines are rejected; nothing does it. The rewrite also runs in the background refresh, where the system rate-limits the model, and it runs twice per refresh.
 - **Where:** `AppleIntelligenceCopy.sanitize` (length only); its call sites in `TodayViewModel.refresh` and `BackgroundRefreshService`.
@@ -997,6 +997,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · R-12: an Apple Intelligence rewording is shown only when it carries exactly the canned line's numbers (`NarrationCheck`); accepted rewordings are reused, and the background refresh no longer calls the model (PR #53)
 - 2026-11-12 · Roadmap re-ordered after the competitor research: Steps 0 to 3 replace the waves, with the no-backend architecture plan (`ARCHITECTURE.md`) and the research report (`docs/research-2026-11.md`); no code changed (PR #52)
 - 2026-11-11 · F-11c: a strength workout in Health ticks off the plan's session: it leaves the pushes, a run day with the session still to do gets one afternoon reminder, and the widget dot waits for it on a strength-only day (PR #51)
 - 2026-11-10 · F-11b: strength sessions show in the plan picker (Cross training), plan detail, Plan tab, Plan Settings, Today's plan line, the pushes and the widget (PR #50)

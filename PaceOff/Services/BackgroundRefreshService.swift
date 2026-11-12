@@ -258,21 +258,12 @@ public final class BackgroundRefreshService {
 
         let state = VoiceState(target: target, yesterday: yesterday, currentStreak: streak, planStatus: planStatus)
         let voice = VoiceCopy()
-        var voiceLine = voice.todayCard(for: state)
-        var notificationLine = voice.notification(for: state)
+        // The canned lines: the system rate-limits the on-device model in
+        // the background, so the Apple Intelligence rewrite happens only in
+        // the foreground refresh.
+        let voiceLine = voice.todayCard(for: state)
+        let notificationLine = voice.notification(for: state)
 
-        // Optional Apple Intelligence pass — rewrites the canned line in a
-        // more creative voice on devices that support it. Time-boxed so we
-        // never blow our 30s budget.
-        if let aiCard = await AppleIntelligenceCopy.shared.rewrite(voiceLine, kind: .todayCard) {
-            voiceLine = aiCard
-        }
-        if let aiNotif = await AppleIntelligenceCopy.shared.rewrite(notificationLine, kind: .notification) {
-            notificationLine = aiNotif
-        }
-
-        // Expired while rewriting: iOS has been told the task is over, so
-        // write nothing more.
         if Task.isCancelled { return false }
 
         // Hand the day to the widget in one write, and have it redraw.

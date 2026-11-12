@@ -9,7 +9,12 @@
 // Everything runs on-device; no network call is made and no data leaves the
 // phone. On hardware/OS combinations without Apple Intelligence support, or
 // when the model is downloading / temporarily unavailable, `rewrite` returns
-// nil and callers fall back to the canned VoiceCopy line.
+// nil and callers fall back to the canned VoiceCopy line. A rewrite is used
+// only when `NarrationCheck` finds the original's numbers in it, so the
+// model can change the wording of the advice, never the advice.
+//
+// Foreground only: the system rate-limits the model for apps in the
+// background, so the background refresh uses the canned lines.
 
 import Foundation
 import os
@@ -35,15 +40,32 @@ public final class AppleIntelligenceCopy {
 
     private let log = Logger(subsystem: "com.paceoff.app", category: "AppleIntelligence")
 
+    private struct CacheKey: Hashable {
+        let kind: Kind
+        let original: String
+    }
+
+    /// Accepted rewrites by the canned line they came from, so a refresh
+    /// that produces the same line shows the same rewrite without asking
+    /// the model again.
+    private var accepted: [CacheKey: String] = [:]
+    private static let cacheLimit = 16
+
     private init() {}
 
     /// Rewrite `original` in a fresh variation. Returns `nil` (callers should
-    /// fall back) when Apple Intelligence is unavailable or the model errors.
+    /// fall back) when Apple Intelligence is unavailable, the model errors,
+    /// or its line fails `NarrationCheck`. Call from the foreground only.
     public func rewrite(_ original: String, kind: Kind) async -> String? {
         guard !original.isEmpty else { return nil }
+        let key = CacheKey(kind: kind, original: original)
+        if let cached = accepted[key] { return cached }
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
-            return await rewriteWithFoundationModels(original, kind: kind)
+            guard let line = await rewriteWithFoundationModels(original, kind: kind) else { return nil }
+            if accepted.count >= Self.cacheLimit { accepted.removeAll() }
+            accepted[key] = line
+            return line
         }
         #endif
         return nil
@@ -72,7 +94,7 @@ public final class AppleIntelligenceCopy {
                 group.addTask {
                     let session = LanguageModelSession(instructions: instructions)
                     let response = try await session.respond(to: prompt)
-                    return await Self.sanitize(response.content)
+                    return await Self.sanitize(response.content, original: original)
                 }
                 group.addTask {
                     try await Task.sleep(nanoseconds: UInt64(Self.timeoutSeconds * 1_000_000_000))
@@ -100,7 +122,7 @@ public final class AppleIntelligenceCopy {
             Constraints:
             - Maximum 14 words. No emoji. No exclamation points.
             - Direct and a little blunt, but never cruel.
-            - Preserve every distance, day count, and number exactly.
+            - Preserve every distance, day count, and number exactly, written in digits as given. Add no other numbers.
             - Output only the rewritten line. No quotes, no preamble.
             """
         case .notification:
@@ -110,7 +132,7 @@ public final class AppleIntelligenceCopy {
             Constraints:
             - Maximum 9 words. No emoji. No exclamation points.
             - Punchy, direct, ends with a period.
-            - Preserve every distance, day count, and number exactly.
+            - Preserve every distance, day count, and number exactly, written in digits as given. Add no other numbers.
             - Output only the rewritten line. No quotes, no preamble.
             """
         }
@@ -120,18 +142,17 @@ public final class AppleIntelligenceCopy {
         "Rewrite this line: \(original)"
     }
 
-    /// Strip stray quotes / leading prefixes the model sometimes emits, and
-    /// reject obviously broken outputs (empty, way-too-long, lost the digits).
-    private static func sanitize(_ raw: String) -> String? {
+    /// Strip the quotes the model sometimes wraps its line in, then keep the
+    /// line only if `NarrationCheck` accepts it: the original's numbers,
+    /// none added, within the length cap.
+    private static func sanitize(_ raw: String, original: String) -> String? {
         var s = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         // Trim wrapping quotes if the model added them.
         if let first = s.first, let last = s.last,
            (first == "\"" || first == "“") && (last == "\"" || last == "”") {
             s = String(s.dropFirst().dropLast()).trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        guard !s.isEmpty else { return nil }
-        // Sanity cap — push body display gets ugly past ~120 chars.
-        guard s.count <= 140 else { return nil }
+        guard NarrationCheck.accepts(s, for: original) else { return nil }
         return s
     }
 }
