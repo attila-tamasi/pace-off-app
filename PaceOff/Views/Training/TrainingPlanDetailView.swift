@@ -48,6 +48,19 @@ struct TrainingPlanDetailView: View {
 
     // MARK: - Header
 
+    /// Where the paces come from ("Paces from your 10 km on 3 Nov
+    /// (48:12)"), with the VDOT. A plan saved before its source was kept
+    /// says only the VDOT.
+    private var paceSourceText: String {
+        let vdot = Int(plan.vdot.rounded())
+        if let source = plan.paceSource {
+            return "\(source.note()). VDOT \(vdot)."
+        }
+        return plan.usedBeginnerDefault
+            ? "Paces use a beginner-baseline VDOT (\(vdot)). Add a VO₂ max reading or PB to refine."
+            : "Paces tailored to VDOT \(vdot)."
+    }
+
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
@@ -62,9 +75,7 @@ struct TrainingPlanDetailView: View {
                 Image(systemName: plan.usedBeginnerDefault ? "info.circle" : "speedometer")
                     .font(.system(.caption, weight: .semibold))
                     .foregroundStyle(.secondary)
-                Text(plan.usedBeginnerDefault
-                     ? "Paces use a beginner-baseline VDOT (\(Int(plan.vdot.rounded()))). Add a VO₂ max reading or PB to refine."
-                     : "Paces tailored to VDOT \(Int(plan.vdot.rounded())).")
+                Text(paceSourceText)
                     .font(.system(.caption, design: .rounded))
                     .foregroundStyle(.secondary)
             }

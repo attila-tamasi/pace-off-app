@@ -535,7 +535,7 @@ final class TrainingPlanGeneratorTests: XCTestCase {
                 })
             },
             vdot: fresh.vdot, usedBeginnerDefault: fresh.usedBeginnerDefault,
-            createdAt: fresh.createdAt, startDate: fresh.startDate
+            createdAt: fresh.createdAt, startDate: fresh.startDate, paceSource: fresh.paceSource
         )
         XCTAssertNotEqual(old, fresh)
         XCTAssertEqual(generator.withSessionNotes(old), fresh)

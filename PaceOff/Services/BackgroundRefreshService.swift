@@ -328,6 +328,7 @@ public final class BackgroundRefreshService {
         // Resolve the runner's current VDOT the same way the picker does.
         // The PB counts whatever its distance: its VDOT is distance-free.
         let pb = ProfileStore.shared.profile?.personalBest
+        let bests = BestEffortLog.load(from: AppGroup.sharedDefaults).bests
 
         // A plan that hasn't started is rebuilt from today's data, quietly:
         // there's nothing the runner has to change yet.
@@ -336,6 +337,7 @@ public final class BackgroundRefreshService {
                 plan,
                 vo2Max: vo2Max.last?.value,
                 personalBest: pb,
+                bestEfforts: bests,
                 recentLongestRunMeters: TrainingPlanGenerator.longestRecentRunMeters(in: runs, today: now),
                 today: now
             ) {
@@ -350,12 +352,15 @@ public final class BackgroundRefreshService {
             tier: plan.tier,
             longRunDay: plan.longRunDay,
             vo2Max: vo2Max.last?.value,
-            personalBest: pb
+            personalBest: pb,
+            bestEfforts: bests,
+            today: now
         )
-        let (currentVDOT, usedFallback) = TrainingPlanGenerator().resolveVDOT(inputs)
-        guard !usedFallback else { return status }
+        let resolution = TrainingPlanGenerator().resolvePaces(inputs)
+        guard !resolution.usedFallback else { return status }
+        let currentVDOT = resolution.vdot
 
-        if let retuned = reconciler.retunedPlan(plan, toVDOT: currentVDOT, today: now) {
+        if let retuned = reconciler.retunedPlan(plan, toVDOT: currentVDOT, source: resolution.source, today: now) {
             store.setActive(retuned)
             if abs(currentVDOT - plan.vdot) >= TrainingPlanReconciler.vdotDriftThreshold {
                 NotificationScheduler.shared.notifyPlanRetuned(fromVDOT: plan.vdot, toVDOT: currentVDOT)

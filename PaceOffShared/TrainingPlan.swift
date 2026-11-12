@@ -305,6 +305,9 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
     /// The kit for the plan's strength sessions, or nil for a running-only
     /// plan. Optional so plans saved before strength work still decode.
     public let crossTraining: StrengthEquipment?
+    /// Where the paces come from, for the plan detail. Nil for a plan saved
+    /// before it was recorded.
+    public let paceSource: PaceSource?
 
     public init(id: UUID = UUID(),
                 goal: RunningGoal,
@@ -315,7 +318,8 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
                 usedBeginnerDefault: Bool,
                 createdAt: Date = Date(),
                 startDate: Date? = nil,
-                crossTraining: StrengthEquipment? = nil) {
+                crossTraining: StrengthEquipment? = nil,
+                paceSource: PaceSource? = nil) {
         self.id = id
         self.goal = goal
         self.tier = tier
@@ -326,6 +330,7 @@ public struct TrainingPlan: Codable, Sendable, Equatable, Identifiable {
         self.createdAt = createdAt
         self.startDate = startDate
         self.crossTraining = crossTraining
+        self.paceSource = paceSource
     }
 
     public var weekCount: Int { weeks.count }
