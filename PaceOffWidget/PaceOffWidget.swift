@@ -70,8 +70,10 @@ struct PaceOffWidgetView: View {
                     Text(distanceShort)
                         .font(.system(.title3, design: .rounded, weight: .bold))
                         .minimumScaleFactor(0.6)
-                    Text("km")
-                        .font(.system(.caption2, design: .rounded))
+                    if today.distanceText != nil {
+                        Text("km")
+                            .font(.system(.caption2, design: .rounded))
+                    }
                 }
             }
         case .accessoryRectangular:
@@ -80,7 +82,7 @@ struct PaceOffWidgetView: View {
                     .fill(statusColor)
                     .frame(width: 10, height: 10)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(distanceShort) km")
+                    Text(distanceLabel)
                         .font(.system(.headline, design: .rounded, weight: .bold))
                     // The plan line beats the voice line when a plan is
                     // active — it's the more actionable of the two.
@@ -99,7 +101,7 @@ struct PaceOffWidgetView: View {
                         .kerning(0.8)
                         .foregroundStyle(.secondary)
                 }
-                Text("\(distanceShort) km")
+                Text(distanceLabel)
                     .font(.system(.largeTitle, design: .rounded, weight: .bold))
                 if let planLine {
                     HStack(spacing: 4) {
@@ -134,14 +136,21 @@ struct PaceOffWidgetView: View {
     /// active.
     private var planLine: String? { today.planLine }
 
+    /// The day's distance ("8", "10.8"), "Rest" on a plan rest day, "—"
+    /// with nothing for today.
     private var distanceShort: String {
-        guard let t = today.target else { return "—" }
-        return "\(t.displayedDistanceKm)"
+        if let km = today.distanceText { return km }
+        return today.target == nil ? "—" : "Rest"
+    }
+
+    /// "8 km", "Rest" or "—".
+    private var distanceLabel: String {
+        today.distanceText.map { "\($0) km" } ?? distanceShort
     }
 
     private var inlineText: String {
-        guard let t = today.target else { return "Open Pace Off" }
-        return "Pace Off: \(t.displayedDistanceKm) km"
+        guard today.target != nil else { return "Open Pace Off" }
+        return "Pace Off: \(distanceLabel)"
     }
 
     /// Green once today is done or on a planned rest day (never the

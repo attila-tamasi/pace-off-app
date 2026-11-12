@@ -31,6 +31,9 @@ public enum AppGroup {
         public static let lastPlanStrengthSummary = "paceoff.lastPlanStrengthSummary"
         /// Whether a strength workout in Health covered today's session.
         public static let strengthCompletedToday = "paceoff.strengthCompletedToday"
+        /// The day's prescribed distance in km (`DayPrescription`), absent
+        /// on a rest day or when no prescription was written.
+        public static let lastDayDistanceKm = "paceoff.lastDayDistanceKm"
         /// Set once a Health read has held a run. A runner back after more
         /// than the 90-day window gets a restart target, not the first-run
         /// card a new runner gets.

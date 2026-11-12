@@ -12,6 +12,10 @@ import WidgetKit
 public final class TodayViewModel {
 
     public private(set) var target: RunTarget?
+    /// The day's one prescription (`DayPrescription`): the plan's run as
+    /// readiness changed it, rest on a plan rest day, or the daily target.
+    /// Today's hero, its badge, the pushes and the widget all show this.
+    public private(set) var prescription: DayPrescription?
     /// True once Health has been read and holds no run to base a target
     /// on. Today then shows how to log a first run, and nothing is pushed.
     public private(set) var needsFirstRun: Bool = false
@@ -106,9 +110,10 @@ public final class TodayViewModel {
             TrainingPlanReconciler().todayStatus(plan: $0, runs: snapshot.runs,
                                                  strengthWorkouts: snapshot.strengthWorkoutsOrEmpty)
         }
-        self.strengthDoneToday = planStatus?.isStrengthCompleted ?? false
+        let prescription = self.prescription
 
-        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak, planStatus: planStatus)
+        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak,
+                               planStatus: planStatus, prescription: prescription)
         let cannedCard = voice.todayCard(for: state)
         let cannedNotif = voice.notification(for: state)
         self.voiceLine = cannedCard
@@ -133,7 +138,8 @@ public final class TodayViewModel {
         // today's date would pass it off as current.
         if sync.isFresh {
             let day = WidgetCache(target: target, voiceLine: self.voiceLine,
-                                  runCompletedToday: todayRun != nil, planStatus: planStatus)
+                                  runCompletedToday: todayRun != nil, planStatus: planStatus,
+                                  prescription: prescription)
             if day.save(to: AppGroup.sharedDefaults) {
                 WidgetCenter.shared.reloadAllTimelines()
             }
@@ -147,6 +153,7 @@ public final class TodayViewModel {
             runs: snapshot.runs,
             plan: plan,
             planStatus: planStatus,
+            prescription: prescription,
             overrideBody: notificationBody
         )
     }
@@ -177,6 +184,20 @@ public final class TodayViewModel {
         let computed = engine.target(inputs, hasRunBefore: defaults?.bool(forKey: AppGroup.Keys.hasSeenRun) ?? false)
         self.target = computed
         self.needsFirstRun = computed == nil
+        let plan = TrainingPlanStore.shared.activePlan
+        let planStatus = plan.map {
+            TrainingPlanReconciler().todayStatus(plan: $0, runs: runs,
+                                                 strengthWorkouts: snapshot.strengthWorkoutsOrEmpty,
+                                                 today: now)
+        }
+        self.strengthDoneToday = planStatus?.isStrengthCompleted ?? false
+        self.prescription = DayPrescription.make(
+            planStatus: planStatus,
+            readiness: self.readiness?.level,
+            target: computed,
+            easyPace: plan.flatMap { DayPrescription.easyPaceBand(in: $0, today: now) },
+            longestRunTodayMeters: DayPrescription.longestRun(on: now, in: runs)
+        )
         self.yesterday = mostRecentRunBefore(today: now, in: runs)
         self.todayRun = mostRecentRunOn(day: now, in: runs)
         self.currentVO2Max = vo2.last?.value

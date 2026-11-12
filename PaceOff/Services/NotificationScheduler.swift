@@ -28,6 +28,7 @@ public final class NotificationScheduler {
         let runs: [RunRecord]
         let plan: TrainingPlan?
         let planStatus: PlanDayStatus?
+        let prescription: DayPrescription?
         let overrideBody: String?
     }
     @ObservationIgnored private var lastDay: DayInputs?
@@ -61,11 +62,13 @@ public final class NotificationScheduler {
         runs: [RunRecord],
         plan: TrainingPlan?,
         planStatus: PlanDayStatus?,
+        prescription: DayPrescription? = nil,
         overrideBody: String? = nil
     ) {
         lastDay = DayInputs(day: Calendar.current.startOfDay(for: Date()),
                             target: target, yesterday: yesterday, currentStreak: currentStreak,
-                            runs: runs, plan: plan, planStatus: planStatus, overrideBody: overrideBody)
+                            runs: runs, plan: plan, planStatus: planStatus, prescription: prescription,
+                            overrideBody: overrideBody)
         cancelDailyPushes()
 
         let defaults = AppGroup.sharedDefaults
@@ -73,7 +76,8 @@ public final class NotificationScheduler {
               DailyPushPlanner.pushesEnabled(in: defaults)
         else { return }
 
-        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak, planStatus: planStatus)
+        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: currentStreak,
+                               planStatus: planStatus, prescription: prescription)
         let times = DailyPushPlanner.Schedule(
             morningHour: defaults?.integer(forKey: AppGroup.Keys.notificationMorningHour) ?? 0,
             afternoonHour: defaults?.integer(forKey: AppGroup.Keys.notificationAfternoonHour) ?? 0,
@@ -85,6 +89,7 @@ public final class NotificationScheduler {
             runs: runs,
             plan: plan,
             planStatus: planStatus,
+            prescription: prescription,
             schedule: times
         ))
 
@@ -102,7 +107,7 @@ public final class NotificationScheduler {
             scheduleDailyPushes(target: day.target, yesterday: day.yesterday,
                                 currentStreak: day.currentStreak, runs: day.runs,
                                 plan: day.plan, planStatus: day.planStatus,
-                                overrideBody: day.overrideBody)
+                                prescription: day.prescription, overrideBody: day.overrideBody)
         } else {
             await BackgroundRefreshService.shared.refreshHealthData()
         }

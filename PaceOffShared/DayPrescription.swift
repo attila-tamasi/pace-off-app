@@ -51,6 +51,10 @@ public struct DayPrescription: Sendable, Equatable {
     public let planWorkout: Workout?
     /// Today's strength session, still to do or done.
     public let strength: StrengthSession?
+    /// Whether today's run already meets the prescription
+    /// (`isMet(byRunMeters:)` on the longest run today). False on rest and
+    /// strength days.
+    public internal(set) var isDone: Bool = false
 
     /// Red readiness keeps at most this share of the plan's distance, the
     /// factor a red day already caps the daily target at.
@@ -64,6 +68,49 @@ public struct DayPrescription: Sendable, Equatable {
     public static let targetCompletionFraction = 0.95
 
     public var distanceKm: Double? { distanceMeters.map { $0 / 1000 } }
+
+    /// The distance as Today's hero shows it: "8", "10.8". Nil on rest and
+    /// strength days.
+    public var distanceText: String? { distanceKm.map(Self.formatKm) }
+
+    /// The plan run to do, as written or eased, with its pace band. Nil for
+    /// the daily target and on rest and strength days.
+    public var runWorkout: Workout? {
+        guard source == .plan, kind == .run || kind == .race, let distanceMeters else { return nil }
+        return Workout(kind: workoutKind ?? .easy, distanceMeters: distanceMeters,
+                       paceMinSecPerKm: paceMinSecPerKm ?? 0, paceMaxSecPerKm: paceMaxSecPerKm ?? 0,
+                       notes: adjustment == nil ? planWorkout?.notes : nil)
+    }
+
+    /// The day on one line, for pushes and the widget: "8.0 km ·
+    /// 5:25–5:45/km", "Race day · 21.1 km", "6 km" for the daily target.
+    /// Nil on rest and strength days.
+    public var summary: String? {
+        switch kind {
+        case .rest, .strength: return nil
+        case .race: return runWorkout?.headline
+        case .run: return runWorkout?.summary ?? distanceText.map { "\($0) km" }
+        }
+    }
+
+    /// Why the plan's workout changed today, nil when it didn't.
+    public var adjustmentNote: String? {
+        switch adjustment {
+        case .easedForYellow:
+            let kind = planWorkout?.kind.displayName.lowercased() ?? "session"
+            return "Readiness is yellow, so today's \(kind) runs easy"
+        case .cutForRed:
+            return "Readiness is red, so today's run is cut to an easy one"
+        case nil:
+            return nil
+        }
+    }
+
+    /// Whole km without a decimal ("8"), else one decimal ("10.8").
+    public static func formatKm(_ km: Double) -> String {
+        let tenths = (km * 10).rounded() / 10
+        return tenths == tenths.rounded() ? String(format: "%.0f", tenths) : String(format: "%.1f", tenths)
+    }
 
     /// Whether a run of `meters` (the longest today) meets the day.
     public func isMet(byRunMeters meters: Double) -> Bool {
@@ -83,18 +130,31 @@ public struct DayPrescription: Sendable, Equatable {
     ///   - target: the daily target, used when the plan has no workout today.
     ///   - easyPace: the plan's easy band this week (`easyPaceBand(in:today:)`),
     ///     for a run readiness eases.
+    ///   - longestRunTodayMeters: the longest run recorded today, which sets
+    ///     `isDone`.
     public static func make(planStatus: PlanDayStatus?,
                             readiness: ReadinessLevel?,
                             target: RunTarget?,
-                            easyPace: ClosedRange<Double>?) -> DayPrescription? {
+                            easyPace: ClosedRange<Double>?,
+                            longestRunTodayMeters: Double = 0) -> DayPrescription? {
+        var day: DayPrescription
         if let status = planStatus, let workout = status.workout {
-            return fromPlan(workout, strength: status.strength, readiness: readiness, easyPace: easyPace)
+            day = fromPlan(workout, strength: status.strength, readiness: readiness, easyPace: easyPace)
+        } else if let target {
+            day = DayPrescription(kind: .run, source: .dailyTarget, workoutKind: nil,
+                                  distanceMeters: target.displayedDistanceMeters,
+                                  paceMinSecPerKm: nil, paceMaxSecPerKm: nil,
+                                  adjustment: nil, planWorkout: nil, strength: nil)
+        } else {
+            return nil
         }
-        guard let target else { return nil }
-        return DayPrescription(kind: .run, source: .dailyTarget, workoutKind: nil,
-                               distanceMeters: target.displayedDistanceMeters,
-                               paceMinSecPerKm: nil, paceMaxSecPerKm: nil,
-                               adjustment: nil, planWorkout: nil, strength: nil)
+        day.isDone = day.isMet(byRunMeters: longestRunTodayMeters)
+        return day
+    }
+
+    /// The longest run that started on `now`'s day.
+    public static func longestRun(on now: Date, in runs: [RunRecord], calendar: Calendar = .current) -> Double {
+        runs.filter { calendar.isDate($0.startDate, inSameDayAs: now) }.map(\.distanceMeters).max() ?? 0
     }
 
     private static func fromPlan(_ workout: Workout, strength: StrengthSession?,

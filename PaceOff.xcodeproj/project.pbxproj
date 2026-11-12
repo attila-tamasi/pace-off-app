@@ -176,6 +176,7 @@
 		51EEA31F4F648CDEA2C9F110 /* DayPrescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = C451BE74A07C3BCE92D2A9D3 /* DayPrescription.swift */; };
 		8DFF8761DD52967483EAE2BE /* DayPrescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = C451BE74A07C3BCE92D2A9D3 /* DayPrescription.swift */; };
 		1F8861EDD67FE025AF43FB42 /* DayPrescriptionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40575257FF762042F0D6C396 /* DayPrescriptionTests.swift */; };
+		73428B092FCF690F0FACAE62 /* PrescriptionSurfacesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE1BC8E4E99BDE5695924EB /* PrescriptionSurfacesTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -330,6 +331,7 @@
 		E9F2DC19A2952B3E7B1C035A /* NarrationCheckTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NarrationCheckTests.swift; sourceTree = "<group>"; };
 		C451BE74A07C3BCE92D2A9D3 /* DayPrescription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayPrescription.swift; sourceTree = "<group>"; };
 		40575257FF762042F0D6C396 /* DayPrescriptionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayPrescriptionTests.swift; sourceTree = "<group>"; };
+		3DE1BC8E4E99BDE5695924EB /* PrescriptionSurfacesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrescriptionSurfacesTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -393,6 +395,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				3DE1BC8E4E99BDE5695924EB /* PrescriptionSurfacesTests.swift */,
 				40575257FF762042F0D6C396 /* DayPrescriptionTests.swift */,
 				E9F2DC19A2952B3E7B1C035A /* NarrationCheckTests.swift */,
 				1B46B8766FA7297082300819 /* StrengthPlanTests.swift */,
@@ -766,6 +769,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				73428B092FCF690F0FACAE62 /* PrescriptionSurfacesTests.swift in Sources */,
 				1F8861EDD67FE025AF43FB42 /* DayPrescriptionTests.swift in Sources */,
 				51EEA31F4F648CDEA2C9F110 /* DayPrescription.swift in Sources */,
 				42B8F7C7914479258183BEDC /* NarrationCheckTests.swift in Sources */,

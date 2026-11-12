@@ -86,6 +86,9 @@ public struct DailyPushPlanner: Sendable {
         public let plan: TrainingPlan?
         /// Today's plan status, nil without an active plan.
         public let planStatus: PlanDayStatus?
+        /// The day's one prescription. On a plan run day the pushes name
+        /// its run, as readiness changed it, and nothing else.
+        public let prescription: DayPrescription?
         public let schedule: Schedule
 
         public init(now: Date,
@@ -93,12 +96,14 @@ public struct DailyPushPlanner: Sendable {
                     runs: [RunRecord],
                     plan: TrainingPlan?,
                     planStatus: PlanDayStatus?,
+                    prescription: DayPrescription? = nil,
                     schedule: Schedule = .standard) {
             self.now = now
             self.body = body
             self.runs = runs
             self.plan = plan
             self.planStatus = planStatus
+            self.prescription = prescription
             self.schedule = schedule
         }
     }
@@ -120,17 +125,29 @@ public struct DailyPushPlanner: Sendable {
     public func pushes(for inputs: Inputs) -> [DailyPush] {
         let isPlanRestDay = inputs.planStatus?.isRestDay ?? false
         let planWorkout = isPlanRestDay ? nil : inputs.planStatus?.workout
+        // The plan's run as the day's prescription has it: eased or cut
+        // when readiness changed it.
+        let planRun = inputs.prescription.flatMap { $0.source == .plan && $0.kind == .run ? $0 : nil }
         // With a plan workout today, the day is done when that workout is;
         // without one, any run counts. A short shakeout doesn't tick off a
         // planned long run.
-        let doneToday = planWorkout != nil
-            ? (inputs.planStatus?.isCompleted ?? false)
-            : inputs.runs.contains(where: { calendar.isDate($0.startDate, inSameDayAs: inputs.now) })
+        let doneToday: Bool
+        if let planRun {
+            doneToday = planRun.isDone
+        } else if planWorkout != nil {
+            doneToday = inputs.planStatus?.isCompleted ?? false
+        } else {
+            doneToday = inputs.runs.contains(where: { calendar.isDate($0.startDate, inSameDayAs: inputs.now) })
+        }
 
         // A session already logged in Health drops out of the pushes.
         let strength = inputs.planStatus?.pendingStrength
         var body = inputs.body
-        if let planWorkout {
+        if let planRun, let run = planRun.runWorkout {
+            // The prescription alone, so a push never names two distances.
+            body = "\(Self.planLine(run, then: strength))."
+            if let note = planRun.adjustmentNote { body += " \(note)." }
+        } else if let planWorkout {
             body = "\(Self.planLine(planWorkout, then: strength)). \(body)"
         }
 

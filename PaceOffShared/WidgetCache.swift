@@ -17,6 +17,11 @@ public struct WidgetCache: Equatable, Sendable {
     public var strengthSummary: String?
     /// Whether a strength workout in Health already covered it.
     public var strengthCompletedToday: Bool
+    /// The day's prescribed distance in km (`DayPrescription`): the plan's
+    /// run as readiness left it, or the daily target. Nil on a rest day,
+    /// and in a cache written before it existed, where the target's whole
+    /// km stand in.
+    public var dayDistanceKm: Double?
 
     public init(target: RunTarget? = nil,
                 voiceLine: String? = nil,
@@ -24,7 +29,8 @@ public struct WidgetCache: Equatable, Sendable {
                 planSummary: String? = nil,
                 planCompletedToday: Bool = false,
                 strengthSummary: String? = nil,
-                strengthCompletedToday: Bool = false) {
+                strengthCompletedToday: Bool = false,
+                dayDistanceKm: Double? = nil) {
         self.target = target
         self.voiceLine = voiceLine
         self.runCompletedToday = runCompletedToday
@@ -32,26 +38,42 @@ public struct WidgetCache: Equatable, Sendable {
         self.planCompletedToday = planCompletedToday
         self.strengthSummary = strengthSummary
         self.strengthCompletedToday = strengthSummary != nil && strengthCompletedToday
+        self.dayDistanceKm = dayDistanceKm
     }
 
     /// The day as a refresh computed it, with today's plan status (nil
     /// when no plan is active).
+    ///
+    /// With the day's `prescription`, the plan line names the plan's run as
+    /// readiness changed it, the plan counts as done once that run is, and
+    /// the widget shows the prescription's distance.
     public init(target: RunTarget,
                 voiceLine: String,
                 runCompletedToday: Bool,
-                planStatus: PlanDayStatus?) {
+                planStatus: PlanDayStatus?,
+                prescription: DayPrescription? = nil) {
+        let planDay = prescription?.source == .plan ? prescription : nil
+        let planRun = planDay?.kind == .run ? planDay : nil
         self.init(target: target,
                   voiceLine: voiceLine,
                   runCompletedToday: runCompletedToday,
-                  planSummary: planStatus?.workout?.headline,
-                  planCompletedToday: planStatus?.isCompleted ?? false,
+                  planSummary: planRun?.summary ?? planStatus?.workout?.headline,
+                  planCompletedToday: planRun?.isDone ?? planStatus?.isCompleted ?? false,
                   strengthSummary: planStatus?.strength?.summary,
-                  strengthCompletedToday: planStatus?.isStrengthCompleted ?? false)
+                  strengthCompletedToday: planStatus?.isStrengthCompleted ?? false,
+                  dayDistanceKm: prescription?.distanceKm)
     }
 
     public static let empty = WidgetCache()
 
     public var isPlanRestDay: Bool { planSummary == Workout.rest.summary }
+
+    /// The distance the widget shows: "8", "10.8". Nil on a plan rest day
+    /// and with no target.
+    public var distanceText: String? {
+        guard let target, !isPlanRestDay else { return nil }
+        return dayDistanceKm.map(DayPrescription.formatKm) ?? "\(target.displayedDistanceKm)"
+    }
 
     /// A planned day without a run but with a strength session.
     public var isStrengthOnlyDay: Bool { isPlanRestDay && strengthSummary != nil }
@@ -163,6 +185,11 @@ public struct WidgetCache: Equatable, Sendable {
             defaults.removeObject(forKey: AppGroup.Keys.lastPlanStrengthSummary)
         }
         defaults.set(strengthCompletedToday, forKey: AppGroup.Keys.strengthCompletedToday)
+        if let dayDistanceKm {
+            defaults.set(dayDistanceKm, forKey: AppGroup.Keys.lastDayDistanceKm)
+        } else {
+            defaults.removeObject(forKey: AppGroup.Keys.lastDayDistanceKm)
+        }
         return true
     }
 
@@ -177,7 +204,8 @@ public struct WidgetCache: Equatable, Sendable {
             planSummary: defaults.string(forKey: AppGroup.Keys.lastPlanWorkoutSummary),
             planCompletedToday: defaults.bool(forKey: AppGroup.Keys.planWorkoutCompletedToday),
             strengthSummary: defaults.string(forKey: AppGroup.Keys.lastPlanStrengthSummary),
-            strengthCompletedToday: defaults.bool(forKey: AppGroup.Keys.strengthCompletedToday)
+            strengthCompletedToday: defaults.bool(forKey: AppGroup.Keys.strengthCompletedToday),
+            dayDistanceKm: defaults.object(forKey: AppGroup.Keys.lastDayDistanceKm) as? Double
         )
     }
 }
