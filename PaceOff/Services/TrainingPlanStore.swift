@@ -66,6 +66,7 @@ public final class TrainingPlanStore {
             let data = try encoder.encode(plan)
             try data.write(to: url, options: .atomic)
             activePlan = plan
+            Task { await WatchWorkoutScheduler.shared.sync(prescription: nil) }
             return true
         } catch {
             return false
@@ -81,5 +82,6 @@ public final class TrainingPlanStore {
         if let url = fileURL {
             try? fileManager.removeItem(at: url)
         }
+        Task { await WatchWorkoutScheduler.shared.sync(prescription: nil) }
     }
 }

@@ -187,6 +187,12 @@
 		66CCE6FCA4DE7214FF4FA58B /* WorkoutBlocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8746BA3E7C2CABAFD631EE5 /* WorkoutBlocks.swift */; };
 		5C5B1F4E72E03AE4A4139226 /* WorkoutBlocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8746BA3E7C2CABAFD631EE5 /* WorkoutBlocks.swift */; };
 		66EE3F5D09F8D6AB0E9BAE7D /* WorkoutBlocksTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F264373C5F8459D641A34C10 /* WorkoutBlocksTests.swift */; };
+		339C557DD7AF9760F0484C77 /* WatchSchedulePlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 323336F95589D3FBBAB3AE03 /* WatchSchedulePlanner.swift */; };
+		D056DE66E8283C3271D9B7EF /* WatchSchedulePlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 323336F95589D3FBBAB3AE03 /* WatchSchedulePlanner.swift */; };
+		A0F2487607BEF8B8CF42D239 /* WatchSchedulePlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 323336F95589D3FBBAB3AE03 /* WatchSchedulePlanner.swift */; };
+		808DAE50E85B46241EB1110A /* WatchSchedulePlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 323336F95589D3FBBAB3AE03 /* WatchSchedulePlanner.swift */; };
+		220EB1E9A44DD0979B6883A1 /* WatchSchedulePlannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22019F8B52F0E38F42AE2787 /* WatchSchedulePlannerTests.swift */; };
+		FC1ED647B7C95EFBF80A7595 /* WatchWorkoutScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CB192416B06DF96163DA831 /* WatchWorkoutScheduler.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -346,6 +352,9 @@
 		951DCB699D71ACA53EAAE327 /* SingleRunCapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleRunCapTests.swift; sourceTree = "<group>"; };
 		A8746BA3E7C2CABAFD631EE5 /* WorkoutBlocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutBlocks.swift; sourceTree = "<group>"; };
 		F264373C5F8459D641A34C10 /* WorkoutBlocksTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutBlocksTests.swift; sourceTree = "<group>"; };
+		323336F95589D3FBBAB3AE03 /* WatchSchedulePlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSchedulePlanner.swift; sourceTree = "<group>"; };
+		22019F8B52F0E38F42AE2787 /* WatchSchedulePlannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSchedulePlannerTests.swift; sourceTree = "<group>"; };
+		2CB192416B06DF96163DA831 /* WatchWorkoutScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchWorkoutScheduler.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -377,6 +386,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				323336F95589D3FBBAB3AE03 /* WatchSchedulePlanner.swift */,
 				A8746BA3E7C2CABAFD631EE5 /* WorkoutBlocks.swift */,
 				5EE9780E98F8E75B1ADF9CD7 /* SingleRunCap.swift */,
 				C451BE74A07C3BCE92D2A9D3 /* DayPrescription.swift */,
@@ -411,6 +421,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				22019F8B52F0E38F42AE2787 /* WatchSchedulePlannerTests.swift */,
 				F264373C5F8459D641A34C10 /* WorkoutBlocksTests.swift */,
 				951DCB699D71ACA53EAAE327 /* SingleRunCapTests.swift */,
 				3DE1BC8E4E99BDE5695924EB /* PrescriptionSurfacesTests.swift */,
@@ -454,6 +465,7 @@
 		20A1D8614B0C28D9D51ABD4D /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				2CB192416B06DF96163DA831 /* WatchWorkoutScheduler.swift */,
 				5EFBD02A6FEE9098969290F2 /* AppleIntelligenceCopy.swift */,
 				28B2707B22E9FF547E90D53F /* AppleSignInService.swift */,
 				733C2FC37577B3FD0C44A279 /* BackgroundRefreshService.swift */,
@@ -787,6 +799,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				220EB1E9A44DD0979B6883A1 /* WatchSchedulePlannerTests.swift in Sources */,
+				A0F2487607BEF8B8CF42D239 /* WatchSchedulePlanner.swift in Sources */,
 				66EE3F5D09F8D6AB0E9BAE7D /* WorkoutBlocksTests.swift in Sources */,
 				66CCE6FCA4DE7214FF4FA58B /* WorkoutBlocks.swift in Sources */,
 				A64789D2B97675E0BE91F7A6 /* SingleRunCapTests.swift in Sources */,
@@ -844,6 +858,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D056DE66E8283C3271D9B7EF /* WatchSchedulePlanner.swift in Sources */,
 				24FC1D8EB6C572C709847E80 /* WorkoutBlocks.swift in Sources */,
 				8E953ED5A63A373959FDB6E8 /* SingleRunCap.swift in Sources */,
 				4B8E9050603B3ABDBE425E9B /* DayPrescription.swift in Sources */,
@@ -880,6 +895,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				808DAE50E85B46241EB1110A /* WatchSchedulePlanner.swift in Sources */,
 				5C5B1F4E72E03AE4A4139226 /* WorkoutBlocks.swift in Sources */,
 				8344566D80BD5F1BDBBC3F4C /* SingleRunCap.swift in Sources */,
 				8DFF8761DD52967483EAE2BE /* DayPrescription.swift in Sources */,
@@ -919,6 +935,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FC1ED647B7C95EFBF80A7595 /* WatchWorkoutScheduler.swift in Sources */,
+				339C557DD7AF9760F0484C77 /* WatchSchedulePlanner.swift in Sources */,
 				0280085D0C6922478BBB259E /* WorkoutBlocks.swift in Sources */,
 				466748F3FB6B32828B798CE1 /* SingleRunCap.swift in Sources */,
 				930021635388EDC877ED95A2 /* DayPrescription.swift in Sources */,

@@ -26,6 +26,7 @@ private struct ActivePlanView: View {
     let plan: TrainingPlan
 
     @State private var settingsPresented = false
+    @State private var watch = WatchWorkoutScheduler.shared
 
     /// One clock read per render, so every part of the screen agrees on
     /// the day, even across midnight.
@@ -252,11 +253,34 @@ private struct ActivePlanView: View {
                 planRow("Strength per week",
                         value: "\(TrainingPlanGenerator.strengthSessionsPerWeek(tier: plan.tier)) · \(kit.displayName)")
             }
+            if watch.isSupported {
+                Divider().padding(.leading, 16)
+                watchRow
+            }
         }
         .background(
             Color(.secondarySystemGroupedBackground),
             in: RoundedRectangle(cornerRadius: 20, style: .continuous)
         )
+    }
+
+    /// "Send workouts to Apple Watch": the next seven days' runs go to the
+    /// Workout app on the watch, with pace alerts.
+    private var watchRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Toggle("Send workouts to Apple Watch", isOn: Binding(
+                get: { watch.isEnabled },
+                set: { on in Task { await watch.setEnabled(on) } }
+            ))
+            Text(watch.isDenied
+                 ? "Pace Off isn't allowed to schedule workouts. You can allow it in Settings."
+                 : "The next seven days' runs appear in the Workout app on your watch, with pace alerts.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 11)
     }
 
     private func planRow(_ title: String, value: String, showsChevron: Bool = false) -> some View {
