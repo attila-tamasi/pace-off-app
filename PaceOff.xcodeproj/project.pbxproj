@@ -209,6 +209,11 @@
 		FC59D0B8BF46EBAD27199683 /* PaceSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 601B741519DC3C7A9F13F8A5 /* PaceSource.swift */; };
 		06C5513710F8E6EF55FC3573 /* PaceSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 601B741519DC3C7A9F13F8A5 /* PaceSource.swift */; };
 		A11D3957B46E14FDAB8F3E53 /* PaceSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E2CD1DC437E1CA3D002F0D4 /* PaceSourceTests.swift */; };
+		D8B2A676718B503573D0916B /* SleepNight.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EC03694CC7A684972F82BB /* SleepNight.swift */; };
+		FBB66CB3907CE499FCDCD94D /* SleepNight.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EC03694CC7A684972F82BB /* SleepNight.swift */; };
+		AFC4F2E202AC463FF45128CE /* SleepNight.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EC03694CC7A684972F82BB /* SleepNight.swift */; };
+		4ED3C4D6F3CFD100B6E1A7E8 /* SleepNight.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8EC03694CC7A684972F82BB /* SleepNight.swift */; };
+		5D3C33C4D0CF0F71EA410527 /* SleepReadinessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 431B0DCA6DBA50446A2D7898 /* SleepReadinessTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -378,6 +383,8 @@
 		FCADC1E50B454347CF2CF453 /* BestEffortService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BestEffortService.swift; sourceTree = "<group>"; };
 		601B741519DC3C7A9F13F8A5 /* PaceSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceSource.swift; sourceTree = "<group>"; };
 		2E2CD1DC437E1CA3D002F0D4 /* PaceSourceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceSourceTests.swift; sourceTree = "<group>"; };
+		E8EC03694CC7A684972F82BB /* SleepNight.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepNight.swift; sourceTree = "<group>"; };
+		431B0DCA6DBA50446A2D7898 /* SleepReadinessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepReadinessTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -409,6 +416,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				E8EC03694CC7A684972F82BB /* SleepNight.swift */,
 				601B741519DC3C7A9F13F8A5 /* PaceSource.swift */,
 				1685EA8B9FF81FA34B89EAEF /* BestEffortLog.swift */,
 				2202FC7680E4565178C1EA64 /* BestEfforts.swift */,
@@ -447,6 +455,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				431B0DCA6DBA50446A2D7898 /* SleepReadinessTests.swift */,
 				2E2CD1DC437E1CA3D002F0D4 /* PaceSourceTests.swift */,
 				EA6370549CF90F6DE04E7D67 /* BestEffortLogTests.swift */,
 				99A8870C60324AA56463B0DF /* BestEffortsTests.swift */,
@@ -829,6 +838,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5D3C33C4D0CF0F71EA410527 /* SleepReadinessTests.swift in Sources */,
+				AFC4F2E202AC463FF45128CE /* SleepNight.swift in Sources */,
 				A11D3957B46E14FDAB8F3E53 /* PaceSourceTests.swift in Sources */,
 				FC59D0B8BF46EBAD27199683 /* PaceSource.swift in Sources */,
 				DDEECAA73EBB6EBA57DD27B7 /* BestEffortLogTests.swift in Sources */,
@@ -894,6 +905,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FBB66CB3907CE499FCDCD94D /* SleepNight.swift in Sources */,
 				34D9BA4642903FD196CF7639 /* PaceSource.swift in Sources */,
 				A3946B4E579D65B47551CFB5 /* BestEffortLog.swift in Sources */,
 				5210E10D4DE7974C1E2EB4C0 /* BestEfforts.swift in Sources */,
@@ -934,6 +946,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4ED3C4D6F3CFD100B6E1A7E8 /* SleepNight.swift in Sources */,
 				06C5513710F8E6EF55FC3573 /* PaceSource.swift in Sources */,
 				A116D7301E83578DC210FF11 /* BestEffortLog.swift in Sources */,
 				642A64249A0B2E5A2A4E50CF /* BestEfforts.swift in Sources */,
@@ -977,6 +990,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D8B2A676718B503573D0916B /* SleepNight.swift in Sources */,
 				26665B995CE016D091B06EDF /* PaceSource.swift in Sources */,
 				BDE101524AB3A1182AFE7D9D /* BestEffortService.swift in Sources */,
 				26B11D1E989E813E7684565D /* BestEffortLog.swift in Sources */,

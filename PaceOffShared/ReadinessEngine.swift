@@ -1,9 +1,9 @@
 // ReadinessEngine.swift
 // Pure-function daily readiness traffic light (SPEC §A).
-// Compares today's HRV (SDNN) and resting heart rate against rolling
-// personal baselines and grades the day green / yellow / red with one
-// supporting sentence. Display-only in V1 — it never feeds back into
-// PushTargetEngine's prescribed distance.
+// Compares today's HRV (SDNN), resting heart rate and last night's time
+// asleep against rolling personal baselines and grades the day green /
+// yellow / red with one supporting sentence. The verdict feeds
+// PushTargetEngine and DayPrescription.
 // No HealthKit imports — testable on any platform.
 
 import Foundation
@@ -26,6 +26,10 @@ public struct DailyReadiness: Codable, Sendable, Equatable {
     public let hrvBaselineMs: Double?
     public let restingHR: Double?
     public let restingHRBaseline: Double?
+    /// Last night's time asleep and the runner's 14-night average, in
+    /// hours. Nil without enough nights.
+    public let sleepHours: Double?
+    public let sleepBaselineHours: Double?
     public let computedAt: Date
 
     public init(
@@ -35,6 +39,8 @@ public struct DailyReadiness: Codable, Sendable, Equatable {
         hrvBaselineMs: Double? = nil,
         restingHR: Double? = nil,
         restingHRBaseline: Double? = nil,
+        sleepHours: Double? = nil,
+        sleepBaselineHours: Double? = nil,
         computedAt: Date = Date()
     ) {
         self.level = level
@@ -43,6 +49,8 @@ public struct DailyReadiness: Codable, Sendable, Equatable {
         self.hrvBaselineMs = hrvBaselineMs
         self.restingHR = restingHR
         self.restingHRBaseline = restingHRBaseline
+        self.sleepHours = sleepHours
+        self.sleepBaselineHours = sleepBaselineHours
         self.computedAt = computedAt
     }
 }
@@ -55,15 +63,18 @@ public struct ReadinessEngine: Sendable {
         public let today: Date
         public let hrv: [HRVSnapshot]                            // trailing ~35 days
         public let restingHeartRate: [RestingHeartRateSnapshot]  // trailing 14 days
+        public let sleep: [SleepNight]                           // trailing ~16 nights
 
         public init(
             today: Date = Date(),
             hrv: [HRVSnapshot],
-            restingHeartRate: [RestingHeartRateSnapshot]
+            restingHeartRate: [RestingHeartRateSnapshot],
+            sleep: [SleepNight] = []
         ) {
             self.today = today
             self.hrv = hrv
             self.restingHeartRate = restingHeartRate
+            self.sleep = sleep
         }
     }
 
@@ -75,6 +86,8 @@ public struct ReadinessEngine: Sendable {
     /// Below these the signal is silently dropped rather than guessed at.
     static let minHRVBaselineDays = 7
     static let minRHRBaselineDays = 5
+    static let sleepBaselineWindowDays = 14
+    static let minSleepBaselineNights = 5
 
     // Deviation thresholds, as fractions of baseline. HRV drops are graded
     // more leniently than RHR rises because overnight SDNN swings ±10% on
@@ -83,6 +96,8 @@ public struct ReadinessEngine: Sendable {
     static let hrvRedDrop = 0.20      // ≥20% below baseline → red
     static let rhrYellowRise = 0.04   // ≥4% above baseline → yellow
     static let rhrRedRise = 0.08      // ≥8% above baseline → red
+    static let sleepYellowShort = 0.15 // ≥15% less than usual → yellow
+    static let sleepRedShort = 0.30    // ≥30% less than usual → red
 
     public init() {}
 
@@ -102,6 +117,8 @@ public struct ReadinessEngine: Sendable {
             minBaselineDays: Self.minRHRBaselineDays
         )
 
+        let sleepReading = lastNightAndBaseline(inputs.sleep, today: inputs.today)
+
         // Severity per signal: 0 green, 1 yellow, 2 red; nil = no data.
         let hrvSeverity: Int? = hrvReading.map { reading in
             let drop = 1.0 - reading.value / reading.baseline
@@ -116,13 +133,20 @@ public struct ReadinessEngine: Sendable {
             return 0
         }
 
-        guard hrvSeverity != nil || rhrSeverity != nil else { return nil }
+        let sleepSeverity: Int? = sleepReading.map { reading in
+            let short = 1.0 - reading.value / reading.baseline
+            if short >= Self.sleepRedShort { return 2 }
+            if short >= Self.sleepYellowShort { return 1 }
+            return 0
+        }
+
+        guard hrvSeverity != nil || rhrSeverity != nil || sleepSeverity != nil else { return nil }
 
         // Worst signal wins; two independently degraded signals escalate to
         // red even if each alone is only yellow.
-        let known = [hrvSeverity, rhrSeverity].compactMap { $0 }
+        let known = [hrvSeverity, rhrSeverity, sleepSeverity].compactMap { $0 }
         var combined = known.max() ?? 0
-        if (hrvSeverity ?? 0) >= 1 && (rhrSeverity ?? 0) >= 1 {
+        if known.filter({ $0 >= 1 }).count >= 2 {
             combined = 2
         }
 
@@ -135,34 +159,43 @@ public struct ReadinessEngine: Sendable {
 
         return DailyReadiness(
             level: level,
-            sentence: sentence(level: level, hrvSeverity: hrvSeverity, rhrSeverity: rhrSeverity),
+            sentence: sentence(level: level, hrvSeverity: hrvSeverity, rhrSeverity: rhrSeverity,
+                               sleepSeverity: sleepSeverity),
             hrvMs: hrvReading?.value,
             hrvBaselineMs: hrvReading?.baseline,
             restingHR: rhrReading?.value,
             restingHRBaseline: rhrReading?.baseline,
+            sleepHours: sleepReading.map { $0.value / 3600 },
+            sleepBaselineHours: sleepReading.map { $0.baseline / 3600 },
             computedAt: inputs.today
         )
     }
 
     // MARK: - Copy
 
-    private func sentence(level: ReadinessLevel, hrvSeverity: Int?, rhrSeverity: Int?) -> String {
+    private func sentence(level: ReadinessLevel, hrvSeverity: Int?, rhrSeverity: Int?,
+                          sleepSeverity: Int?) -> String {
         let hrvOff = (hrvSeverity ?? 0) >= 1
         let rhrOff = (rhrSeverity ?? 0) >= 1
+        let sleepOff = (sleepSeverity ?? 0) >= 1
         switch level {
         case .green:
             return "Recovery is on baseline — you're clear to push."
         case .yellow:
-            return hrvOff
-                ? "HRV below your baseline — easy day."
-                : "Resting heart rate above your baseline — keep it easy."
+            if hrvOff { return "HRV below your baseline — easy day." }
+            if rhrOff { return "Resting heart rate above your baseline — keep it easy." }
+            return "Less sleep than usual last night — keep it easy."
         case .red:
-            if hrvOff && rhrOff {
-                return "HRV down and resting heart rate up — your body is asking for rest."
+            let causes = [hrvOff ? "HRV down" : nil,
+                          rhrOff ? "resting heart rate up" : nil,
+                          sleepOff ? "short sleep" : nil].compactMap { $0 }
+            if causes.count >= 2 {
+                let list = causes.dropLast().joined(separator: ", ") + " and " + causes[causes.count - 1]
+                return String(list.prefix(1)).uppercased() + String(list.dropFirst()) + " — your body is asking for rest."
             }
-            return hrvOff
-                ? "HRV well below your baseline — rest or keep it very easy."
-                : "Resting heart rate well above your baseline — rest or keep it very easy."
+            if hrvOff { return "HRV well below your baseline — rest or keep it very easy." }
+            if rhrOff { return "Resting heart rate well above your baseline — rest or keep it very easy." }
+            return "Much less sleep than usual last night — rest or keep it very easy."
         }
     }
 
@@ -179,6 +212,23 @@ public struct ReadinessEngine: Sendable {
                 (day: day, value: entries.map { $0.value }.reduce(0, +) / Double(entries.count))
             }
             .sorted { $0.day < $1.day }
+    }
+
+    /// Last night's time asleep (the night that ended today) and the mean
+    /// of the 14 nights before it, in seconds. Nil without last night or
+    /// with fewer than 5 nights behind it.
+    func lastNightAndBaseline(_ nights: [SleepNight], today: Date) -> (value: Double, baseline: Double)? {
+        let cal = Calendar.current
+        let startOfToday = cal.startOfDay(for: today)
+        guard let windowStart = cal.date(byAdding: .day, value: -Self.sleepBaselineWindowDays, to: startOfToday),
+              let lastNight = nights.last(where: { cal.isDate($0.night, inSameDayAs: startOfToday) }),
+              lastNight.asleepSeconds > 0
+        else { return nil }
+        let before = nights.filter { $0.night >= windowStart && $0.night < startOfToday && $0.asleepSeconds > 0 }
+        guard before.count >= Self.minSleepBaselineNights else { return nil }
+        let baseline = before.map(\.asleepSeconds).reduce(0, +) / Double(before.count)
+        guard baseline > 0 else { return nil }
+        return (lastNight.asleepSeconds, baseline)
     }
 
     /// Pick "today's" reading and the rolling baseline it compares against.

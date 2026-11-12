@@ -80,6 +80,10 @@ public final class TodayViewModel {
         isRefreshing = true
         defer { isRefreshing = false }
 
+        // A type the app reads since the runner last answered (sleep) gets
+        // its switch once, before the read.
+        if AppGroup.isRunnerSetUp { await HealthKitService.shared.requestNewReadTypesIfNeeded() }
+
         // Fire one parallel sync that writes the cache. Apply the result:
         // the fresh read, or the kept cache when the read couldn't be used.
         // Nil means neither is trustworthy; leave the screen as it is.
@@ -171,7 +175,7 @@ public final class TodayViewModel {
         // Readiness first — its verdict feeds the target computation (red
         // caps the day, yellow holds the baseline).
         self.readiness = readinessEngine.compute(
-            ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr)
+            ReadinessEngine.Inputs(today: now, hrv: snapshot.hrv, restingHeartRate: rhr, sleep: snapshot.sleepOrEmpty)
         )
 
         let inputs = PushTargetEngine.Inputs(

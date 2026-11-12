@@ -55,6 +55,7 @@ public final class HealthKitService {
             HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)!,
             HKObjectType.quantityType(forIdentifier: .stepCount)!,
             HKObjectType.characteristicType(forIdentifier: .dateOfBirth)!,
+            HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!,
             HKSeriesType.workoutRoute(),
         ]
         // Running dynamics — guarded because identifiers vary by SDK version
@@ -84,6 +85,18 @@ public final class HealthKitService {
             lastError = error.localizedDescription
             isAuthorized = false
         }
+    }
+
+    /// Asks for read access again when the app now reads a type the runner
+    /// hasn't been asked about (sleep, for one), so an existing runner gets
+    /// the new switch without going through onboarding. iOS shows the sheet
+    /// only for the new types, and only once.
+    public func requestNewReadTypesIfNeeded() async {
+        guard isHealthDataAvailable,
+              let status = try? await store.statusForAuthorizationRequest(toShare: [], read: readTypes),
+              status == .shouldRequest
+        else { return }
+        await requestAuthorization()
     }
 
     // MARK: - High-level sync
@@ -129,6 +142,7 @@ public final class HealthKitService {
             async let yAvg = fetchAverageHeartRate(on: yesterday, log: log)
             async let lRHR = fetchLatestRestingHeartRate(asOf: now, log: log)
             async let strength = fetchStrengthWorkouts(log: log)
+            async let sleep = fetchSleep(log: log)
 
             fresh.runs = await runs
             fresh.vo2Max = await vo2
@@ -138,6 +152,7 @@ public final class HealthKitService {
             fresh.yesterdayAvgHeartRate = await yAvg
             fresh.latestRestingHeartRate = await lRHR
             fresh.strengthWorkouts = await strength
+            fresh.sleep = await sleep
             fresh.userAge = userAge()
         }
 
@@ -160,6 +175,33 @@ public final class HealthKitService {
     }
 
     // MARK: - Reads
+
+    /// Time asleep per night over the trailing window (`SleepNight`), from
+    /// the asleep stages of Health's sleep analysis.
+    public func fetchSleep(daysBack: Int = 16, log: HealthReadLog? = nil) async -> [SleepNight] {
+        guard let type = HKObjectType.categoryType(forIdentifier: .sleepAnalysis),
+              let start = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date())
+        else { return [] }
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: [])
+        let asleep = Set(HKCategoryValueSleepAnalysis.allAsleepValues.map(\.rawValue))
+
+        let (intervals, failure): ([DateInterval], Error?) = await withCheckedContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: type,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: nil
+            ) { _, samples, error in
+                let values = (samples as? [HKCategorySample] ?? [])
+                    .filter { asleep.contains($0.value) && $0.endDate > $0.startDate }
+                    .map { DateInterval(start: $0.startDate, end: $0.endDate) }
+                continuation.resume(returning: (values, error))
+            }
+            store.execute(query)
+        }
+        log?.note(failure)
+        return SleepNight.nights(from: intervals)
+    }
 
     /// Traditional and functional strength training: the workouts that
     /// tick off a plan's strength session.
