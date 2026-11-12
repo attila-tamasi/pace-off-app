@@ -34,6 +34,8 @@ public enum AppGroup {
         /// The day's prescribed distance in km (`DayPrescription`), absent
         /// on a rest day or when no prescription was written.
         public static let lastDayDistanceKm = "paceoff.lastDayDistanceKm"
+        /// The Plan tab's "Send workouts to Apple Watch" switch.
+        public static let sendWorkoutsToWatch = "paceoff.watch.sendWorkouts"
         /// Set once a Health read has held a run. A runner back after more
         /// than the 90-day window gets a restart target, not the first-run
         /// card a new runner gets.

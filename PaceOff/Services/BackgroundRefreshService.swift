@@ -297,6 +297,7 @@ public final class BackgroundRefreshService {
             prescription: prescription,
             overrideBody: notificationLine
         )
+        await WatchWorkoutScheduler.shared.sync(prescription: prescription)
 
         log.info("Background refresh completed — target=\(target.displayedDistanceKm)km")
         return true

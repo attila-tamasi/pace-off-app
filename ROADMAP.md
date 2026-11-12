@@ -134,7 +134,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
 ## Step 1 · One coach: on the wrist, adapting, explaining itself
 
 ### F-12 · Plan workouts on Apple Watch
-- **Status:** todo (F-12a done, PR #58; F-12b next)
+- **Status:** done (F-12a PR #58, F-12b PR #59)
 - **Size:** L   ·   **Merge:** auto
 - **Problem:** The plan's paces only live on the phone. During the run nothing tells the runner they're too fast or too slow. Sending the workout to the watch is the baseline for plan apps on Apple Watch: Runna and TrainingPeaks do it, and Run With Hal is marked down for not doing it.
 - **Approach:** WorkoutKit (Apple's framework, iOS 17+) schedules custom workouts into the Watch's own Workout app, with pace alerts, under Pace Off's name and icon. No watch app of ours is involved. If this works well, D-01 can be settled by hiding our watch app. Workout Buddy can't be driven by an app; whether it speaks during a scheduled workout is one of the owner's checks.
@@ -147,7 +147,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
 - **Sub-items:**
   - **F-12a · Workout to blocks** (M), **done (PR #58)**: a pure function in `PaceOffShared`, with no WorkoutKit import. It turns a plan `Workout` into warm-up, work and recovery blocks and cool-down, each with its distance and pace band. Interval sessions repeat their work block; easy, long, tempo and marathon-pace runs are one work block with the pace alert. Tested.
   - **Decision (Claude, 2026-11-12, F-12a; the owner can reverse it):** a tempo run follows the threshold session, as its notes and distance already do in the generator, rather than one work block. No plan generates a tempo run today, so nothing changes for a runner.
-  - **F-12b · Scheduling** (M): `WorkoutScheduler` authorization, building `CustomWorkout`s from the blocks, scheduling and removing them, and the Plan tab switch. The cloud can't prove this one: its Visual check line asks the owner to run one scheduled workout on a real watch.
+  - **F-12b · Scheduling** (M), **done (PR #59)**: `WorkoutScheduler` authorization, building `CustomWorkout`s from the blocks, scheduling and removing them, and the Plan tab switch. The cloud can't prove this one: its Visual check line asks the owner to run one scheduled workout on a real watch.
 
 ### F-14 · Best efforts and automatic PBs
 - **Status:** todo
@@ -970,6 +970,7 @@ All done.
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #59 (needs a real iPhone and Apple Watch): the Plan tab's "Send workouts to Apple Watch" row and its permission prompt; the next seven days' runs in the watch's Workout app under Pace Off; start a threshold session and check the warm-up, the reps with their pace alerts, the jogs and the cool-down; how many workouts the watch accepts; whether Workout Buddy speaks during one; switching off removes them
 - [ ] PR #57: on a fresh install, the Health permission sheet lists only read access (no "Pace Off would like to update" section); the background refresh and the workout observer still wake the app (Q-07's check)
 - [ ] PR #56: Today's hero on a capped day: the footnote "Kept to 11 km: 10% past your longest run of the last 30 days." and the plan line's "(plan: 18.0 km)"
 - [ ] PR #55: on a plan run day Today's hero shows the plan's distance with decimals ("10.8 km"), on a plan rest day "Rest" with no "km"; the plan line's ", run easy today" / ", cut to an easy run" on a yellow or red day; the run card's "Target hit" against the plan run; the widget (all families) showing the same distance, and "Rest" on a rest day
@@ -1001,6 +1002,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · F-12b: the Plan tab's "Send workouts to Apple Watch" switch schedules the next seven days' runs into Apple's Workout app through WorkoutKit, with pace alerts; today's follows the day's prescription; removed when the switch, the plan or the runner's data goes (PR #59)
 - 2026-11-12 · F-12a: `WorkoutBlocks` turns a plan workout into the steps a watch runs (warm-up, repeated work and recovery, cool-down, with pace bands); quality sessions follow their notes and add up to their distance; not sent anywhere until F-12b (PR #58)
 - 2026-11-12 · Q-13: the iPhone app asks Health for read access only and no longer declares a Health write string, a motion string or the remote-notification and processing background modes it never used; Step 0 is done (PR #57)
 - 2026-11-12 · R-11: no prescribed run is longer than 110% of the longest run of the previous 30 days: the daily target and today's plan run are kept to it, and Today and the push say so; the race is never cut (PR #56)

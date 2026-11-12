@@ -156,6 +156,7 @@ public final class TodayViewModel {
             prescription: prescription,
             overrideBody: notificationBody
         )
+        await WatchWorkoutScheduler.shared.sync(prescription: prescription)
     }
 
     /// Recompute every derived property from a cached or freshly-synced
