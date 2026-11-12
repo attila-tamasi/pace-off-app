@@ -331,4 +331,44 @@ final class GoalPredictionServiceTests: XCTestCase {
         XCTAssertNotNil(withDate!.trainingImprovementMultiplier)
         XCTAssertEqual(withDate!.goalDate, inEightWeeks)
     }
+
+    // MARK: - Best efforts
+
+    func test_predict_aFasterEffortInsideARun_isTheBasis() {
+        let today = Date()
+        // A 21.1 km run at 5:30/km, with a 10 km best of 45:00 inside it.
+        let half = run(daysAgo: 4, km: 21.1, paceSecPerKm: 330, today: today)
+        let tenK = BestEffort(distance: .tenK, seconds: 2_700, runStart: half.startDate)
+        let p = service.predict(goal: .tenK, runs: [half], age: nil, personalBest: nil,
+                                bestEfforts: [tenK], today: today)
+        XCTAssertEqual(p?.basis, .bestEffort(tenK))
+        XCTAssertEqual(p?.projectedTimeSeconds ?? 0, 2_700, accuracy: 0.5)
+    }
+
+    func test_predict_aSlowerEffortLeavesTheRunAsTheBasis() {
+        let today = Date()
+        let fast = run(daysAgo: 3, km: 10, paceSecPerKm: 270, today: today)
+        let slow = BestEffort(distance: .fiveK, seconds: 1_800, runStart: fast.startDate)
+        let p = service.predict(goal: .tenK, runs: [fast], age: nil, personalBest: nil,
+                                bestEfforts: [slow], today: today)
+        if case .recentRun = p?.basis {} else { XCTFail("Expected recent-run basis, got \(String(describing: p?.basis))") }
+    }
+
+    func test_predict_leavesOutOldAndOneKmEfforts() {
+        let today = Date()
+        let old = BestEffort(distance: .tenK, seconds: 2_400,
+                             runStart: today.addingTimeInterval(-91 * 86_400))
+        let oneK = BestEffort(distance: .oneK, seconds: 200, runStart: today.addingTimeInterval(-86_400))
+        XCTAssertNil(service.predict(goal: .tenK, runs: [], age: nil, personalBest: nil,
+                                     bestEfforts: [old, oneK], today: today))
+    }
+
+    func test_predict_anEffortAloneIsEnough() {
+        let today = Date()
+        let fiveK = BestEffort(distance: .fiveK, seconds: 1_320, runStart: today.addingTimeInterval(-2 * 86_400))
+        let p = service.predict(goal: .fiveK, runs: [], age: nil, personalBest: nil,
+                                bestEfforts: [fiveK], today: today)
+        XCTAssertEqual(p?.basis, .bestEffort(fiveK))
+        XCTAssertEqual(p?.confidence, .low)
+    }
 }

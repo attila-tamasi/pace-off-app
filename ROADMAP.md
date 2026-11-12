@@ -158,7 +158,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - **F-14b · Keeping them** (M), **done (PR #61)**: `HealthKitService` reads the routes of runs not yet looked at (the last 90 days at first, then each new run), the bests are kept in App Group defaults (with the runs already looked at, so a route is read once), a new best gets one notification, it becomes the PB for its distance (5 km, 10 km, half; Q-04's PB tied to its distance) when faster than the stored one, and Profile and run detail show the bests.
 
 ### F-17 · Paces from what the runner actually ran
-- **Status:** todo (F-17a done, PR #62; F-17b next)
+- **Status:** done (F-17a PR #62, F-17b PR #63)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** Plan paces and the retune take Health's VO₂ max first, and a PB only when there is none (`resolveVDOT`). In two lab studies the Apple Watch estimate read about 6 ml/kg/min low on average (13% error; only 14% of people landed in the right fitness band), and a few units of VDOT move every pace by many seconds per km. A recent hard run says more than the estimate, and F-14 finds those. Today a new best changes nothing in the plan while a VO₂ max reading exists.
 - **Defaults (the owner can change them here):**
@@ -173,7 +173,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - Tests: a recent race above the estimate, only easy runs below it, neither, and an effort older than 90 days.
 - **Sub-items:**
   - **F-17a · The plan** (M), **done (PR #62)**: `PaceSource` resolves the VDOT by the rule above for the plan picker, the rebuild before a plan starts and the background retune; the plan records its source and the detail screen shows it.
-  - **F-17b · The prediction** (S): `GoalPredictionService` reads the same recent best efforts. Today it projects from whole recent runs (Riegel) and the PB; a 10 km best inside a half-marathon run is a better basis than the whole run.
+  - **F-17b · The prediction** (S), **done (PR #63)**: `GoalPredictionService` reads the same recent best efforts. Today it projects from whole recent runs (Riegel) and the PB; a 10 km best inside a half-marathon run is a better basis than the whole run.
 
 ### F-13 · Sleep in readiness
 - **Status:** todo
@@ -971,6 +971,7 @@ All done.
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #63: Profile's prediction line "Projected from your 10 km best on 3 Nov (45:00)."
 - [ ] PR #62: the plan detail's pace line ("Paces from your 10 km on 3 Nov (48:12). VDOT 47.") under the chips, at large text sizes too
 - [ ] PR #61: Profile's "Best efforts" card (under goal and prediction), run detail's "Best efforts" section under the splits with the orange "Best" mark, and the "New best: …" notification after a fast run
 - [ ] PR #59 (needs a real iPhone and Apple Watch): the Plan tab's "Send workouts to Apple Watch" row and its permission prompt; the next seven days' runs in the watch's Workout app under Pace Off; start a threshold session and check the warm-up, the reps with their pace alerts, the jogs and the cool-down; how many workouts the watch accepts; whether Workout Buddy speaks during one; switching off removes them
@@ -1005,6 +1006,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · F-17b: the race prediction also projects from the last 90 days' 5 km, 10 km and half best efforts, and Profile names the one it used (PR #63)
 - 2026-11-12 · F-17a: a plan's paces come from the higher of the last 90 days' 5 km, 10 km and half best efforts and Health's VO₂ max (`PaceSource`), in the picker, the rebuild and the retune; the plan detail says where they come from (PR #62)
 - 2026-11-12 · F-14b: the app reads the routes of runs not yet looked at, keeps the fastest 1 km, 5 km, 10 km and half, makes a faster one the PB for its distance, sends one notification for a new best, and shows the bests in Profile and run detail (PR #61)
 - 2026-11-12 · F-14a: `BestEfforts` finds a run's fastest 1 km, 5 km, 10 km and half marathon from its route and keeps the faster across runs; not wired up until F-14b (PR #60)

@@ -326,6 +326,8 @@ struct ProfileView: View {
         case .recentRun(let distance, _):
             let km = String(format: "%.1f", distance / 1000)
             return "Projected from your recent \(km) km run."
+        case .bestEffort(let effort):
+            return "Projected from your \(effort.distance.displayName) best on \(effort.runStart.formatted(.dateTime.day().month(.abbreviated))) (\(BestEffortLog.formatTime(effort.seconds)))."
         case .agedPersonalBest(let years):
             if years == 0 {
                 return "Anchored on this year's PB."
@@ -352,6 +354,7 @@ struct ProfileView: View {
             age: age,
             personalBest: profile.personalBest,
             vo2MaxHistory: vo2,
+            bestEfforts: BestEffortService.shared.log.bests,
             goalDate: profile.goalDate
         )
     }
