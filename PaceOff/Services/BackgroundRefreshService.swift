@@ -262,7 +262,8 @@ public final class BackgroundRefreshService {
             readiness: readiness?.level,
             target: target,
             easyPace: activePlan.flatMap { DayPrescription.easyPaceBand(in: $0, today: now) },
-            longestRunTodayMeters: DayPrescription.longestRun(on: now, in: runs)
+            longestRunTodayMeters: DayPrescription.longestRun(on: now, in: runs),
+            singleRunCapMeters: SingleRunCap.capMeters(runs: runs, today: now)
         )
 
         let state = VoiceState(target: target, yesterday: yesterday, currentStreak: streak,

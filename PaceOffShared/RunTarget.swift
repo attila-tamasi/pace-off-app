@@ -30,6 +30,10 @@ public struct RunTarget: Codable, Sendable, Equatable {
     /// displayed whole km. Optional so RunTarget JSON cached before this
     /// field existed still decodes — nil means "unknown".
     public let capMeters: Double?
+    /// The single-run cap (`SingleRunCap`) when it lowered the shown
+    /// distance today: 110% of the longest run of the previous 30 days.
+    /// Nil when it didn't, and in JSON cached before this field existed.
+    public let singleRunCapMeters: Double?
     /// When this target was computed.
     public let computedAt: Date
 
@@ -43,6 +47,7 @@ public struct RunTarget: Codable, Sendable, Equatable {
         fatigueGuardActive: Bool,
         readinessCapApplied: Bool? = nil,
         capMeters: Double? = nil,
+        singleRunCapMeters: Double? = nil,
         computedAt: Date = Date()
     ) {
         self.distanceMeters = distanceMeters
@@ -54,6 +59,7 @@ public struct RunTarget: Codable, Sendable, Equatable {
         self.fatigueGuardActive = fatigueGuardActive
         self.readinessCapApplied = readinessCapApplied
         self.capMeters = capMeters
+        self.singleRunCapMeters = singleRunCapMeters
         self.computedAt = computedAt
     }
 

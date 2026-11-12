@@ -147,6 +147,7 @@ public struct DailyPushPlanner: Sendable {
             // The prescription alone, so a push never names two distances.
             body = "\(Self.planLine(run, then: strength))."
             if let note = planRun.adjustmentNote { body += " \(note)." }
+            if let note = planRun.capNote { body += " \(note)." }
         } else if let planWorkout {
             body = "\(Self.planLine(planWorkout, then: strength)). \(body)"
         }

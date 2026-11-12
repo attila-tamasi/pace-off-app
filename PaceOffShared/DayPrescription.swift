@@ -55,6 +55,9 @@ public struct DayPrescription: Sendable, Equatable {
     /// (`isMet(byRunMeters:)` on the longest run today). False on rest and
     /// strength days.
     public internal(set) var isDone: Bool = false
+    /// The distance the single-run cap (`SingleRunCap`) kept today's run
+    /// to, when it cut it. Nil when it didn't.
+    public internal(set) var cappedAtMeters: Double? = nil
 
     /// Red readiness keeps at most this share of the plan's distance, the
     /// factor a red day already caps the daily target at.
@@ -106,6 +109,12 @@ public struct DayPrescription: Sendable, Equatable {
         }
     }
 
+    /// "Kept to 11 km: 10% past your longest run of the last 30 days", when
+    /// the single-run cap cut today's run.
+    public var capNote: String? {
+        cappedAtMeters.map { SingleRunCap.note(keptToKm: Self.formatKm($0 / 1000)) }
+    }
+
     /// Whole km without a decimal ("8"), else one decimal ("10.8").
     public static func formatKm(_ km: Double) -> String {
         let tenths = (km * 10).rounded() / 10
@@ -132,19 +141,35 @@ public struct DayPrescription: Sendable, Equatable {
     ///     for a run readiness eases.
     ///   - longestRunTodayMeters: the longest run recorded today, which sets
     ///     `isDone`.
+    ///   - singleRunCapMeters: `SingleRunCap.capMeters` for today. A plan run
+    ///     over it is kept to it; the race never is. The daily target comes
+    ///     already capped.
     public static func make(planStatus: PlanDayStatus?,
                             readiness: ReadinessLevel?,
                             target: RunTarget?,
                             easyPace: ClosedRange<Double>?,
-                            longestRunTodayMeters: Double = 0) -> DayPrescription? {
+                            longestRunTodayMeters: Double = 0,
+                            singleRunCapMeters: Double? = nil) -> DayPrescription? {
         var day: DayPrescription
         if let status = planStatus, let workout = status.workout {
             day = fromPlan(workout, strength: status.strength, readiness: readiness, easyPace: easyPace)
+            if day.kind == .run, let cap = singleRunCapMeters, let distance = day.distanceMeters,
+               distance > cap + 1e-6 {
+                // Rounded down to the tenth of a km the plan shows.
+                let kept = ((cap + 1e-6) / 100).rounded(.down) * 100
+                day = DayPrescription(kind: day.kind, source: day.source, workoutKind: day.workoutKind,
+                                      distanceMeters: kept,
+                                      paceMinSecPerKm: day.paceMinSecPerKm, paceMaxSecPerKm: day.paceMaxSecPerKm,
+                                      adjustment: day.adjustment, planWorkout: day.planWorkout,
+                                      strength: day.strength)
+                day.cappedAtMeters = kept
+            }
         } else if let target {
             day = DayPrescription(kind: .run, source: .dailyTarget, workoutKind: nil,
                                   distanceMeters: target.displayedDistanceMeters,
                                   paceMinSecPerKm: nil, paceMaxSecPerKm: nil,
                                   adjustment: nil, planWorkout: nil, strength: nil)
+            if target.singleRunCapMeters != nil { day.cappedAtMeters = target.displayedDistanceMeters }
         } else {
             return nil
         }
