@@ -40,6 +40,7 @@ public final class BestEffortService {
         var improved: [BestEffort] = []
         for run in todo {
             let route = await HealthKitService.shared.fetchRoutePoints(for: run)
+            guard BestEffortLog.isSettled(run, routeIsEmpty: route.isEmpty, now: now) else { continue }
             improved += log.record(runStart: run.startDate,
                                    efforts: BestEfforts.efforts(route: route, runStart: run.startDate))
         }

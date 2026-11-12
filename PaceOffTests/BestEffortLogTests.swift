@@ -33,6 +33,13 @@ final class BestEffortLogTests: XCTestCase {
         XCTAssertEqual(log.unseen(runs, now: now).map(\.distanceMeters), [5_000])
     }
 
+    func testARunWithoutARouteWaitsADayForIt() {
+        let fresh = run(daysAgo: 0.1, km: 5)
+        XCTAssertFalse(BestEffortLog.isSettled(fresh, routeIsEmpty: true, now: now))
+        XCTAssertTrue(BestEffortLog.isSettled(fresh, routeIsEmpty: false, now: now))
+        XCTAssertTrue(BestEffortLog.isSettled(run(daysAgo: 2, km: 5), routeIsEmpty: true, now: now))
+    }
+
     func testRecordReturnsWhatImproved() {
         var log = BestEffortLog()
         XCTAssertEqual(log.record(runStart: tuesday, efforts: [effort(.oneK, 240), effort(.fiveK, 1_300)]).count, 2)

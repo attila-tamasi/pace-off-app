@@ -17,6 +17,10 @@ public struct BestEffortLog: Codable, Equatable, Sendable {
     public static let windowDays = 90
     /// Runs shorter than the shortest distance can't hold an effort.
     public static let minimumMeters = 1_000.0
+    /// A run's route can reach Health after the run itself (the watch syncs
+    /// it later), so a run without one is looked at again until this long
+    /// after it ended.
+    public static let routeWaitHours = 24.0
 
     public init(bests: [BestEffort] = [], seenRunStarts: Set<Double> = []) {
         self.bests = bests
@@ -36,6 +40,12 @@ public struct BestEffortLog: Codable, Equatable, Sendable {
             .filter { $0.distanceMeters >= Self.minimumMeters }
             .filter { !seenRunStarts.contains($0.startDate.timeIntervalSince1970) }
             .sorted { $0.startDate > $1.startDate }
+    }
+
+    /// Whether a run read with `routeIsEmpty` is done with: it has a route,
+    /// or it ended long enough ago that none is coming (a treadmill run).
+    public static func isSettled(_ run: RunRecord, routeIsEmpty: Bool, now: Date) -> Bool {
+        !routeIsEmpty || now.timeIntervalSince(run.endDate) >= routeWaitHours * 3600
     }
 
     /// Folds one run's efforts in and marks it looked at. Returns the
