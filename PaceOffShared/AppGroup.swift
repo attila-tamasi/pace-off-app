@@ -61,8 +61,9 @@ public enum AppGroup {
     }
 
     /// The files Pace Off writes in the container: the active plan, the
-    /// Health snapshot and the profile photo.
-    public static let containerFiles = [trainingPlanFilename, HealthDataCache.filename, profilePhotoFilename]
+    /// Health snapshot, the run ledger and the profile photo.
+    public static let containerFiles = [trainingPlanFilename, HealthDataCache.filename, RunLedger.filename,
+                                        profilePhotoFilename]
 
     /// Erases everything Pace Off keeps in the App Group, for "Delete my
     /// data" and sign-out: every `keyPrefix` defaults key (profile, flags,

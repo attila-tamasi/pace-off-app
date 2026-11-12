@@ -284,6 +284,7 @@ public final class BackgroundRefreshService {
         if day.save(to: AppGroup.sharedDefaults) {
             WidgetCenter.shared.reloadAllTimelines()
         }
+        await RunLedger.shared.record(prescription: prescription, readiness: readiness?.level, runs: runs)
 
         // Reschedule today's notifications with the freshly enriched body so
         // the user gets the updated copy on the next push.
