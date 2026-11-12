@@ -166,6 +166,11 @@
 		13C5F61F3680749CBCBDD886 /* RunWindowPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C784E82FE7E15176CF76F34 /* RunWindowPlanner.swift */; };
 		75F1AF82FF26FCA3CBBC1B89 /* RunWindowPlannerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE52936C2AF58A06FCB6A608 /* RunWindowPlannerTests.swift */; };
 		EE76027ECFC95F0CCA14CE9F /* StrengthPlanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B46B8766FA7297082300819 /* StrengthPlanTests.swift */; };
+		BBF4E1BD5C2D996F2A92ED27 /* NarrationCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 070585DF6E505F84B4CC9E4D /* NarrationCheck.swift */; };
+		C4C59553A468F0F400EB8461 /* NarrationCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 070585DF6E505F84B4CC9E4D /* NarrationCheck.swift */; };
+		A98CC87DDF3694BC8596CFE1 /* NarrationCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 070585DF6E505F84B4CC9E4D /* NarrationCheck.swift */; };
+		0C08F5FED3638A4B1012C509 /* NarrationCheck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 070585DF6E505F84B4CC9E4D /* NarrationCheck.swift */; };
+		42B8F7C7914479258183BEDC /* NarrationCheckTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9F2DC19A2952B3E7B1C035A /* NarrationCheckTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -316,6 +321,8 @@
 		3C784E82FE7E15176CF76F34 /* RunWindowPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunWindowPlanner.swift; sourceTree = "<group>"; };
 		AE52936C2AF58A06FCB6A608 /* RunWindowPlannerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunWindowPlannerTests.swift; sourceTree = "<group>"; };
 		1B46B8766FA7297082300819 /* StrengthPlanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrengthPlanTests.swift; sourceTree = "<group>"; };
+		070585DF6E505F84B4CC9E4D /* NarrationCheck.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NarrationCheck.swift; sourceTree = "<group>"; };
+		E9F2DC19A2952B3E7B1C035A /* NarrationCheckTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NarrationCheckTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -347,6 +354,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				070585DF6E505F84B4CC9E4D /* NarrationCheck.swift */,
 				3C784E82FE7E15176CF76F34 /* RunWindowPlanner.swift */,
 				518F932B08979B0859ABFBB2 /* OnceFlag.swift */,
 				79DEFC03881AF55665EB0AF2 /* WeekReview.swift */,
@@ -377,6 +385,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				E9F2DC19A2952B3E7B1C035A /* NarrationCheckTests.swift */,
 				1B46B8766FA7297082300819 /* StrengthPlanTests.swift */,
 				AE52936C2AF58A06FCB6A608 /* RunWindowPlannerTests.swift */,
 				7B3B4430415CDBABF6D4761F /* AppGroupTests.swift */,
@@ -748,6 +757,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				42B8F7C7914479258183BEDC /* NarrationCheckTests.swift in Sources */,
+				A98CC87DDF3694BC8596CFE1 /* NarrationCheck.swift in Sources */,
 				EE76027ECFC95F0CCA14CE9F /* StrengthPlanTests.swift in Sources */,
 				75F1AF82FF26FCA3CBBC1B89 /* RunWindowPlannerTests.swift in Sources */,
 				E157EDEFA107234E7A71FCBC /* RunWindowPlanner.swift in Sources */,
@@ -796,6 +807,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C4C59553A468F0F400EB8461 /* NarrationCheck.swift in Sources */,
 				31285398BDF7DDA7150BDD32 /* RunWindowPlanner.swift in Sources */,
 				1BEA66EEA89BF6EB89463AEC /* OnceFlag.swift in Sources */,
 				6FEC638C6700E353F6FED950 /* WeekReview.swift in Sources */,
@@ -828,6 +840,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0C08F5FED3638A4B1012C509 /* NarrationCheck.swift in Sources */,
 				13C5F61F3680749CBCBDD886 /* RunWindowPlanner.swift in Sources */,
 				8C17229E371CB281CE8962D9 /* OnceFlag.swift in Sources */,
 				A5534DD54512341037EFBC0C /* WeekReview.swift in Sources */,
@@ -863,6 +876,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BBF4E1BD5C2D996F2A92ED27 /* NarrationCheck.swift in Sources */,
 				579048DA515B30ED88DE670A /* RunWindowPlanner.swift in Sources */,
 				268710EE520889798F108AE8 /* ScaledFont.swift in Sources */,
 				9C541E4BBF47AE57F6980955 /* OnceFlag.swift in Sources */,
