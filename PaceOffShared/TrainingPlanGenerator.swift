@@ -1194,3 +1194,17 @@ struct QualitySession: Equatable, Sendable {
         km < 0.995 ? metersText(km) : kmText(km)
     }
 }
+
+extension TrainingPlanGenerator {
+    /// The peak session a quality workout of `kind` is cut from, as its
+    /// notes are (`withSessionNotes`): the threshold session for tempo and
+    /// threshold runs, the interval session for intervals. Nil for every
+    /// other kind.
+    func peakSession(for kind: WorkoutKind, tier: PlanTier, goal: RunningGoal) -> QualitySession? {
+        switch kind {
+        case .threshold, .tempo: return thresholdSession(tier: tier, goal: goal)
+        case .interval:          return intervalSession(tier: tier, goal: goal)
+        default:                 return nil
+        }
+    }
+}

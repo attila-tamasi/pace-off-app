@@ -182,6 +182,11 @@
 		4B88430ABA06F07B38C8D8B8 /* SingleRunCap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EE9780E98F8E75B1ADF9CD7 /* SingleRunCap.swift */; };
 		8344566D80BD5F1BDBBC3F4C /* SingleRunCap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EE9780E98F8E75B1ADF9CD7 /* SingleRunCap.swift */; };
 		A64789D2B97675E0BE91F7A6 /* SingleRunCapTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 951DCB699D71ACA53EAAE327 /* SingleRunCapTests.swift */; };
+		0280085D0C6922478BBB259E /* WorkoutBlocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8746BA3E7C2CABAFD631EE5 /* WorkoutBlocks.swift */; };
+		24FC1D8EB6C572C709847E80 /* WorkoutBlocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8746BA3E7C2CABAFD631EE5 /* WorkoutBlocks.swift */; };
+		66CCE6FCA4DE7214FF4FA58B /* WorkoutBlocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8746BA3E7C2CABAFD631EE5 /* WorkoutBlocks.swift */; };
+		5C5B1F4E72E03AE4A4139226 /* WorkoutBlocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8746BA3E7C2CABAFD631EE5 /* WorkoutBlocks.swift */; };
+		66EE3F5D09F8D6AB0E9BAE7D /* WorkoutBlocksTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F264373C5F8459D641A34C10 /* WorkoutBlocksTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -339,6 +344,8 @@
 		3DE1BC8E4E99BDE5695924EB /* PrescriptionSurfacesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrescriptionSurfacesTests.swift; sourceTree = "<group>"; };
 		5EE9780E98F8E75B1ADF9CD7 /* SingleRunCap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleRunCap.swift; sourceTree = "<group>"; };
 		951DCB699D71ACA53EAAE327 /* SingleRunCapTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleRunCapTests.swift; sourceTree = "<group>"; };
+		A8746BA3E7C2CABAFD631EE5 /* WorkoutBlocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutBlocks.swift; sourceTree = "<group>"; };
+		F264373C5F8459D641A34C10 /* WorkoutBlocksTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutBlocksTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -370,6 +377,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				A8746BA3E7C2CABAFD631EE5 /* WorkoutBlocks.swift */,
 				5EE9780E98F8E75B1ADF9CD7 /* SingleRunCap.swift */,
 				C451BE74A07C3BCE92D2A9D3 /* DayPrescription.swift */,
 				070585DF6E505F84B4CC9E4D /* NarrationCheck.swift */,
@@ -403,6 +411,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				F264373C5F8459D641A34C10 /* WorkoutBlocksTests.swift */,
 				951DCB699D71ACA53EAAE327 /* SingleRunCapTests.swift */,
 				3DE1BC8E4E99BDE5695924EB /* PrescriptionSurfacesTests.swift */,
 				40575257FF762042F0D6C396 /* DayPrescriptionTests.swift */,
@@ -778,6 +787,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				66EE3F5D09F8D6AB0E9BAE7D /* WorkoutBlocksTests.swift in Sources */,
+				66CCE6FCA4DE7214FF4FA58B /* WorkoutBlocks.swift in Sources */,
 				A64789D2B97675E0BE91F7A6 /* SingleRunCapTests.swift in Sources */,
 				4B88430ABA06F07B38C8D8B8 /* SingleRunCap.swift in Sources */,
 				73428B092FCF690F0FACAE62 /* PrescriptionSurfacesTests.swift in Sources */,
@@ -833,6 +844,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				24FC1D8EB6C572C709847E80 /* WorkoutBlocks.swift in Sources */,
 				8E953ED5A63A373959FDB6E8 /* SingleRunCap.swift in Sources */,
 				4B8E9050603B3ABDBE425E9B /* DayPrescription.swift in Sources */,
 				C4C59553A468F0F400EB8461 /* NarrationCheck.swift in Sources */,
@@ -868,6 +880,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5C5B1F4E72E03AE4A4139226 /* WorkoutBlocks.swift in Sources */,
 				8344566D80BD5F1BDBBC3F4C /* SingleRunCap.swift in Sources */,
 				8DFF8761DD52967483EAE2BE /* DayPrescription.swift in Sources */,
 				0C08F5FED3638A4B1012C509 /* NarrationCheck.swift in Sources */,
@@ -906,6 +919,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0280085D0C6922478BBB259E /* WorkoutBlocks.swift in Sources */,
 				466748F3FB6B32828B798CE1 /* SingleRunCap.swift in Sources */,
 				930021635388EDC877ED95A2 /* DayPrescription.swift in Sources */,
 				BBF4E1BD5C2D996F2A92ED27 /* NarrationCheck.swift in Sources */,
