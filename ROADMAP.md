@@ -120,7 +120,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - Tests: the runner whose runs are all 5 km; a long run after three missed weeks; a runner back after 31 days; race day.
 
 ### Q-13 · The iPhone app declares things it doesn't do
-- **Status:** todo
+- **Status:** done (PR #57)
 - **Size:** S   ·   **Merge:** auto (the PR's title says it changes `Info.plist` privacy strings and background modes)
 - **Problem:** `PaceOff/Info.plist` still carries an earlier "record on iPhone" plan: a Health write description ("saves running workouts you start in the app"), a motion description and the `remote-notification` background mode. `HealthKitService.requestAuthorization` asks for write access too. No iPhone code writes a workout, reads motion or receives a remote push. The Health permission sheet promises a feature that isn't there, and App Review asks about access that is declared and unused.
 - **Where:** `PaceOff/Info.plist`, `HealthKitService.requestAuthorization` (`writeTypes`), `PaceOff.entitlements`.
@@ -969,6 +969,7 @@ All done.
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #57: on a fresh install, the Health permission sheet lists only read access (no "Pace Off would like to update" section); the background refresh and the workout observer still wake the app (Q-07's check)
 - [ ] PR #56: Today's hero on a capped day: the footnote "Kept to 11 km: 10% past your longest run of the last 30 days." and the plan line's "(plan: 18.0 km)"
 - [ ] PR #55: on a plan run day Today's hero shows the plan's distance with decimals ("10.8 km"), on a plan rest day "Rest" with no "km"; the plan line's ", run easy today" / ", cut to an easy run" on a yellow or red day; the run card's "Target hit" against the plan run; the widget (all families) showing the same distance, and "Rest" on a rest day
 - [ ] PR #51: on a strength-only day, the widget dot stays orange/red until a strength workout is in Health, then green with "Strength: … ✓"; after a run on a strength day, the 17:30 push "Run done. Strength left today: …"
@@ -999,6 +1000,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · Q-13: the iPhone app asks Health for read access only and no longer declares a Health write string, a motion string or the remote-notification and processing background modes it never used; Step 0 is done (PR #57)
 - 2026-11-12 · R-11: no prescribed run is longer than 110% of the longest run of the previous 30 days: the daily target and today's plan run are kept to it, and Today and the push say so; the race is never cut (PR #56)
 - 2026-11-12 · R-10b: Today's hero, its badge, the voice line, the pushes and the widget show the day's one prescription: the plan's run as readiness changed it, "Rest" on a plan rest day, the daily target without a plan workout; a push never names two distances (PR #55)
 - 2026-11-12 · R-10a: `DayPrescription` gives the one prescription for today (the plan's workout as readiness changes it, rest on a plan rest day, the daily target without one); nothing shows it until R-10b (PR #54)

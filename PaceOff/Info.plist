@@ -30,10 +30,6 @@
 	<false/>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Pace Off reads your VO₂ max, runs, heart rate, running dynamics, and workout routes from Apple Health to compute today's push target and visualize your runs on a map. Nothing leaves your device.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>Pace Off saves running workouts you start in the app to Apple Health.</string>
-	<key>NSMotionUsageDescription</key>
-	<string>Pace Off uses motion data to measure your run.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -42,8 +38,6 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
-		<string>processing</string>
-		<string>remote-notification</string>
 	</array>
 	<key>UILaunchScreen</key>
 	<dict>
