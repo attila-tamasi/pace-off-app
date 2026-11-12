@@ -51,6 +51,9 @@ public struct HealthDataSnapshot: Codable, Sendable, Equatable {
     /// so a snapshot saved before sleep was read still decodes; read it as
     /// `sleepOrEmpty`.
     public var sleep: [SleepNight]?
+    /// The highest heart rate in Health over the last 90 days, for the
+    /// heart-rate zones (`HeartRateZones.maxHR`). Nil when unknown.
+    public var maxHeartRate: Double?
 
     // Recovery snapshot — small scalars, all optional because HealthKit may
     // have nothing recorded for the day.
