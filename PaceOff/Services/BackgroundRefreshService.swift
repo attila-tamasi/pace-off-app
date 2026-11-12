@@ -256,7 +256,17 @@ public final class BackgroundRefreshService {
         let planStatus = reconcileTrainingPlan(runs: runs, strengthWorkouts: snapshot.strengthWorkoutsOrEmpty,
                                                vo2Max: vo2, now: now)
 
-        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: streak, planStatus: planStatus)
+        let activePlan = TrainingPlanStore.shared.activePlan
+        let prescription = DayPrescription.make(
+            planStatus: planStatus,
+            readiness: readiness?.level,
+            target: target,
+            easyPace: activePlan.flatMap { DayPrescription.easyPaceBand(in: $0, today: now) },
+            longestRunTodayMeters: DayPrescription.longestRun(on: now, in: runs)
+        )
+
+        let state = VoiceState(target: target, yesterday: yesterday, currentStreak: streak,
+                               planStatus: planStatus, prescription: prescription)
         let voice = VoiceCopy()
         // The canned lines: the system rate-limits the on-device model in
         // the background, so the Apple Intelligence rewrite happens only in
@@ -268,7 +278,8 @@ public final class BackgroundRefreshService {
 
         // Hand the day to the widget in one write, and have it redraw.
         let day = WidgetCache(target: target, voiceLine: voiceLine,
-                              runCompletedToday: todayRun != nil, planStatus: planStatus)
+                              runCompletedToday: todayRun != nil, planStatus: planStatus,
+                              prescription: prescription)
         if day.save(to: AppGroup.sharedDefaults) {
             WidgetCenter.shared.reloadAllTimelines()
         }
@@ -280,8 +291,9 @@ public final class BackgroundRefreshService {
             yesterday: yesterday,
             currentStreak: streak,
             runs: runs,
-            plan: TrainingPlanStore.shared.activePlan,
+            plan: activePlan,
             planStatus: planStatus,
+            prescription: prescription,
             overrideBody: notificationLine
         )
 

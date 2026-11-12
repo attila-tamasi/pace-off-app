@@ -86,7 +86,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - Tests: a changed number, an added one, a dropped one, a number written as a word ("six"), decimals, and a pace band ("5:25–5:45/km").
 
 ### R-10 · A plan day has two prescriptions
-- **Status:** todo (R-10a done, PR #54; R-10b next)
+- **Status:** done (R-10a PR #54, R-10b PR #55)
 - **Size:** L   ·   **Merge:** auto
 - **Problem:** With a plan active, Today's big number is the daily-target engine's distance and the plan's workout is a label under it. "Target hit" is judged against the engine's number. A push can name two distances: "Today's plan: 8.0 km · 5:25–5:45/km. Yesterday: done. Today: 6 km." On a plan rest day the push says rest while Today still shows a target. Once F-12 sends the plan's workout to the watch, the wrist and the phone would disagree as well.
 - **Decision (Claude, 2026-11-12; the owner can reverse it):** on a day with a plan run, the plan's workout is the day's prescription, and readiness changes that workout instead of a second number. A plan rest day shows as rest. Without a plan, or before a plan's first week, the daily target works as today.
@@ -99,7 +99,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
 - **Where:** `TodayView` (the hero's `displayedDistanceKm`, the "Target hit" badge), `TodayViewModel.refresh`, `VoiceState` / `VoiceCopy`, `DailyPushPlanner` (the body joins the plan line and the voice line), `WidgetCache`, `PaceOffWidget`.
 - **Sub-items:**
   - **R-10a · The day's prescription** (M), **done (PR #54)**: a pure function in `PaceOffShared` (`DayPrescription`) takes the plan day's status, the readiness verdict and the engine's target, and returns the one prescription for today: its kind (run, rest, strength, race), distance, pace band or "easy", and what changed it. Tests cover each default above, no plan, a plan that hasn't started, a rest day and a strength-only day.
-  - **R-10b · Every surface reads it** (M): Today's hero, its badge and its voice line, the pushes, the widget and its cache. Done when no screen or push shows the engine's number on a plan-run day, a push never names two distances, and a plan rest day shows as rest.
+  - **R-10b · Every surface reads it** (M), **done (PR #55)**: Today's hero, its badge and its voice line, the pushes, the widget and its cache. Done when no screen or push shows the engine's number on a plan-run day, a push never names two distances, and a plan rest day shows as rest.
 
 ### R-11 · One run can jump far past anything recent
 - **Status:** todo
@@ -969,6 +969,7 @@ All done.
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #55: on a plan run day Today's hero shows the plan's distance with decimals ("10.8 km"), on a plan rest day "Rest" with no "km"; the plan line's ", run easy today" / ", cut to an easy run" on a yellow or red day; the run card's "Target hit" against the plan run; the widget (all families) showing the same distance, and "Rest" on a rest day
 - [ ] PR #51: on a strength-only day, the widget dot stays orange/red until a strength workout is in Health, then green with "Strength: … ✓"; after a run on a strength day, the 17:30 push "Run done. Strength left today: …"
 - [ ] PR #50: the plan picker's Cross training control and the "N strength/wk" chip; the plan detail's strength rows (preview "Plan detail — Medium half with kettlebell"); the Plan tab hero on a strength day and the week rows; Plan Settings' Cross training row; Today's plan line on a strength day; the widget's "Strength: Kettlebell · 35 min" (systemSmall preview)
 - [ ] PR #47: plan detail session notes in week 1, mid-build and race week match each session's distance (fewer reps, warm-up and cool-down to 0.1 km; one rep, no jog, in race week)
@@ -997,6 +998,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · R-10b: Today's hero, its badge, the voice line, the pushes and the widget show the day's one prescription: the plan's run as readiness changed it, "Rest" on a plan rest day, the daily target without a plan workout; a push never names two distances (PR #55)
 - 2026-11-12 · R-10a: `DayPrescription` gives the one prescription for today (the plan's workout as readiness changes it, rest on a plan rest day, the daily target without one); nothing shows it until R-10b (PR #54)
 - 2026-11-12 · R-12: an Apple Intelligence rewording is shown only when it carries exactly the canned line's numbers (`NarrationCheck`); accepted rewordings are reused, and the background refresh no longer calls the model (PR #53)
 - 2026-11-12 · Roadmap re-ordered after the competitor research: Steps 0 to 3 replace the waves, with the no-backend architecture plan (`ARCHITECTURE.md`) and the research report (`docs/research-2026-11.md`); no code changed (PR #52)

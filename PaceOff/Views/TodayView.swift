@@ -152,15 +152,17 @@ struct TodayView: View {
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(todayVM.target.map { "\($0.displayedDistanceKm)" } ?? "—")
+                Text(heroDistance ?? (isPlanRestDay ? "Rest" : "—"))
                     .scaledFont(size: 76, weight: .heavy, design: .rounded)
                     .foregroundStyle(.white)
                     .contentTransition(.numericText())
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
-                Text("km")
-                    .font(.system(.title2, design: .rounded, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.8))
+                if heroDistance != nil {
+                    Text("km")
+                        .font(.system(.title2, design: .rounded, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.8))
+                }
             }
 
             // The trailing inset keeps the copy clear of the track.
@@ -223,6 +225,18 @@ struct TodayView: View {
         .heroSurface(trackSize: 120)
     }
 
+    /// The day's distance: the prescription's ("8", "10.8"), else the
+    /// target's whole km. Nil on a plan rest day and before any target.
+    private var heroDistance: String? {
+        if let prescription = todayVM.prescription { return prescription.distanceText }
+        return todayVM.target.map { "\($0.displayedDistanceKm)" }
+    }
+
+    private var isPlanRestDay: Bool {
+        guard let kind = todayVM.prescription?.kind else { return false }
+        return kind == .rest || kind == .strength
+    }
+
     /// Today's plan workout under the hero's copy, on a glowing track dot.
     private func planLineRow(_ line: String) -> some View {
         HStack(spacing: 7) {
@@ -248,7 +262,12 @@ struct TodayView: View {
             return day.strength.map { "Strength day in your plan · \($0.equipment.displayName)\(tick)" }
                 ?? "Rest day in your plan"
         }
-        let line = "\(plan.goal.displayName) plan · \(day.workout.kind.displayName)"
+        var line = "\(plan.goal.displayName) plan · \(day.workout.kind.displayName)"
+        switch todayVM.prescription?.adjustment {
+        case .easedForYellow?: line += ", run easy today"
+        case .cutForRed?: line += ", cut to an easy run"
+        case nil: break
+        }
         return day.strength == nil ? line : "\(line) + strength\(tick)"
     }
 
@@ -473,11 +492,17 @@ struct TodayView: View {
     // MARK: - Today's run
 
     private func todayRunCard(_ run: RunRecord) -> some View {
-        // Compare against the displayed (rounded-up) target, not the precise
-        // engine value, so the "Target hit" badge matches what the user saw.
-        let askedKm = Double(todayVM.target?.displayedDistanceKm ?? 0)
+        // Judged against the day's prescription as the hero showed it: the
+        // plan's run (85% of it counts), else the target's whole km (95%).
+        let askedKm: Double
+        if let prescription = todayVM.prescription {
+            askedKm = prescription.distanceKm ?? 0
+        } else {
+            askedKm = Double(todayVM.target?.displayedDistanceKm ?? 0)
+        }
         let actualKm = run.distanceKm
-        let hit = askedKm > 0 && actualKm >= askedKm * 0.95
+        let hit = askedKm > 0 && (todayVM.prescription?.isMet(byRunMeters: run.distanceMeters)
+                                  ?? (actualKm >= askedKm * 0.95))
         let label: String
         let color: Color
         if hit {

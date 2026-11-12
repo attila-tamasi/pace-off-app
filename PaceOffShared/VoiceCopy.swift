@@ -18,6 +18,9 @@ public enum VoiceState: Sendable, Equatable {
     case runCompletedHitTarget(tomorrowKm: Double)
     case runCompletedShortfall(actualKm: Double, targetKm: Double)
     case fatigueGuard
+    /// A plan rest day, with the strength session's summary when it has one.
+    case planRestDay(strength: String?)
+    case raceDay(km: Double)
 
     /// `target.daysSinceLastRun` counts calendar days back to the last run:
     /// 0 means the runner already ran today, 1 that the last run was
@@ -29,24 +32,43 @@ public enum VoiceState: Sendable, Equatable {
     ///
     /// `planStatus` is today's plan status, if a plan is active. A run today
     /// that falls short of the plan's workout doesn't close the day.
+    ///
+    /// `prescription` is the day's one prescription (`DayPrescription`).
+    /// With one from the plan, its distance is the one the line names, a
+    /// plan rest day gets rest copy and a race day race copy.
     public init(target: RunTarget,
                 yesterday: RunRecord?,
                 currentStreak: Int,
-                planStatus: PlanDayStatus? = nil) {
-        // Use the *displayed* (rounded-up) target so every voice line and
-        // notification matches the integer the user sees on the hero card.
-        let displayedKm = Double(target.displayedDistanceKm)
+                planStatus: PlanDayStatus? = nil,
+                prescription: DayPrescription? = nil) {
+        let planDay = prescription?.source == .plan ? prescription : nil
+        // The distance Today's hero shows: the plan's on a plan day, else the
+        // *displayed* (rounded-up) target, so the line matches the hero.
+        let displayedKm = planDay?.distanceKm ?? Double(target.displayedDistanceKm)
         let gap = target.daysSinceLastRun
 
         // Today's run is in: nothing left to push for, unless it fell short
         // of the plan's workout.
         if gap == 0 {
-            if let planStatus, planStatus.workout != nil, !planStatus.isRestDay, !planStatus.isCompleted {
+            if let planDay, planDay.kind == .run {
+                self = planDay.isDone ? .ranToday(streakDays: currentStreak) : .planStillToDo
+            } else if planDay == nil, let planStatus, planStatus.workout != nil,
+                      !planStatus.isRestDay, !planStatus.isCompleted {
                 self = .planStillToDo
             } else {
                 self = .ranToday(streakDays: currentStreak)
             }
             return
+        }
+        switch planDay?.kind {
+        case .rest?, .strength?:
+            self = .planRestDay(strength: planDay?.strength?.summary)
+            return
+        case .race?:
+            self = .raceDay(km: displayedKm)
+            return
+        default:
+            break
         }
         // The engine's tone decides the restart and recovery days; the copy
         // follows it, so the words never fight the badge next to them.
@@ -120,6 +142,10 @@ public struct VoiceCopy: Sendable {
             return "Short. Tomorrow we close it."
         case .fatigueGuard:
             return "HR is up. Easy run today."
+        case .planRestDay(let strength):
+            return strength.map { "Strength day: \($0). No run today." } ?? "Rest day. Recovery is training too."
+        case .raceDay(let km):
+            return "Race day. \(format(km)) km. Start controlled."
         }
     }
 
@@ -154,6 +180,11 @@ public struct VoiceCopy: Sendable {
             return "Finished \(format(actual)) of \(format(target)). Tomorrow we close the gap."
         case .fatigueGuard:
             return "Resting HR is elevated. Easy run today, no hero stuff."
+        case .planRestDay(let strength):
+            return strength.map { "Strength day on your plan: \($0). No run today." }
+                ?? "Rest day on your plan. Recovery is training too."
+        case .raceDay(let km):
+            return "Race day: \(format(km)) km. Start controlled and let the taper work."
         }
     }
 
