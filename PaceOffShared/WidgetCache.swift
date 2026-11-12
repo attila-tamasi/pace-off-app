@@ -54,12 +54,14 @@ public struct WidgetCache: Equatable, Sendable {
                 prescription: DayPrescription? = nil) {
         let planDay = prescription?.source == .plan ? prescription : nil
         let planRun = planDay?.kind == .run ? planDay : nil
+        // Unwell: the widget shows rest, with or without a plan.
+        let unwell = prescription?.adjustment == .restForUnwell
         self.init(target: target,
                   voiceLine: voiceLine,
                   runCompletedToday: runCompletedToday,
-                  planSummary: planRun?.summary ?? planStatus?.workout?.headline,
-                  planCompletedToday: planRun?.isDone ?? planStatus?.isCompleted ?? false,
-                  strengthSummary: planStatus?.strength?.summary,
+                  planSummary: unwell ? Workout.rest.summary : planRun?.summary ?? planStatus?.workout?.headline,
+                  planCompletedToday: unwell ? false : planRun?.isDone ?? planStatus?.isCompleted ?? false,
+                  strengthSummary: unwell ? nil : planStatus?.strength?.summary,
                   strengthCompletedToday: planStatus?.isStrengthCompleted ?? false,
                   dayDistanceKm: prescription?.distanceKm)
     }

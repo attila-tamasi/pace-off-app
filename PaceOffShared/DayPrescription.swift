@@ -32,6 +32,8 @@ public struct DayPrescription: Sendable, Equatable {
         case easedForYellow
         /// Red: an easy run of at most 60% of the plan's distance.
         case cutForRed
+        /// The runner said they're unwell (`CheckIn`): no run, no strength.
+        case restForUnwell
     }
 
     public let kind: Kind
@@ -104,6 +106,8 @@ public struct DayPrescription: Sendable, Equatable {
             return "Readiness is yellow, so today's \(kind) runs easy"
         case .cutForRed:
             return "Readiness is red, so today's run is cut to an easy one"
+        case .restForUnwell:
+            return "You said you're unwell, so today is rest"
         case nil:
             return nil
         }
@@ -144,12 +148,15 @@ public struct DayPrescription: Sendable, Equatable {
     ///   - singleRunCapMeters: `SingleRunCap.capMeters` for today. A plan run
     ///     over it is kept to it; the race never is. The daily target comes
     ///     already capped.
+    ///   - unwell: the runner said they're unwell this morning. A run or a
+    ///     strength day becomes rest; the race is left to the runner.
     public static func make(planStatus: PlanDayStatus?,
                             readiness: ReadinessLevel?,
                             target: RunTarget?,
                             easyPace: ClosedRange<Double>?,
                             longestRunTodayMeters: Double = 0,
-                            singleRunCapMeters: Double? = nil) -> DayPrescription? {
+                            singleRunCapMeters: Double? = nil,
+                            unwell: Bool = false) -> DayPrescription? {
         var day: DayPrescription
         if let status = planStatus, let workout = status.workout {
             day = fromPlan(workout, strength: status.strength, readiness: readiness, easyPace: easyPace)
@@ -172,6 +179,11 @@ public struct DayPrescription: Sendable, Equatable {
             if target.singleRunCapMeters != nil { day.cappedAtMeters = target.displayedDistanceMeters }
         } else {
             return nil
+        }
+        if unwell, day.kind == .run || day.kind == .strength {
+            day = DayPrescription(kind: .rest, source: day.source, workoutKind: nil, distanceMeters: nil,
+                                  paceMinSecPerKm: nil, paceMaxSecPerKm: nil,
+                                  adjustment: .restForUnwell, planWorkout: day.planWorkout, strength: nil)
         }
         day.isDone = day.isMet(byRunMeters: longestRunTodayMeters)
         return day
