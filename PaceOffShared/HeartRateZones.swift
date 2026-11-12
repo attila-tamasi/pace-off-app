@@ -83,6 +83,15 @@ public enum EasyRunCheck {
         return timeInZones[2...].reduce(0, +) / total
     }
 
+    /// The share of time in zones 1–2 across runs ("easy"), nil without
+    /// time. The week screen's easy/hard balance.
+    public static func easyShare(_ runs: [[TimeInterval]]) -> Double? {
+        let total = runs.joined().reduce(0, +)
+        guard total > 0 else { return nil }
+        let easy = runs.filter { $0.count == 5 }.map { $0[0] + $0[1] }.reduce(0, +)
+        return easy / total
+    }
+
     /// "35% of this easy run was in zone 3 or above. Slow down to keep it
     /// easy." for a run meant to be easy that wasn't; nil otherwise.
     public static func note(timeInZones: [TimeInterval], meantEasy: Bool) -> String? {

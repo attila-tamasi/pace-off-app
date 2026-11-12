@@ -74,6 +74,12 @@ final class HeartRateZonesTests: XCTestCase {
         XCTAssertFalse(EasyRunCheck.isMeantEasy(nil))
     }
 
+    func testTheWeeksEasyShare() {
+        XCTAssertEqual(EasyRunCheck.easyShare([[0, 1_500, 500, 0, 0], [500, 1_500, 0, 0, 0]])!, 0.875, accuracy: 1e-9)
+        XCTAssertNil(EasyRunCheck.easyShare([]))
+        XCTAssertNil(EasyRunCheck.easyShare([[0, 0, 0, 0, 0]]))
+    }
+
     func testTheNoteOnAnEasyRunRunTooHard() {
         let hard: [TimeInterval] = [0, 1_300, 500, 200, 0]   // 35% above zone 2
         XCTAssertEqual(EasyRunCheck.note(timeInZones: hard, meantEasy: true),
