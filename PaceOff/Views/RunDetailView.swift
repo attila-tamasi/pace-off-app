@@ -26,6 +26,8 @@ struct RunDetailView: View {
     @State private var heartRate: WorkoutHeartRate?
     @State private var elevation: WorkoutElevation?
     @State private var extras: WorkoutExtras?
+    /// This run's fastest 1 km, 5 km, 10 km and half, from its route.
+    @State private var efforts: [BestEffort] = []
 
     /// Map height as a fraction of the available screen height. Matches the
     /// proportion used on the Today screen so the experience feels consistent.
@@ -49,6 +51,7 @@ struct RunDetailView: View {
                             elevationCard(elevation)
                         }
                         splitsSection
+                        if !efforts.isEmpty { effortsCard }
                         if hasDynamics { dynamicsSection }
                     }
                     .padding(20)
@@ -136,6 +139,12 @@ struct RunDetailView: View {
         let locations = await HealthKitService.shared.fetchRunLocations(for: run)
         routeCoordinates = locations.map(\.coordinate)
         isLoadingRoute = false
+        efforts = BestEfforts.efforts(
+            route: locations.map {
+                RoutePoint(time: $0.timestamp, latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude)
+            },
+            runStart: run.startDate
+        )
         updateCamera(for: routeCoordinates)
 
         // Splits: convert (date, lat, lon) → cumulative-metres samples
@@ -367,6 +376,33 @@ struct RunDetailView: View {
         } else {
             EmptyView()
         }
+    }
+
+    /// "BEST EFFORTS": each distance this run covered, its time, and "Best"
+    /// where it's the runner's fastest so far.
+    private var effortsCard: some View {
+        let bests = BestEffortService.shared.log
+        return VStack(alignment: .leading, spacing: 10) {
+            sectionLabel("BEST EFFORTS")
+            ForEach(efforts, id: \.distance) { effort in
+                HStack {
+                    Text(effort.distance.displayName)
+                        .font(.system(.subheadline, design: .rounded))
+                    Spacer()
+                    if bests.best(effort.distance) == effort {
+                        Text("Best")
+                            .font(.system(.caption, design: .rounded, weight: .bold))
+                            .foregroundStyle(BrandPalette.track)
+                    }
+                    Text(BestEffortLog.formatTime(effort.seconds))
+                        .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                        .monospacedDigit()
+                }
+                .accessibilityElement(children: .combine)
+            }
+        }
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     private var splitsLoading: some View {

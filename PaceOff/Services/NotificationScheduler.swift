@@ -167,6 +167,19 @@ public final class NotificationScheduler {
         center.add(request)
     }
 
+    /// One notice for a new best effort ("New best: 5 km in 22:41, inside
+    /// Tuesday's run."), not with the pushes off.
+    public func notifyBestEffort(_ body: String) {
+        guard DailyPushPlanner.pushesEnabled(in: AppGroup.sharedDefaults) else { return }
+        let content = UNMutableNotificationContent()
+        content.title = "Pace Off"
+        content.body = body
+        content.sound = .default
+        content.threadIdentifier = "paceoff.bests"
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+        center.add(UNNotificationRequest(identifier: "paceoff.bestEffort", content: content, trigger: trigger))
+    }
+
     private func schedule(_ push: DailyPush) {
         let content = UNMutableNotificationContent()
         content.title = "Pace Off"

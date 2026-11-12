@@ -157,6 +157,7 @@ public final class TodayViewModel {
             overrideBody: notificationBody
         )
         await WatchWorkoutScheduler.shared.sync(prescription: prescription)
+        await BestEffortService.shared.update(runs: snapshot.runs)
     }
 
     /// Recompute every derived property from a cached or freshly-synced

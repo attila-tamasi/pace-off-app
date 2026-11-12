@@ -136,6 +136,7 @@ public final class ProfileStore {
         TrainingPlanStore.shared.clear()
         NotificationScheduler.shared.cancelAll()
         Task { await WatchWorkoutScheduler.shared.eraseAll() }
+        BestEffortService.shared.reset()
         WidgetCenter.shared.reloadAllTimelines()
         NotificationCenter.default.post(name: .paceOffSignOut, object: nil)
     }

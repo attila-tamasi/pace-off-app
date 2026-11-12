@@ -22,6 +22,7 @@ struct ProfileView: View {
 
     @AppStorage(AppGroup.Keys.notificationsEnabled, store: AppGroup.sharedDefaults)
     private var pushesEnabled: Bool = true
+    @State private var bestEfforts = BestEffortService.shared
     /// What iOS allows, read when the section appears and after each ask.
     @State private var pushPermission: NotificationScheduler.Permission?
     @Environment(\.openURL) private var openURL
@@ -41,6 +42,7 @@ struct ProfileView: View {
             VStack(spacing: 20) {
                 identityHero
                 goalAndPredictionCard
+                if !bestEfforts.log.bests.isEmpty { bestEffortsCard }
                 preferencesList
                 signOutButton
                     .padding(.top, 4)
@@ -591,6 +593,34 @@ struct ProfileView: View {
                     .fill(Color(.secondarySystemGroupedBackground))
                     .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
             }
+    }
+
+    /// The runner's fastest 1 km, 5 km, 10 km and half, found inside their
+    /// runs (`BestEffortService`), each with its date.
+    private var bestEffortsCard: some View {
+        card {
+            VStack(alignment: .leading, spacing: 12) {
+                cardLabel("BEST EFFORTS", systemImage: "trophy.fill")
+                ForEach(bestEfforts.log.bests, id: \.distance) { effort in
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(effort.distance.displayName)
+                            .font(.system(.body, design: .rounded))
+                        Spacer()
+                        Text(effort.runStart.formatted(.dateTime.day().month(.abbreviated).year()))
+                            .font(.system(.footnote, design: .rounded))
+                            .foregroundStyle(.secondary)
+                        Text(BestEffortLog.formatTime(effort.seconds))
+                            .font(.system(.body, design: .rounded, weight: .semibold))
+                            .monospacedDigit()
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+                Text("Found inside your runs from their GPS routes, the last 90 days at first.")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 
     private func cardLabel(_ text: String, systemImage: String) -> some View {
