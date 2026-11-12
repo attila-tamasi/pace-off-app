@@ -7,7 +7,7 @@ iOS + watchOS running app. Reads runs, VO₂ max, HR from Apple Health, computes
 
 No accounts (Sign in with Apple is optional). No servers. Privacy label: *Data Not Collected*.
 
-Companion docs: `ROADMAP.md` (the prioritised backlog: what to build next), `LOOP.md` (how Claude works through the roadmap on its own), `SPEC.md` (shipped features + V2 proposals), `README.md` (build/run walkthrough), `Pace Off - PRD.docx` (full product spec — the PRD § references in code comments point here).
+Companion docs: `ROADMAP.md` (the prioritised backlog: what to build next), `LOOP.md` (how Claude works through the roadmap on its own), `ARCHITECTURE.md` (where the app is going: the no-backend decision, the Apple Intelligence design, the building blocks to come), `docs/research-2026-11.md` (the competitor research behind both, in Hungarian), `SPEC.md` (shipped features + V2 proposals), `README.md` (build/run walkthrough), `Pace Off - PRD.docx` (full product spec — the PRD § references in code comments point here).
 
 ## Tech stack
 - SwiftUI, Swift 6, iOS 26 / watchOS 26 minimum
@@ -58,6 +58,7 @@ The app icon is one opaque 1024×1024 PNG, the same file in the iOS, widget and 
 - HealthKit access is confined to `HealthKitService` (`@MainActor`) on iOS and `WorkoutSessionManager` on watchOS. Nothing else imports `HealthKit`.
 - Watch app: `WorkoutSessionManager` drives `HKWorkoutSession` + `HKLiveWorkoutBuilder` with live running dynamics
 - Preview support in `Views/Preview/PreviewSupport.swift`: sample data + `PreviewProfileStore`, gated behind `#if DEBUG`
+- A language model phrases, it never decides. Every number and verdict a runner sees comes from a pure function; the on-device model may only reword that text, in the foreground, and the canned or template text is the fallback and the product on phones and in languages the model doesn't cover (`ARCHITECTURE.md`, "Rules for every model feature")
 
 ## Working style
 - Work feature-by-feature per `SPEC.md`; keep PRs small and compilable
@@ -83,7 +84,7 @@ Do not run `xcodebuild test` in ad-hoc automation — it hangs on host device di
 ## Scope discipline
 The training-plan feature is **in scope** and shipping — a VDOT-based generator (`TrainingPlanGenerator`), a picker, a detail view, and a persistent active plan (`TrainingPlanStore`). Do not remove or gut it.
 
-Anything that would require **CloudKit, a server, a paywall, Android, or a chat surface** is out of scope for the current milestone. `SPEC.md` lists proposals that fall in these categories under a **V2+ / needs decision** section — they are ideas, not commitments. Ask before starting one.
+Anything that would require **CloudKit, a server, a paywall, Android, or a chat surface** is out of scope for the current milestone. `ROADMAP.md` tracks these under **Needs a decision** (D-08 to D-14), `ARCHITECTURE.md` says where each boundary runs, and `SPEC.md` keeps the older proposals under **V2+ / needs decision** — they are ideas, not commitments. Ask before starting one. Sending a runner's data to a third-party AI service belongs in the same list.
 
 ## Autonomous development
 `ROADMAP.md` is the single queue of work, in priority order; `LOOP.md` is the procedure that takes its top item to a merged PR without the owner present. When running the loop:
@@ -93,8 +94,9 @@ Anything that would require **CloudKit, a server, a paywall, Android, or a chat 
 - UI changes can't be seen from the cloud: list them in the roadmap's **Visual check queue**.
 - A direct request from the owner always wins over the roadmap.
 
-## Current priorities (2026-10)
-- Work the roadmap top-down: Wave 1 fixes (wrong advice, unsafe load, stale data) before Wave 2 quality, before Wave 3 features.
+## Current priorities (2026-11)
+- The goal: the number-one coach for runners with an iPhone and an Apple Watch. Pace Off owns the start of the day (what to run, and why) and the end (how it went, and what changes); Apple's Workout app records the run. `ARCHITECTURE.md` has the reasons.
+- Work the roadmap top-down: Step 0 fixes (wrong advice, unsafe load) before Step 1 (one coach: on the wrist, adapting, explaining itself), before Step 2 (breadth), before Step 3 (race day).
 - **iPhone-first**: onboarding, home, run detail, training plan, profile.
-- **watchOS app is deprioritized** for the current wave. The `PaceOff Watch App` target still builds and ships, but don't spend cycles polishing it, adding features, or reworking the workout session code unless the user explicitly asks. Bugfixes to keep it building are fine.
+- **The plan reaches the wrist through WorkoutKit** and Apple's own Workout app (F-12), not through our watch app. The watchOS app stays deprioritized: the `PaceOff Watch App` target still builds and ships, but don't spend cycles polishing it, adding features, or reworking the workout session code unless the user explicitly asks. Bugfixes to keep it building are fine.
 - Widget stays in scope but only as a "renders the cached target" surface — the WatchConnectivity-dependent in-progress-run state is on hold with the Watch work.
