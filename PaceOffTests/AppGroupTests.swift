@@ -70,7 +70,8 @@ final class AppGroupTests: XCTestCase {
                     AppGroup.Keys.lastPlanStrengthSummary, AppGroup.Keys.strengthCompletedToday,
                     AppGroup.Keys.lastDayDistanceKm, AppGroup.Keys.sendWorkoutsToWatch,
                     AppGroup.Keys.bestEfforts, AppGroup.Keys.checkIn,
-                    AppGroup.Keys.lastReadinessLevel, AppGroup.Keys.lastReadinessSentence]
+                    AppGroup.Keys.lastReadinessLevel, AppGroup.Keys.lastReadinessSentence,
+                    AppGroup.Keys.distanceUnit]
         for key in keys {
             XCTAssertTrue(key.hasPrefix(AppGroup.keyPrefix), key)
         }

@@ -252,11 +252,11 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - A day cached on an earlier date answers "Open Pace Off to get today's target", as the widget does.
 
 ### F-01 · Kilometres or miles
-- **Status:** todo
+- **Status:** todo (F-01a done, PR #73; F-01b next)
 - **Size:** L   ·   **Merge:** auto
 - **Problem:** "km" and "/km" are hard-coded everywhere, and decimals ignore the locale. A runner in the US or the UK can't use the app as it is.
 - **Sub-items:**
-  - **F-01a · One formatter** (M): a unit setting (default from the locale) and one formatter in `PaceOffShared` for distances, paces and speeds, with tests. The engines keep working in metres. Whole-unit rounding rules (R-04's "never above the cap") hold in miles too.
+  - **F-01a · One formatter** (M), **done (PR #73)**: a unit setting (default from the locale) and one formatter in `PaceOffShared` for distances, paces and speeds, with tests. The engines keep working in metres. Whole-unit rounding rules (R-04's "never above the cap") hold in miles too.
   - **F-01b · Every screen, push and widget through it** (M): no "km" literal is left outside the formatter; plan notes, session notes and the voice lines included. Best efforts add the mile.
 
 ### F-08 · Languages: Hungarian first
@@ -1022,6 +1022,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · F-01a: `DistanceUnit` (kilometres or miles, the locale's by default, kept in App Group defaults) and `UnitFormatter` for distances, paces, speeds and whole units under a cap, locale decimals; nothing uses it until F-01b (PR #73)
 - 2026-11-12 · F-16: Siri and Shortcuts answer "What's my run today?" and "How ready am I?" from the cached day, and a Control Center control opens Today (PR #72)
 - 2026-11-12 · F-15b: run detail shows time in heart-rate zones with the easy-run note, and the week screen the week's easy/hard balance with the notes (PR #71)
 - 2026-11-12 · F-15a: heart-rate zones from the 90-day max HR (else age), time in zones, and the easy-run check against the day's ledger row; not shown until F-15b (PR #70)
