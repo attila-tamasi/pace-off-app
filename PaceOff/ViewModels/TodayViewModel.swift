@@ -147,6 +147,8 @@ public final class TodayViewModel {
             if day.save(to: AppGroup.sharedDefaults) {
                 WidgetCenter.shared.reloadAllTimelines()
             }
+            await RunLedger.shared.record(prescription: prescription, readiness: readiness?.level,
+                                          runs: snapshot.runs)
         }
 
         // Schedule today's notifications using the (possibly AI-rewritten) body.

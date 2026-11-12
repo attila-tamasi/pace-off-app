@@ -195,7 +195,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - **F-13b · The screen** (S), **done (PR #65)**: the readiness screen's third signal card (last night against the 14-night average, with its own grade) and the "how they combine" copy with three signals.
 
 ### F-18 · A memory: what was prescribed, and what was run
-- **Status:** todo
+- **Status:** done (PR #66)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** Pace Off keeps nothing about a day once it's over. A run gets a new `id` on every Health read, `RunRecord.targetDistanceMeters` and `hitTarget` are never filled, and the prescription shown on a past day can't be found again. The run review, plan adherence for past weeks, shoes, the recap and an adaptive plan all need it.
 - **Where:** `RunRecord` (identity), `HealthKitService.toRunRecord` (`workout.uuid`), `AppGroup` (`containerFiles`), `TodayViewModel.refresh` and `BackgroundRefreshService` (where the day is computed), `HealthDataCache` (the actor-and-JSON pattern to follow).
@@ -1011,6 +1011,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · F-18: `RunLedger` keeps each day's prescription as shown and the day each run belongs to in `run-ledger.json`; a run's `id` is its Health workout UUID (PR #66)
 - 2026-11-12 · F-13b: the readiness screen shows last night's sleep as its third signal card, and its rules name the three signals (PR #65)
 - 2026-11-12 · F-13a: readiness reads last night's time asleep against the 14-night average (15% short yellow, 30% red), with HRV and resting HR; Health's sleep is read, and asked for once (PR #64)
 - 2026-11-12 · F-17b: the race prediction also projects from the last 90 days' 5 km, 10 km and half best efforts, and Profile names the one it used (PR #63)

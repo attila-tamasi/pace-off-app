@@ -450,6 +450,8 @@ public final class HealthKitService {
             : nil
 
         return RunRecord(
+            // The workout's own UUID, so a run keeps its identity across reads.
+            id: workout.uuid,
             startDate: workout.startDate,
             endDate: workout.endDate,
             distanceMeters: distance,

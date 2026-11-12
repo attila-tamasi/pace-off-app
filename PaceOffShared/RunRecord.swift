@@ -5,6 +5,7 @@
 import Foundation
 
 public struct RunRecord: Codable, Sendable, Identifiable, Equatable {
+    /// The Health workout's UUID, the same on every read.
     public let id: UUID
     public let startDate: Date
     public let endDate: Date
@@ -21,9 +22,8 @@ public struct RunRecord: Codable, Sendable, Identifiable, Equatable {
     public let averageGroundContactMs: Double?
     public let averageCadenceSpm: Double?      // steps per minute
 
-    // Pace Off context — non-HK fields. Currently transient (computed at read time
-    // from the day's RunTarget cached in App-Group UserDefaults). If we ever need
-    // historical "did the user hit the target" trends, mirror these into SwiftData.
+    // Pace Off context — non-HK fields, not filled in. What Pace Off asked
+    // for on a past day is kept in `RunLedger`.
     public let targetDistanceMeters: Double?   // what the app asked for that day
     public let hitTarget: Bool?                // whether distance >= target * 0.95
 

@@ -12,7 +12,7 @@ import Foundation
 
 public struct DayPrescription: Sendable, Equatable {
 
-    public enum Kind: String, Sendable {
+    public enum Kind: String, Codable, Sendable {
         case run
         case rest
         /// A plan rest day for running with a strength session.
@@ -21,13 +21,13 @@ public struct DayPrescription: Sendable, Equatable {
     }
 
     /// Where the day's run comes from.
-    public enum Source: String, Sendable {
+    public enum Source: String, Codable, Sendable {
         case plan
         case dailyTarget
     }
 
     /// What readiness did to the plan's workout.
-    public enum Adjustment: String, Sendable {
+    public enum Adjustment: String, Codable, Sendable {
         /// Yellow: a quality session run at easy pace, same distance.
         case easedForYellow
         /// Red: an easy run of at most 60% of the plan's distance.
