@@ -207,7 +207,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - Tests: write and read, the same-day replacement, a past day kept, a corrupt file.
 
 ### F-20 · The runner's own word in readiness
-- **Status:** todo (F-20a done, PR #67; F-20b next)
+- **Status:** todo (F-20a PR #67, F-20b PR #68 done; F-20c next)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** Readiness hears the watch, never the runner. Sore legs, a cold or a rough night with a child never reach HealthKit. Self-reported measures follow training load more sensitively and consistently than objective ones (a review of 56 studies), and the one trial in which HRV-guided training beat a fixed plan for recreational runners (10 km time down 6.2% against 2.9%) combined HRV with how recovered the runners felt.
 - **Defaults (the owner can change them here):**
@@ -222,7 +222,8 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - The readiness screen shows it as its own signal card.
 - **Sub-items:**
   - **F-20a · The signal** (S), **done (PR #67)**: `CheckIn` (the answer, kept in App Group defaults for today only), `ReadinessEngine` grades it (tired or sore one signal off, unwell red with "rest today", fresh never lifts the watch) and the run ledger keeps it with the day. Both refreshes read it.
-  - **F-20b · The question** (M): Today's one-tap question each morning, changeable, recomputing the day on an answer; the readiness screen's signal card; on Unwell the day's prescription becomes rest on every surface (Today, pushes, widget, watch schedule).
+  - **F-20b · The question** (M), **done (PR #68)**: Today's one-tap question ("How do you feel?"), folding to "You feel tired today · Change" once answered, clearable; an answer works the day out again (readiness, target, prescription, pushes, widget, watch) without a new Health read; the readiness screen's "How you feel" card.
+  - **F-20c · Unwell means rest** (S): on Unwell the day's prescription becomes rest on every surface (Today's hero, the pushes, the widget, the watch schedule), with "You said you're unwell, so today is rest"; the race day is left alone.
 
 ### F-15 · Easy runs that weren't easy
 - **Status:** todo
@@ -977,6 +978,7 @@ All done.
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #68: Today's "How do you feel?" card above Readiness (five buttons in a grid, at large text sizes too), the folded "You feel tired today · Change" row, Clear, and the readiness screen's "How you feel" card; after an answer the readiness card and hero update
 - [ ] PR #65: the readiness screen's Sleep card (teal bed, "6:42 asleep", "18% below your 14-night average of 8:10", its grade dot) under HRV and Resting HR, and the three-signal rules card
 - [ ] PR #64: on the first open after updating, Health's permission sheet asks for Sleep once (an existing runner, not through onboarding); afterwards the readiness card's sentence on a short night ("Less sleep than usual last night — keep it easy.")
 - [ ] PR #63: Profile's prediction line "Projected from your 10 km best on 3 Nov (45:00)."
@@ -1014,6 +1016,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · F-20b: Today asks "How do you feel?" (one tap, changeable), the answer reworks the day, and the readiness screen shows it as a signal card (PR #68)
 - 2026-11-12 · F-20a: the runner's morning answer (Fresh, Normal, Tired, Sore, Unwell) is a readiness signal and goes into the run ledger; nothing asks yet (PR #67)
 - 2026-11-12 · F-18: `RunLedger` keeps each day's prescription as shown and the day each run belongs to in `run-ledger.json`; a run's `id` is its Health workout UUID (PR #66)
 - 2026-11-12 · F-13b: the readiness screen shows last night's sleep as its third signal card, and its rules name the three signals (PR #65)

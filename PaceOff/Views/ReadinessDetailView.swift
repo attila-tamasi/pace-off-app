@@ -21,6 +21,7 @@ struct ReadinessDetailView: View {
                         signalCard(.hrv, value: readiness.hrvMs, baseline: readiness.hrvBaselineMs)
                         signalCard(.restingHeartRate, value: readiness.restingHR, baseline: readiness.restingHRBaseline)
                         sleepCard(hours: readiness.sleepHours, baseline: readiness.sleepBaselineHours)
+                        feelingCard(readiness.feeling)
                     }
                 } else {
                     notYet
@@ -141,6 +142,40 @@ struct ReadinessDetailView: View {
         }
     }
 
+    /// The runner's own answer this morning and what it does.
+    private func feelingCard(_ feeling: CheckInFeeling?) -> some View {
+        let level: ReadinessLevel? = feeling.map {
+            switch $0 {
+            case .fresh, .normal: return .green
+            case .tired, .sore: return .yellow
+            case .unwell: return .red
+            }
+        }
+        let note: String = switch feeling {
+        case nil: "Not answered today. Answer on Today, and it joins the watch's signals"
+        case .fresh?, .normal?: "Counts as on track. It never lifts what the watch says"
+        case .tired?, .sore?: "Counts as one signal off: with another one off, the day turns red"
+        case .unwell?: "Unwell turns the day red: rest today"
+        }
+        return MetricCard(
+            title: "How you feel",
+            systemImage: "hand.raised.fill",
+            tint: BrandPalette.track,
+            detail: level.map { label($0) },
+            showsChevron: false,
+            value: feeling?.displayName ?? "—",
+            note: note
+        ) {
+            if let level {
+                Circle()
+                    .fill(dotColor(level))
+                    .frame(width: 14, height: 14)
+                    .padding(.bottom, 6)
+                    .accessibilityHidden(true)
+            }
+        }
+    }
+
     private var notYet: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("No readiness today")
@@ -167,7 +202,7 @@ struct ReadinessDetailView: View {
                 .kerning(1.2)
                 .foregroundStyle(.secondary)
 
-            Text("Each signal is graded against your own baseline. The worst one sets the day, and when two are off the day turns red.")
+            Text("Each signal is graded against your own baseline, and your morning answer counts as one more. The worst one sets the day, and when two are off the day turns red. Unwell turns it red on its own.")
                 .font(.system(.body, design: .rounded))
                 .fixedSize(horizontal: false, vertical: true)
 
