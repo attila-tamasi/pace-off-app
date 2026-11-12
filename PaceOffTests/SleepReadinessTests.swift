@@ -115,6 +115,20 @@ final class SleepReadinessTests: XCTestCase {
         XCTAssertEqual(r?.sentence, "HRV well below your baseline — rest or keep it very easy.")
     }
 
+    func testTheCardsGradeIsTheEngines() {
+        XCTAssertEqual(ReadinessEngine.sleepLevel(hours: 7.5, baseline: 8), .green)
+        XCTAssertEqual(ReadinessEngine.sleepLevel(hours: 6.7, baseline: 8), .yellow)
+        XCTAssertEqual(ReadinessEngine.sleepLevel(hours: 5.5, baseline: 8), .red)
+        let r = readiness(sleep: nights(usual: 8, lastNight: 6.7))
+        XCTAssertEqual(ReadinessEngine.sleepLevel(hours: r!.sleepHours!, baseline: r!.sleepBaselineHours!), r!.level)
+    }
+
+    func testSleepText() {
+        XCTAssertEqual(ReadinessEngine.sleepText(hours: 7.0833333), "7:05")
+        XCTAssertEqual(ReadinessEngine.sleepText(hours: 8), "8:00")
+        XCTAssertEqual(ReadinessEngine.sleepText(hours: 5.999), "6:00")
+    }
+
     func testTheSnapshotKeepsItsNightsAndAnOldOneDecodes() throws {
         var snapshot = HealthDataSnapshot(lastSyncedAt: today)
         XCTAssertFalse(snapshot.hasReadings)

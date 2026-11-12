@@ -176,7 +176,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - **F-17b · The prediction** (S), **done (PR #63)**: `GoalPredictionService` reads the same recent best efforts. Today it projects from whole recent runs (Riegel) and the PB; a 10 km best inside a half-marathon run is a better basis than the whole run.
 
 ### F-13 · Sleep in readiness
-- **Status:** todo (F-13a done, PR #64; F-13b next)
+- **Status:** done (F-13a PR #64, F-13b PR #65)
 - **Size:** M   ·   **Merge:** auto
 - **Problem:** Readiness reads HRV and resting heart rate, not sleep, the most common reason a runner isn't ready. In a cohort of 339 runners, poorer sleep went with a 36% higher injury risk.
 - **Defaults (the owner can change them here):**
@@ -192,7 +192,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - The readiness screen shows a third signal card, and the readiness sentence names sleep when it's the cause.
 - **Sub-items:**
   - **F-13a · The signal** (M), **done (PR #64)**: `SleepNight` (asleep intervals to nights), `ReadinessEngine` grades sleep and names it in the sentence, `HealthKitService` reads sleep and the foreground refresh asks for the new type once, the snapshot keeps the nights.
-  - **F-13b · The screen** (S): the readiness screen's third signal card (last night against the 14-night average, with its own grade) and the "how they combine" copy with three signals.
+  - **F-13b · The screen** (S), **done (PR #65)**: the readiness screen's third signal card (last night against the 14-night average, with its own grade) and the "how they combine" copy with three signals.
 
 ### F-18 · A memory: what was prescribed, and what was run
 - **Status:** todo
@@ -974,6 +974,7 @@ All done.
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #65: the readiness screen's Sleep card (teal bed, "6:42 asleep", "18% below your 14-night average of 8:10", its grade dot) under HRV and Resting HR, and the three-signal rules card
 - [ ] PR #64: on the first open after updating, Health's permission sheet asks for Sleep once (an existing runner, not through onboarding); afterwards the readiness card's sentence on a short night ("Less sleep than usual last night — keep it easy.")
 - [ ] PR #63: Profile's prediction line "Projected from your 10 km best on 3 Nov (45:00)."
 - [ ] PR #62: the plan detail's pace line ("Paces from your 10 km on 3 Nov (48:12). VDOT 47.") under the chips, at large text sizes too
@@ -1010,6 +1011,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · F-13b: the readiness screen shows last night's sleep as its third signal card, and its rules name the three signals (PR #65)
 - 2026-11-12 · F-13a: readiness reads last night's time asleep against the 14-night average (15% short yellow, 30% red), with HRV and resting HR; Health's sleep is read, and asked for once (PR #64)
 - 2026-11-12 · F-17b: the race prediction also projects from the last 90 days' 5 km, 10 km and half best efforts, and Profile names the one it used (PR #63)
 - 2026-11-12 · F-17a: a plan's paces come from the higher of the last 90 days' 5 km, 10 km and half best efforts and Health's VO₂ max (`PaceSource`), in the picker, the rebuild and the retune; the plan detail says where they come from (PR #62)
