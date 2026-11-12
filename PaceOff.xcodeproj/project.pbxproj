@@ -238,6 +238,11 @@
 		83BFE813FC324F3FEBBBD34B /* OpenTodayIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1B2D33F1382A76C81D8BD64 /* OpenTodayIntent.swift */; };
 		F14FC6B1B01E96FDCDA173CF /* TodayControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2D53CC5A4839B7F294FF9DC /* TodayControl.swift */; };
 		3CC44CD6B8B64AD9B2362343 /* SiriAnswerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EE91FF7DAF3132E88129A9E /* SiriAnswerTests.swift */; };
+		7B851C7F751F385ED0F90881 /* DistanceUnits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E09C8369B4681289B74DA33 /* DistanceUnits.swift */; };
+		E1E4C32D3FA7FAA709F4E1E1 /* DistanceUnits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E09C8369B4681289B74DA33 /* DistanceUnits.swift */; };
+		8B96481DC3AB6589246F8B21 /* DistanceUnits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E09C8369B4681289B74DA33 /* DistanceUnits.swift */; };
+		F0E91A44E77ACE49B79E4A29 /* DistanceUnits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E09C8369B4681289B74DA33 /* DistanceUnits.swift */; };
+		2D3B59D88684B458EBADBD19 /* DistanceUnitsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E2274AFDD80188EACEF002 /* DistanceUnitsTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -420,6 +425,8 @@
 		F1B2D33F1382A76C81D8BD64 /* OpenTodayIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenTodayIntent.swift; sourceTree = "<group>"; };
 		E2D53CC5A4839B7F294FF9DC /* TodayControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayControl.swift; sourceTree = "<group>"; };
 		8EE91FF7DAF3132E88129A9E /* SiriAnswerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriAnswerTests.swift; sourceTree = "<group>"; };
+		5E09C8369B4681289B74DA33 /* DistanceUnits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DistanceUnits.swift; sourceTree = "<group>"; };
+		B7E2274AFDD80188EACEF002 /* DistanceUnitsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DistanceUnitsTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -453,6 +460,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				5E09C8369B4681289B74DA33 /* DistanceUnits.swift */,
 				550D882E09E08F7B9233731C /* SiriAnswer.swift */,
 				77E5D9D281AF2B79EA41ED0A /* HeartRateZones.swift */,
 				92E3DBF426AAEA692AB38242 /* CheckIn.swift */,
@@ -496,6 +504,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				B7E2274AFDD80188EACEF002 /* DistanceUnitsTests.swift */,
 				8EE91FF7DAF3132E88129A9E /* SiriAnswerTests.swift */,
 				DC6ED6BC961B01E7C70DE776 /* HeartRateZonesTests.swift */,
 				E483C461ADBAF6CAF2ACBA15 /* CheckInTests.swift */,
@@ -884,6 +893,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2D3B59D88684B458EBADBD19 /* DistanceUnitsTests.swift in Sources */,
+				8B96481DC3AB6589246F8B21 /* DistanceUnits.swift in Sources */,
 				3CC44CD6B8B64AD9B2362343 /* SiriAnswerTests.swift in Sources */,
 				4192AD8CB5789738B019935F /* SiriAnswer.swift in Sources */,
 				4C036D37DA3465DFC37B5AA7 /* HeartRateZonesTests.swift in Sources */,
@@ -959,6 +970,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E1E4C32D3FA7FAA709F4E1E1 /* DistanceUnits.swift in Sources */,
 				F14FC6B1B01E96FDCDA173CF /* TodayControl.swift in Sources */,
 				83BFE813FC324F3FEBBBD34B /* OpenTodayIntent.swift in Sources */,
 				486A9FF4A9173CF785C4CB5C /* SiriAnswer.swift in Sources */,
@@ -1006,6 +1018,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F0E91A44E77ACE49B79E4A29 /* DistanceUnits.swift in Sources */,
 				549B8EE0F996138F50E30379 /* SiriAnswer.swift in Sources */,
 				C07D7AD62A8FC30A358EAD65 /* HeartRateZones.swift in Sources */,
 				7174D33755854042F1579F38 /* CheckIn.swift in Sources */,
@@ -1054,6 +1067,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7B851C7F751F385ED0F90881 /* DistanceUnits.swift in Sources */,
 				8EC08095621421275C0D870C /* OpenTodayIntent.swift in Sources */,
 				3B3CE14447D9331B0A95EB42 /* PaceOffIntents.swift in Sources */,
 				63220CA3B2A4DB129A7DBBD9 /* SiriAnswer.swift in Sources */,

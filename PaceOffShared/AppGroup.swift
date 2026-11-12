@@ -43,6 +43,8 @@ public enum AppGroup {
         public static let bestEfforts = "paceoff.bestEfforts"
         /// Today's answer to "How do you feel?" (`CheckIn`, JSON).
         public static let checkIn = "paceoff.checkIn"
+        /// Kilometres or miles (`DistanceUnit`); unset follows the locale.
+        public static let distanceUnit = "paceoff.distanceUnit"
         /// Set once a Health read has held a run. A runner back after more
         /// than the 90-day window gets a restart target, not the first-run
         /// card a new runner gets.
