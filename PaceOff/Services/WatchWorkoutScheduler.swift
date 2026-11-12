@@ -14,7 +14,9 @@
 import Foundation
 import Observation
 #if canImport(WorkoutKit)
-import WorkoutKit
+// WorkoutKit's types (AuthorizationState among them) aren't marked
+// Sendable; they're plain values, safe to read on the main actor.
+@preconcurrency import WorkoutKit
 #endif
 
 @MainActor
