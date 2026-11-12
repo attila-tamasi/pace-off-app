@@ -29,6 +29,15 @@ public enum PaceSource: Codable, Equatable, Sendable {
     /// The distances whose best efforts can set paces.
     public static let effortDistances: Set<BestEffortDistance> = [.fiveK, .tenK, .halfMarathon]
 
+    /// The best efforts that count: 5 km, 10 km and half, from the last 90
+    /// days. The race prediction reads the same ones.
+    public static func eligibleEfforts(_ efforts: [BestEffort], today: Date) -> [BestEffort] {
+        let earliest = today.addingTimeInterval(-Double(effortWindowDays) * 86_400)
+        return efforts.filter {
+            effortDistances.contains($0.distance) && $0.runStart >= earliest && $0.runStart <= today
+        }
+    }
+
     /// The VDOT and where it came from.
     public struct Resolution: Equatable, Sendable {
         public let vdot: Double
@@ -44,11 +53,9 @@ public enum PaceSource: Codable, Equatable, Sendable {
                                bestEfforts: [BestEffort],
                                today: Date) -> Resolution {
         let plausible = VDOTCalculator.plausibleRange
-        let earliest = today.addingTimeInterval(-Double(effortWindowDays) * 86_400)
         let calculator = VDOTCalculator()
 
-        var candidates: [(vdot: Double, source: PaceSource)] = bestEfforts
-            .filter { effortDistances.contains($0.distance) && $0.runStart >= earliest && $0.runStart <= today }
+        var candidates: [(vdot: Double, source: PaceSource)] = eligibleEfforts(bestEfforts, today: today)
             .compactMap { effort in
                 calculator.vdot(fromRaceDistanceMeters: effort.distance.meters, timeSeconds: effort.seconds)
                     .map { (vdot: $0, source: PaceSource.bestEffort(effort)) }

@@ -84,6 +84,10 @@ public struct GoalPrediction: Equatable, Sendable {
     public enum Basis: Equatable, Sendable {
         /// Riegel-projected from a recent training run.
         case recentRun(distanceMeters: Double, durationSeconds: Double)
+        /// Riegel-projected from a best effort inside a recent run
+        /// (`PaceSource.eligibleEfforts`): a 10 km best inside a half-marathon
+        /// run says more than the whole run.
+        case bestEffort(BestEffort)
         /// Falling back to the PB because no recent runs are usable. The
         /// associated value is the PB's age in whole years — drives the
         /// "from a 10-year-old PB" caption.
@@ -153,13 +157,14 @@ public struct GoalPredictionService: Sendable {
         age: Int?,
         personalBest: PersonalBest?,
         vo2MaxHistory: [VO2MaxSnapshot] = [],
+        bestEfforts: [BestEffort] = [],
         goalDate: Date? = nil,
         today: Date = Date()
     ) -> GoalPrediction? {
 
         // ─── Step 1: pick the base time and basis ──────────────────────────
         let candidates = candidateRuns(from: runs, today: today)
-        let recentBest: (basis: GoalPrediction.Basis, seconds: Double)? = candidates
+        let projections: [(GoalPrediction.Basis, Double)] = candidates
             .compactMap { run -> (GoalPrediction.Basis, Double)? in
                 guard let seconds = riegel(fromDistanceMeters: run.distanceMeters,
                                            timeSeconds: run.durationSeconds,
@@ -171,6 +176,16 @@ public struct GoalPredictionService: Sendable {
                 )
                 return (basis, seconds)
             }
+        let effortProjections: [(GoalPrediction.Basis, Double)] = PaceSource
+            .eligibleEfforts(bestEfforts, today: today)
+            .compactMap { effort -> (GoalPrediction.Basis, Double)? in
+                guard let seconds = riegel(fromDistanceMeters: effort.distance.meters,
+                                           timeSeconds: effort.seconds,
+                                           toDistanceMeters: goal.distanceMeters)
+                else { return nil }
+                return (GoalPrediction.Basis.bestEffort(effort), seconds)
+            }
+        let recentBest: (basis: GoalPrediction.Basis, seconds: Double)? = (projections + effortProjections)
             .min(by: { $0.1 < $1.1 })
 
         let base: (basis: GoalPrediction.Basis, seconds: Double)?
@@ -209,6 +224,7 @@ public struct GoalPredictionService: Sendable {
         let confidence = computeConfidence(
             candidates: candidates,
             personalBest: personalBest,
+            hasRecentEffort: !effortProjections.isEmpty,
             today: today,
             goal: goal
         )
@@ -321,12 +337,15 @@ public struct GoalPredictionService: Sendable {
 
     private func computeConfidence(candidates: [RunRecord],
                                    personalBest: PersonalBest?,
+                                   hasRecentEffort: Bool = false,
                                    today: Date,
                                    goal: RunningGoal) -> GoalPrediction.Confidence {
         let cal = Calendar.current
 
         if candidates.isEmpty {
-            // No recent runs — confidence hinges on whether the PB is fresh.
+            // No recent runs — confidence hinges on a recent best effort
+            // or on whether the PB is fresh.
+            if hasRecentEffort { return .low }
             if let pb = personalBest, pbAgeYears(pb: pb, today: today) <= 2 {
                 return .low
             }
