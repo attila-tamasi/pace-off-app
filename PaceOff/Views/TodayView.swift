@@ -275,6 +275,7 @@ struct TodayView: View {
         switch todayVM.prescription?.adjustment {
         case .easedForYellow?: line += ", run easy today"
         case .cutForRed?: line += ", cut to an easy run"
+        case .restForUnwell?: line += ", rest today: you're unwell"
         case nil: break
         }
         if todayVM.prescription?.cappedAtMeters != nil {

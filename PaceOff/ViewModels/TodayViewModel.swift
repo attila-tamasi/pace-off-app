@@ -234,7 +234,8 @@ public final class TodayViewModel {
             target: computed,
             easyPace: plan.flatMap { DayPrescription.easyPaceBand(in: $0, today: now) },
             longestRunTodayMeters: DayPrescription.longestRun(on: now, in: runs),
-            singleRunCapMeters: SingleRunCap.capMeters(runs: runs, today: now)
+            singleRunCapMeters: SingleRunCap.capMeters(runs: runs, today: now),
+            unwell: self.readiness?.feeling == .unwell
         )
         self.yesterday = mostRecentRunBefore(today: now, in: runs)
         self.todayRun = mostRecentRunOn(day: now, in: runs)

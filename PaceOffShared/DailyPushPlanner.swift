@@ -123,7 +123,9 @@ public struct DailyPushPlanner: Sendable {
     /// Today's pushes, in firing order, leaving out slots that have passed,
     /// then the next-morning push.
     public func pushes(for inputs: Inputs) -> [DailyPush] {
-        let isPlanRestDay = inputs.planStatus?.isRestDay ?? false
+        // Unwell: a rest day whatever the plan said, with one morning push.
+        let unwell = inputs.prescription?.adjustment == .restForUnwell
+        let isPlanRestDay = unwell || (inputs.planStatus?.isRestDay ?? false)
         let planWorkout = isPlanRestDay ? nil : inputs.planStatus?.workout
         // The plan's run as the day's prescription has it: eased or cut
         // when readiness changed it.
@@ -141,7 +143,7 @@ public struct DailyPushPlanner: Sendable {
         }
 
         // A session already logged in Health drops out of the pushes.
-        let strength = inputs.planStatus?.pendingStrength
+        let strength = unwell ? nil : inputs.planStatus?.pendingStrength
         var body = inputs.body
         if let planRun, let run = planRun.runWorkout {
             // The prescription alone, so a push never names two distances.
@@ -157,7 +159,13 @@ public struct DailyPushPlanner: Sendable {
         if isPlanRestDay {
             // No run push; a strength day's morning push names the session,
             // and once it's logged there's nothing to say.
-            if !(inputs.planStatus?.isStrengthCompleted ?? false) {
+            if unwell {
+                pushes.append(DailyPush(
+                    slot: .morning,
+                    fireDate: time(of: .morning, in: inputs.schedule, on: inputs.now),
+                    body: Self.unwellBody
+                ))
+            } else if !(inputs.planStatus?.isStrengthCompleted ?? false) {
                 pushes.append(DailyPush(
                     slot: .morning,
                     fireDate: time(of: .morning, in: inputs.schedule, on: inputs.now),
@@ -238,6 +246,9 @@ public struct DailyPushPlanner: Sendable {
         let line = "Today's plan: \(workout.summary)"
         return strength.map { "\(line), then strength (\($0.summary))" } ?? line
     }
+
+    /// The morning push on a day the runner said they're unwell.
+    static let unwellBody = "You said you're unwell, so no run today. Rest and get well."
 
     /// "Race day · 21.1 km. Start controlled and let the taper work."
     static func raceDayBody(_ race: Workout) -> String {

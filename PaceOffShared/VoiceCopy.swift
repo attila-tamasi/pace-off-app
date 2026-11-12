@@ -21,6 +21,8 @@ public enum VoiceState: Sendable, Equatable {
     /// A plan rest day, with the strength session's summary when it has one.
     case planRestDay(strength: String?)
     case raceDay(km: Double)
+    /// The runner said they're unwell: rest, whatever the plan said.
+    case unwellRest
 
     /// `target.daysSinceLastRun` counts calendar days back to the last run:
     /// 0 means the runner already ran today, 1 that the last run was
@@ -41,6 +43,10 @@ public enum VoiceState: Sendable, Equatable {
                 currentStreak: Int,
                 planStatus: PlanDayStatus? = nil,
                 prescription: DayPrescription? = nil) {
+        if prescription?.adjustment == .restForUnwell {
+            self = .unwellRest
+            return
+        }
         let planDay = prescription?.source == .plan ? prescription : nil
         // The distance Today's hero shows: the plan's on a plan day, else the
         // *displayed* (rounded-up) target, so the line matches the hero.
@@ -146,6 +152,8 @@ public struct VoiceCopy: Sendable {
             return strength.map { "Strength day: \($0). No run today." } ?? "Rest day. Recovery is training too."
         case .raceDay(let km):
             return "Race day. \(format(km)) km. Start controlled."
+        case .unwellRest:
+            return "You said you're unwell. Rest today: getting well comes first."
         }
     }
 
@@ -185,6 +193,8 @@ public struct VoiceCopy: Sendable {
                 ?? "Rest day on your plan. Recovery is training too."
         case .raceDay(let km):
             return "Race day: \(format(km)) km. Start controlled and let the taper work."
+        case .unwellRest:
+            return "You said you're unwell, so no run today. Rest and get well."
         }
     }
 
