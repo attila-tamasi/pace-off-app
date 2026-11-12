@@ -34,6 +34,9 @@ public enum AppGroup {
         /// The day's prescribed distance in km (`DayPrescription`), absent
         /// on a rest day or when no prescription was written.
         public static let lastDayDistanceKm = "paceoff.lastDayDistanceKm"
+        /// Today's readiness level and sentence, for Siri and Shortcuts.
+        public static let lastReadinessLevel = "paceoff.lastReadinessLevel"
+        public static let lastReadinessSentence = "paceoff.lastReadinessSentence"
         /// The Plan tab's "Send workouts to Apple Watch" switch.
         public static let sendWorkoutsToWatch = "paceoff.watch.sendWorkouts"
         /// The best efforts kept across runs (`BestEffortLog`, JSON).

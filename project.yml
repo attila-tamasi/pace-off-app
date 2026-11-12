@@ -77,6 +77,8 @@ targets:
     sources:
       - path: PaceOffWidget
       - path: PaceOffShared
+      # The Control Center control's intent runs in the app; both targets build it.
+      - path: PaceOff/OpenTodayIntent.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.paceoff.app.widget

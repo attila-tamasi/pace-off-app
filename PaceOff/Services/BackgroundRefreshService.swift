@@ -282,7 +282,7 @@ public final class BackgroundRefreshService {
         // Hand the day to the widget in one write, and have it redraw.
         let day = WidgetCache(target: target, voiceLine: voiceLine,
                               runCompletedToday: todayRun != nil, planStatus: planStatus,
-                              prescription: prescription)
+                              prescription: prescription, readiness: readiness)
         if day.save(to: AppGroup.sharedDefaults) {
             WidgetCenter.shared.reloadAllTimelines()
         }

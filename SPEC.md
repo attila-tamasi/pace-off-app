@@ -78,6 +78,8 @@ Living spec. Split into **shipped today** (what exists in the codebase now) and 
 - The timeline has entries at noon (the dot turns red) and at midnight. A day cached on an earlier date renders as "Open Pace Off" with a grey dot and no voice line, never as today's
 - Time-of-day-based status dot; no live "in-progress run" state yet
 
+- **Siri, Shortcuts and Control Center** (`SiriAnswer`, in `PaceOffShared`, unit-tested; App Intents in the app): "What's my run today in Pace Off" answers from the day cached for the widget ("Today's run: 8.0 km · 5:25–5:45/km.", "Rest day today.", "Strength day: Kettlebell · 35 min. No run today.", "Today's run is done: 6 km."), and "How ready am I in Pace Off" says the readiness and its sentence ("Ease off: HRV below your baseline — easy day."), now cached with the day. No HealthKit and no app launch; a day cached on an earlier date answers "Open Pace Off to get today's target." The Shortcuts app lists both. A Control Center control, "Today's Run", opens Pace Off on Today
+
 ### 9. Profile + preferences
 - Identity hero (photo, name, age), goal + PB + prediction card, active training-plan card, notification / voice / health preferences. Each fact appears once: the goal, PB and race-day countdown live only in the goal card. The prediction is worked out again when the goal, race day, PB or birthday changes, or when a fresh Health read lands
 - Legal (T&C, Privacy, licenses), delete-my-data path, sign-out

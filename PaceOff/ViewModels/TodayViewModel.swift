@@ -170,7 +170,7 @@ public final class TodayViewModel {
         if isFresh {
             let day = WidgetCache(target: target, voiceLine: self.voiceLine,
                                   runCompletedToday: todayRun != nil, planStatus: planStatus,
-                                  prescription: prescription)
+                                  prescription: prescription, readiness: readiness)
             if day.save(to: AppGroup.sharedDefaults) {
                 WidgetCenter.shared.reloadAllTimelines()
             }

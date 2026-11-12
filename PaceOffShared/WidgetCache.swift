@@ -22,6 +22,9 @@ public struct WidgetCache: Equatable, Sendable {
     /// and in a cache written before it existed, where the target's whole
     /// km stand in.
     public var dayDistanceKm: Double?
+    /// Today's readiness and its sentence, nil when there's none.
+    public var readinessLevel: ReadinessLevel?
+    public var readinessSentence: String?
 
     public init(target: RunTarget? = nil,
                 voiceLine: String? = nil,
@@ -30,7 +33,9 @@ public struct WidgetCache: Equatable, Sendable {
                 planCompletedToday: Bool = false,
                 strengthSummary: String? = nil,
                 strengthCompletedToday: Bool = false,
-                dayDistanceKm: Double? = nil) {
+                dayDistanceKm: Double? = nil,
+                readinessLevel: ReadinessLevel? = nil,
+                readinessSentence: String? = nil) {
         self.target = target
         self.voiceLine = voiceLine
         self.runCompletedToday = runCompletedToday
@@ -39,6 +44,8 @@ public struct WidgetCache: Equatable, Sendable {
         self.strengthSummary = strengthSummary
         self.strengthCompletedToday = strengthSummary != nil && strengthCompletedToday
         self.dayDistanceKm = dayDistanceKm
+        self.readinessLevel = readinessLevel
+        self.readinessSentence = readinessSentence
     }
 
     /// The day as a refresh computed it, with today's plan status (nil
@@ -51,7 +58,8 @@ public struct WidgetCache: Equatable, Sendable {
                 voiceLine: String,
                 runCompletedToday: Bool,
                 planStatus: PlanDayStatus?,
-                prescription: DayPrescription? = nil) {
+                prescription: DayPrescription? = nil,
+                readiness: DailyReadiness? = nil) {
         let planDay = prescription?.source == .plan ? prescription : nil
         let planRun = planDay?.kind == .run ? planDay : nil
         // Unwell: the widget shows rest, with or without a plan.
@@ -63,7 +71,9 @@ public struct WidgetCache: Equatable, Sendable {
                   planCompletedToday: unwell ? false : planRun?.isDone ?? planStatus?.isCompleted ?? false,
                   strengthSummary: unwell ? nil : planStatus?.strength?.summary,
                   strengthCompletedToday: planStatus?.isStrengthCompleted ?? false,
-                  dayDistanceKm: prescription?.distanceKm)
+                  dayDistanceKm: prescription?.distanceKm,
+                  readinessLevel: readiness?.level,
+                  readinessSentence: readiness?.sentence)
     }
 
     public static let empty = WidgetCache()
@@ -192,6 +202,13 @@ public struct WidgetCache: Equatable, Sendable {
         } else {
             defaults.removeObject(forKey: AppGroup.Keys.lastDayDistanceKm)
         }
+        if let readinessLevel, let readinessSentence {
+            defaults.set(readinessLevel.rawValue, forKey: AppGroup.Keys.lastReadinessLevel)
+            defaults.set(readinessSentence, forKey: AppGroup.Keys.lastReadinessSentence)
+        } else {
+            defaults.removeObject(forKey: AppGroup.Keys.lastReadinessLevel)
+            defaults.removeObject(forKey: AppGroup.Keys.lastReadinessSentence)
+        }
         return true
     }
 
@@ -207,7 +224,9 @@ public struct WidgetCache: Equatable, Sendable {
             planCompletedToday: defaults.bool(forKey: AppGroup.Keys.planWorkoutCompletedToday),
             strengthSummary: defaults.string(forKey: AppGroup.Keys.lastPlanStrengthSummary),
             strengthCompletedToday: defaults.bool(forKey: AppGroup.Keys.strengthCompletedToday),
-            dayDistanceKm: defaults.object(forKey: AppGroup.Keys.lastDayDistanceKm) as? Double
+            dayDistanceKm: defaults.object(forKey: AppGroup.Keys.lastDayDistanceKm) as? Double,
+            readinessLevel: defaults.string(forKey: AppGroup.Keys.lastReadinessLevel).flatMap(ReadinessLevel.init(rawValue:)),
+            readinessSentence: defaults.string(forKey: AppGroup.Keys.lastReadinessSentence)
         )
     }
 }
