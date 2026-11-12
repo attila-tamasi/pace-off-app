@@ -185,6 +185,9 @@ public struct TrainingPlanInputs: Sendable {
     /// distance-free, so a 10K PB anchors a marathon plan as well. A PB of
     /// unknown distance is ignored. Refines VDOT when VO₂ max is missing.
     public let personalBest: PersonalBest?
+    /// The runner's best efforts (`BestEffortLog`). The 5 km, 10 km and
+    /// half of the last 90 days can set the VDOT (`PaceSource`).
+    public let bestEfforts: [BestEffort]
     /// Race-day deadline for the goal. When set in the future, the plan is
     /// shortened to fit (capped at the goal's default plan length, with a
     /// 4-week minimum so we still get a build + taper). When nil the default
@@ -205,6 +208,7 @@ public struct TrainingPlanInputs: Sendable {
                 longRunDay: Weekday = .sunday,
                 vo2Max: Double? = nil,
                 personalBest: PersonalBest? = nil,
+                bestEfforts: [BestEffort] = [],
                 goalDate: Date? = nil,
                 recentLongestRunMeters: Double? = nil,
                 crossTraining: StrengthEquipment? = nil,
@@ -214,6 +218,7 @@ public struct TrainingPlanInputs: Sendable {
         self.longRunDay = longRunDay
         self.vo2Max = vo2Max
         self.personalBest = personalBest
+        self.bestEfforts = bestEfforts
         self.goalDate = goalDate
         self.recentLongestRunMeters = recentLongestRunMeters
         self.crossTraining = crossTraining
@@ -237,7 +242,8 @@ public struct TrainingPlanGenerator: Sendable {
     // MARK: Public entry point
 
     public func generate(_ inputs: TrainingPlanInputs) -> TrainingPlan {
-        let (vdot, fromFallback) = resolveVDOT(inputs)
+        let resolution = resolvePaces(inputs)
+        let vdot = resolution.vdot
         let weekCount = planWeeks(for: inputs.goal,
                                   goalDate: inputs.goalDate,
                                   today: inputs.today)
@@ -286,10 +292,11 @@ public struct TrainingPlanGenerator: Sendable {
             longRunDay: inputs.longRunDay,
             weeks: weeks,
             vdot: vdot,
-            usedBeginnerDefault: fromFallback,
+            usedBeginnerDefault: resolution.usedFallback,
             createdAt: inputs.today,
             startDate: start,
-            crossTraining: inputs.crossTraining
+            crossTraining: inputs.crossTraining,
+            paceSource: resolution.source
         )
     }
 
@@ -306,17 +313,14 @@ public struct TrainingPlanGenerator: Sendable {
     /// 25-minute 5K. The beginner default applies only with no measurement.
     /// Returns `(vdot, usedFallback)`.
     public func resolveVDOT(_ inputs: TrainingPlanInputs) -> (Double, Bool) {
-        let fromPB = inputs.personalBest?.vdot
-        let measured = [inputs.vo2Max, fromPB]
-            .compactMap { $0 }
-            .filter { VDOTCalculator.plausibleRange.contains($0) }
-        if let inRange = measured.first(where: { VDOTCalculator.validRange.contains($0) }) {
-            return (inRange, false)
-        }
-        if let slow = measured.first {
-            return (VDOTCalculator.clamped(slow), false)
-        }
-        return (Self.beginnerVDOTFallback, true)
+        let resolution = resolvePaces(inputs)
+        return (resolution.vdot, resolution.usedFallback)
+    }
+
+    /// The VDOT and its source (`PaceSource.resolve`).
+    public func resolvePaces(_ inputs: TrainingPlanInputs) -> PaceSource.Resolution {
+        PaceSource.resolve(vo2Max: inputs.vo2Max, personalBest: inputs.personalBest,
+                           bestEfforts: inputs.bestEfforts, today: inputs.today)
     }
 
     // MARK: Plan length
@@ -714,7 +718,7 @@ public struct TrainingPlanGenerator: Sendable {
         return TrainingPlan(id: plan.id, goal: plan.goal, tier: plan.tier, longRunDay: plan.longRunDay,
                             weeks: weeks, vdot: plan.vdot, usedBeginnerDefault: plan.usedBeginnerDefault,
                             createdAt: plan.createdAt, startDate: plan.startDate,
-                            crossTraining: plan.crossTraining)
+                            crossTraining: plan.crossTraining, paceSource: plan.paceSource)
     }
 
     // MARK: Race day

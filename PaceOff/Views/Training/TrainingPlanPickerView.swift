@@ -234,6 +234,7 @@ struct TrainingPlanPickerView: View {
             longRunDay: longRunDay,
             vo2Max: vo2Max,
             personalBest: personalBest,
+            bestEfforts: BestEffortService.shared.log.bests,
             goalDate: goalDate,
             recentLongestRunMeters: recentLongestRunMeters,
             crossTraining: crossTraining

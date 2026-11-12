@@ -204,6 +204,11 @@
 		A116D7301E83578DC210FF11 /* BestEffortLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1685EA8B9FF81FA34B89EAEF /* BestEffortLog.swift */; };
 		DDEECAA73EBB6EBA57DD27B7 /* BestEffortLogTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA6370549CF90F6DE04E7D67 /* BestEffortLogTests.swift */; };
 		BDE101524AB3A1182AFE7D9D /* BestEffortService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCADC1E50B454347CF2CF453 /* BestEffortService.swift */; };
+		26665B995CE016D091B06EDF /* PaceSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 601B741519DC3C7A9F13F8A5 /* PaceSource.swift */; };
+		34D9BA4642903FD196CF7639 /* PaceSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 601B741519DC3C7A9F13F8A5 /* PaceSource.swift */; };
+		FC59D0B8BF46EBAD27199683 /* PaceSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 601B741519DC3C7A9F13F8A5 /* PaceSource.swift */; };
+		06C5513710F8E6EF55FC3573 /* PaceSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 601B741519DC3C7A9F13F8A5 /* PaceSource.swift */; };
+		A11D3957B46E14FDAB8F3E53 /* PaceSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E2CD1DC437E1CA3D002F0D4 /* PaceSourceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -371,6 +376,8 @@
 		1685EA8B9FF81FA34B89EAEF /* BestEffortLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BestEffortLog.swift; sourceTree = "<group>"; };
 		EA6370549CF90F6DE04E7D67 /* BestEffortLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BestEffortLogTests.swift; sourceTree = "<group>"; };
 		FCADC1E50B454347CF2CF453 /* BestEffortService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BestEffortService.swift; sourceTree = "<group>"; };
+		601B741519DC3C7A9F13F8A5 /* PaceSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceSource.swift; sourceTree = "<group>"; };
+		2E2CD1DC437E1CA3D002F0D4 /* PaceSourceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaceSourceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -402,6 +409,7 @@
 		109C6A0E735388A83524485D /* PaceOffShared */ = {
 			isa = PBXGroup;
 			children = (
+				601B741519DC3C7A9F13F8A5 /* PaceSource.swift */,
 				1685EA8B9FF81FA34B89EAEF /* BestEffortLog.swift */,
 				2202FC7680E4565178C1EA64 /* BestEfforts.swift */,
 				323336F95589D3FBBAB3AE03 /* WatchSchedulePlanner.swift */,
@@ -439,6 +447,7 @@
 		1B7540353C08CE299EFD814C /* PaceOffTests */ = {
 			isa = PBXGroup;
 			children = (
+				2E2CD1DC437E1CA3D002F0D4 /* PaceSourceTests.swift */,
 				EA6370549CF90F6DE04E7D67 /* BestEffortLogTests.swift */,
 				99A8870C60324AA56463B0DF /* BestEffortsTests.swift */,
 				22019F8B52F0E38F42AE2787 /* WatchSchedulePlannerTests.swift */,
@@ -820,6 +829,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A11D3957B46E14FDAB8F3E53 /* PaceSourceTests.swift in Sources */,
+				FC59D0B8BF46EBAD27199683 /* PaceSource.swift in Sources */,
 				DDEECAA73EBB6EBA57DD27B7 /* BestEffortLogTests.swift in Sources */,
 				BC28105A61BC924B39234887 /* BestEffortLog.swift in Sources */,
 				546ACED05652DC169D20F00C /* BestEffortsTests.swift in Sources */,
@@ -883,6 +894,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				34D9BA4642903FD196CF7639 /* PaceSource.swift in Sources */,
 				A3946B4E579D65B47551CFB5 /* BestEffortLog.swift in Sources */,
 				5210E10D4DE7974C1E2EB4C0 /* BestEfforts.swift in Sources */,
 				D056DE66E8283C3271D9B7EF /* WatchSchedulePlanner.swift in Sources */,
@@ -922,6 +934,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				06C5513710F8E6EF55FC3573 /* PaceSource.swift in Sources */,
 				A116D7301E83578DC210FF11 /* BestEffortLog.swift in Sources */,
 				642A64249A0B2E5A2A4E50CF /* BestEfforts.swift in Sources */,
 				808DAE50E85B46241EB1110A /* WatchSchedulePlanner.swift in Sources */,
@@ -964,6 +977,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26665B995CE016D091B06EDF /* PaceSource.swift in Sources */,
 				BDE101524AB3A1182AFE7D9D /* BestEffortService.swift in Sources */,
 				26B11D1E989E813E7684565D /* BestEffortLog.swift in Sources */,
 				E310CDAAFFA20548859C90BF /* BestEfforts.swift in Sources */,

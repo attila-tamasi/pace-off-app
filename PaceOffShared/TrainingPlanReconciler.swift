@@ -112,6 +112,7 @@ public struct TrainingPlanReconciler: Sendable {
     public func rebuiltBeforeStart(_ plan: TrainingPlan,
                                    vo2Max: Double?,
                                    personalBest: PersonalBest?,
+                                   bestEfforts: [BestEffort] = [],
                                    recentLongestRunMeters: Double?,
                                    today: Date = Date()) -> TrainingPlan? {
         guard plan.startsLater(today: today) else { return nil }
@@ -121,6 +122,7 @@ public struct TrainingPlanReconciler: Sendable {
             longRunDay: plan.longRunDay,
             vo2Max: vo2Max,
             personalBest: personalBest,
+            bestEfforts: bestEfforts,
             goalDate: plan.lastDay,
             recentLongestRunMeters: recentLongestRunMeters,
             crossTraining: plan.crossTraining,
@@ -140,7 +142,8 @@ public struct TrainingPlanReconciler: Sendable {
             usedBeginnerDefault: fresh.usedBeginnerDefault,
             createdAt: plan.createdAt,
             startDate: fresh.startDate,
-            crossTraining: plan.crossTraining
+            crossTraining: plan.crossTraining,
+            paceSource: fresh.paceSource
         )
     }
 
@@ -158,6 +161,7 @@ public struct TrainingPlanReconciler: Sendable {
     /// so week indexing and identity stay stable.
     public func retunedPlan(_ plan: TrainingPlan,
                             toVDOT newVDOT: Double,
+                            source: PaceSource? = nil,
                             today: Date = Date()) -> TrainingPlan? {
         guard let currentWeek = plan.currentWeekIndex(today: today) else { return nil }
         let drift = abs(newVDOT - plan.vdot)
@@ -183,7 +187,8 @@ public struct TrainingPlanReconciler: Sendable {
             usedBeginnerDefault: false,
             createdAt: plan.createdAt,
             startDate: plan.startDate,
-            crossTraining: plan.crossTraining
+            crossTraining: plan.crossTraining,
+            paceSource: source ?? plan.paceSource
         )
     }
 
