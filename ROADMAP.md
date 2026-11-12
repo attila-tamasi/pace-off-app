@@ -997,6 +997,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-12 · Roadmap re-ordered after the competitor research: Steps 0 to 3 replace the waves, with the no-backend architecture plan (`ARCHITECTURE.md`) and the research report (`docs/research-2026-11.md`); no code changed (PR #52)
 - 2026-11-11 · F-11c: a strength workout in Health ticks off the plan's session: it leaves the pushes, a run day with the session still to do gets one afternoon reminder, and the widget dot waits for it on a strength-only day (PR #51)
 - 2026-11-10 · F-11b: strength sessions show in the plan picker (Cross training), plan detail, Plan tab, Plan Settings, Today's plan line, the pushes and the widget (PR #50)
 - 2026-11-10 · F-11a: plans can carry kettlebell or free-weight sessions (1 a week Easy, 2 Medium and Aggressive), placed on free days by the rules, easing off in the taper; in the model only until F-11b shows them (PR #49)
