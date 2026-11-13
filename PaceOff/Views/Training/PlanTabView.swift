@@ -163,7 +163,7 @@ private struct ActivePlanView: View {
         if workout.kind == .rest {
             return strength.map { "\($0.summary). No run today." } ?? "Recovery is part of the plan."
         }
-        return workout.summary(in: units)
+        return workout.summary(in: .runner)
     }
 
     // MARK: - This week
@@ -203,7 +203,7 @@ private struct ActivePlanView: View {
                     .font(.system(.subheadline, weight: isRest ? .regular : .semibold))
                     .foregroundStyle(isRest ? .secondary : .primary)
                 if day.workout.kind != .rest {
-                    Text(day.workout.summary(in: units))
+                    Text(day.workout.summary(in: .runner))
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }

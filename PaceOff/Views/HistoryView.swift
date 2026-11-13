@@ -8,9 +8,6 @@ struct HistoryView: View {
     @State private var runs: [RunRecord] = []
     @State private var isLoading = false
 
-    /// The runner's unit (kilometres or miles).
-    private var units: UnitFormatter { .runner }
-
     var body: some View {
         List {
             if isLoading && runs.isEmpty {
@@ -73,7 +70,7 @@ private struct RunRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(run.startDate.formatted(.dateTime.weekday(.abbreviated).month().day()))
                     .font(.system(.body, design: .rounded, weight: .semibold))
-                Text("\(units.distanceTwoDecimals(run.distanceMeters)) · \(run.formattedPace(in: units)) · \(run.formattedDuration)")
+                Text("\(UnitFormatter.runner.distanceTwoDecimals(run.distanceMeters)) · \(run.formattedPace(in: .runner)) · \(run.formattedDuration)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
