@@ -13,6 +13,9 @@ struct WeekDetailView: View {
     @Environment(TrainingPlanStore.self) private var planStore
     @Environment(AppNavigation.self) private var navigation
 
+    /// The runner's unit (kilometres or miles).
+    private var units: UnitFormatter { .runner }
+
     /// The week's time in zones 1–2 across its runs, and the notes for runs
     /// meant easy that weren't. Nil until worked out, or without heart rate.
     @State private var balance: (easyShare: Double, notes: [String])?
@@ -51,12 +54,12 @@ struct WeekDetailView: View {
     private func summary(_ week: WeekReview) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(String(format: "%.1f", week.totalKm))
+                Text(units.numberOneDecimal(week.totalKm * 1000))
                     .scaledFont(size: 64, weight: .bold, design: .rounded)
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                     .contentTransition(.numericText())
-                Text("km")
+                Text(units.unit.symbol)
                     .font(.system(.body, design: .rounded, weight: .medium))
                     .foregroundStyle(.secondary)
             }
@@ -145,7 +148,7 @@ struct WeekDetailView: View {
             ForEach(week.days) { day in
                 BarMark(
                     x: .value("Day", day.date, unit: .day),
-                    y: .value("km", day.distanceKm)
+                    y: .value(units.unit.symbol, units.value(day.distanceKm * 1000))
                 )
                 .foregroundStyle(BrandPalette.trackFill)
                 .cornerRadius(5)
@@ -153,7 +156,7 @@ struct WeekDetailView: View {
                     RuleMark(
                         xStart: .value("Start", day.date.addingTimeInterval(3 * 3600)),
                         xEnd: .value("End", day.date.addingTimeInterval(21 * 3600)),
-                        y: .value("Plan", workout.distanceKm)
+                        y: .value("Plan", units.value(workout.distanceMeters))
                     )
                     .foregroundStyle(Color.accentColor)
                     .lineStyle(StrokeStyle(lineWidth: 2, dash: [4, 3]))
@@ -184,7 +187,7 @@ struct WeekDetailView: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 16) {
                 stat(value: "\(week.completedSessions) of \(week.plannedSessions)", label: "sessions done")
-                stat(value: String(format: "%.1f of %.1f", week.kmOnPlanDays, week.plannedKm), label: "km on plan days")
+                stat(value: "\(units.numberOneDecimal(week.kmOnPlanDays * 1000)) of \(units.numberOneDecimal(week.plannedKm * 1000))", label: "\(units.unit.symbol) on plan days")
             }
 
             if week.plannedKm > 0 {
@@ -226,7 +229,7 @@ struct WeekDetailView: View {
                     .font(.system(.headline, design: .rounded))
                 Spacer(minLength: 8)
                 if day.distanceKm > 0 {
-                    Text(String(format: "%.1f km", day.distanceKm))
+                    Text(units.distanceOneDecimal(day.distanceKm * 1000))
                         .font(.system(.subheadline, design: .rounded, weight: .semibold))
                         .foregroundStyle(BrandPalette.track)
                 }
@@ -273,8 +276,8 @@ struct WeekDetailView: View {
     /// "Plan: Easy · 8.0 km · 5:25–5:45/km", or "Plan: rest day".
     private func planLine(_ workout: Workout) -> String {
         if workout.kind == .rest { return "Plan: rest day" }
-        if workout.kind == .race { return "Plan: \(workout.headline)" }
-        return "Plan: \(workout.kind.displayName) · \(workout.summary)"
+        if workout.kind == .race { return "Plan: \(workout.headline(in: units))" }
+        return "Plan: \(workout.kind.displayName) · \(workout.summary(in: units))"
     }
 
     private func markIcon(_ mark: WeekReview.PlanMark) -> some View {
@@ -302,9 +305,9 @@ struct WeekDetailView: View {
             Image(systemName: "figure.run")
                 .foregroundStyle(BrandPalette.track)
             VStack(alignment: .leading, spacing: 2) {
-                Text(String(format: "%.2f km", run.distanceKm))
+                Text(units.distanceTwoDecimals(run.distanceMeters))
                     .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                Text("\(run.formattedPace) · \(run.formattedDuration) · \(run.startDate.formatted(date: .omitted, time: .shortened))")
+                Text("\(run.formattedPace(in: units)) · \(run.formattedDuration) · \(run.startDate.formatted(date: .omitted, time: .shortened))")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

@@ -71,6 +71,12 @@ public struct RunRecord: Codable, Sendable, Identifiable, Equatable {
         return String(format: "%d:%02d/km", mins, secs)
     }
 
+    /// `formattedPace` in the runner's unit: "8:41/mi".
+    public func formattedPace(in units: UnitFormatter) -> String {
+        guard let pace = averagePace, pace > 0 else { return "—" }
+        return units.pace(secondsPerKm: pace)
+    }
+
     public var formattedDuration: String {
         let total = Int(durationSeconds)
         let h = total / 3600

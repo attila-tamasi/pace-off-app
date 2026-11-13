@@ -27,6 +27,10 @@ struct ProfileView: View {
     @State private var pushPermission: NotificationScheduler.Permission?
     @Environment(\.openURL) private var openURL
 
+    /// Kilometres or miles (`DistanceUnit`); the locale's until chosen.
+    @AppStorage(AppGroup.Keys.distanceUnit, store: AppGroup.sharedDefaults)
+    private var distanceUnit: DistanceUnit = .default(for: .current)
+
     @AppStorage(AppGroup.Keys.notificationEveningHour, store: AppGroup.sharedDefaults)
 
     private var eveningHour: Int = DailyPushPlanner.Schedule.defaultEveningHour
@@ -221,7 +225,7 @@ struct ProfileView: View {
                         .scaledFont(size: 30, weight: .bold, design: .rounded)
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
-                    Text(String(format: "%.1f km", goal.distanceKm))
+                    Text(UnitFormatter.runner.distanceOneDecimal(goal.distanceMeters))
                         .font(.system(.subheadline, design: .rounded, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
@@ -324,8 +328,7 @@ struct ProfileView: View {
     private func predictionBasisDescription(_ basis: GoalPrediction.Basis) -> String {
         switch basis {
         case .recentRun(let distance, _):
-            let km = String(format: "%.1f", distance / 1000)
-            return "Projected from your recent \(km) km run."
+            return "Projected from your recent \(UnitFormatter.runner.distanceOneDecimal(distance)) run."
         case .bestEffort(let effort):
             return "Projected from your \(effort.distance.displayName) best on \(effort.runStart.formatted(.dateTime.day().month(.abbreviated))) (\(BestEffortLog.formatTime(effort.seconds)))."
         case .agedPersonalBest(let years):
@@ -369,6 +372,8 @@ struct ProfileView: View {
                 notificationRow
                 divider
                 voiceRow
+                divider
+                unitsRow
                 divider
                 healthRow
                 divider
@@ -507,6 +512,24 @@ struct ProfileView: View {
                 .padding(.vertical, 14)
         }
         .buttonStyle(.plain)
+    }
+
+    /// Kilometres or miles for every distance, pace and speed in the app.
+    private var unitsRow: some View {
+        HStack {
+            preferenceLabel(icon: "ruler", color: .orange, title: "Units", value: nil)
+            Picker("Units", selection: $distanceUnit) {
+                Text("Kilometres").tag(DistanceUnit.kilometers)
+                Text("Miles").tag(DistanceUnit.miles)
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .onChange(of: distanceUnit) {
+            NotificationCenter.default.post(name: .paceOffUnitsChanged, object: nil)
+        }
     }
 
     private var aboutRow: some View {

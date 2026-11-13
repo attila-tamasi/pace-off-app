@@ -148,4 +148,7 @@ struct PaceOffApp: App {
 extension Notification.Name {
     /// Posted by ProfileStore.signOut() so the app shell can reset its flow.
     static let paceOffSignOut = Notification.Name("PaceOffSignOut")
+    /// Posted when the runner switches between kilometres and miles, so
+    /// Today works the day out again in the new unit.
+    static let paceOffUnitsChanged = Notification.Name("PaceOffUnitsChanged")
 }

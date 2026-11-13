@@ -47,6 +47,9 @@ struct TodayView: View {
         }
         .background { ambientBackground }
         .refreshable { await todayVM.refresh() }
+        .onReceive(NotificationCenter.default.publisher(for: .paceOffUnitsChanged)) { _ in
+            Task { await todayVM.refresh() }
+        }
         .navigationTitle("Today")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -488,8 +491,8 @@ struct TodayView: View {
                     tint: BrandPalette.track,
                     detail: streakLabel,
                     showsChevron: true,
-                    value: String(format: "%.1f", todayVM.weekTotalKm),
-                    unit: "km"
+                    value: units.numberOneDecimal(todayVM.weekTotalKm * 1000),
+                    unit: units.unit.symbol
                 ) {
                     DailyDistanceBars(days: todayVM.weekDistances)
                         .frame(width: 150, height: 64)
@@ -538,7 +541,7 @@ struct TodayView: View {
             tint: .accentColor,
             showsChevron: showsChevron,
             value: lastRunValue,
-            note: todayVM.yesterday.map { String(format: "%.1f km", $0.distanceKm) },
+            note: todayVM.yesterday.map { units.distanceOneDecimal($0.distanceMeters) },
             layout: .compact
         )
     }
@@ -592,7 +595,7 @@ struct TodayView: View {
             color = .orange
         }
 
-        var stats = "\(run.formattedDuration) · \(run.formattedPace)"
+        var stats = "\(run.formattedDuration) · \(run.formattedPace(in: units))"
         if let hr = run.averageHeartRate {
             stats += " · \(Int(hr.rounded())) bpm"
         }
@@ -604,8 +607,8 @@ struct TodayView: View {
                 tint: BrandPalette.track,
                 detail: run.startDate.formatted(date: .omitted, time: .shortened),
                 showsChevron: true,
-                value: String(format: "%.2f", actualKm),
-                unit: "km",
+                value: units.numberTwoDecimals(run.distanceMeters),
+                unit: units.unit.symbol,
                 note: stats
             ) {
                 Text(label)

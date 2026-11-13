@@ -44,6 +44,18 @@ final class DistanceUnitsTests: XCTestCase {
         XCTAssertEqual(mi.paceBand(minSecondsPerKm: 325, maxSecondsPerKm: 345), "8:43–9:15/mi")
     }
 
+    func testARecordedRun() {
+        let run = RunRecord(startDate: Date(), endDate: Date().addingTimeInterval(1_620), distanceMeters: 5_230,
+                            durationSeconds: 1_620, averagePace: 309.75)
+        XCTAssertEqual(km.distanceTwoDecimals(run.distanceMeters), "5.23 km")
+        XCTAssertEqual(mi.numberTwoDecimals(run.distanceMeters), "3.25")
+        XCTAssertEqual(run.formattedPace(in: km), "5:09/km")
+        XCTAssertEqual(run.formattedPace(in: mi), "8:18/mi")
+        XCTAssertEqual(mi.secondsPerUnit(secondsPerKm: 300), 482.8032, accuracy: 1e-9)
+        XCTAssertEqual(RunRecord(startDate: Date(), endDate: Date(), distanceMeters: 0, durationSeconds: 0)
+            .formattedPace(in: mi), "—")
+    }
+
     func testSpeeds() {
         XCTAssertEqual(km.speed(metersPerSecond: 3.0833), "11.1 km/h")
         XCTAssertEqual(mi.speed(metersPerSecond: 3.0833), "6.9 mph")
