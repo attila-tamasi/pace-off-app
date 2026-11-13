@@ -241,7 +241,7 @@ struct GoalGridPicker: View {
                     VStack(spacing: 4) {
                         Text(goal.displayName)
                             .font(.system(.subheadline, design: .rounded, weight: .semibold))
-                        Text(String(format: "%.1f km", goal.distanceKm))
+                        Text(UnitFormatter.runner.distanceOneDecimal(goal.distanceMeters))
                             .font(.system(.caption2, design: .rounded))
                             .foregroundStyle(isSelected ? .white.opacity(0.85) : .secondary)
                     }

@@ -10,6 +10,9 @@ struct TrendsView: View {
 
     @State private var vo2Max: [VO2MaxSnapshot] = []
     @State private var runs: [RunRecord] = []
+
+    /// The runner's unit (kilometres or miles).
+    private var units: UnitFormatter { .runner }
     /// False until there's something to show (the cache) or the Health
     /// read is back, so the empty lines never show while still loading.
     @State private var loaded = false
@@ -37,8 +40,8 @@ struct TrendsView: View {
                     systemImage: "figure.run",
                     tint: BrandPalette.track,
                     detail: "Last 12 weeks",
-                    value: String(format: "%.1f", thisWeekKm),
-                    unit: "km this week",
+                    value: units.numberOneDecimal(thisWeekKm * 1000),
+                    unit: "\(units.unit.symbol) this week",
                     layout: .compact
                 ) {
                     if weeklyDistances.isEmpty {
@@ -53,7 +56,7 @@ struct TrendsView: View {
                     tint: .teal,
                     detail: "Last 28 days",
                     value: averagePaceLabel,
-                    unit: "/km avg",
+                    unit: "/\(units.unit.symbol) avg",
                     layout: .compact
                 ) {
                     if recentPacedRuns.isEmpty {
@@ -124,7 +127,7 @@ struct TrendsView: View {
 
     private var weeklyDistanceChart: some View {
         Chart(weeklyDistances, id: \.week) { entry in
-            BarMark(x: .value("Week", entry.week, unit: .weekOfYear), y: .value("km", entry.km))
+            BarMark(x: .value("Week", entry.week, unit: .weekOfYear), y: .value(units.unit.symbol, units.value(entry.km * 1000)))
                 .foregroundStyle(BrandPalette.trackFill)
                 .cornerRadius(4)
         }
@@ -144,19 +147,18 @@ struct TrendsView: View {
     private var averagePaceLabel: String {
         let paces = recentPacedRuns.compactMap(\.averagePace)
         guard !paces.isEmpty else { return "—" }
-        let mean = Int((paces.reduce(0, +) / Double(paces.count)).rounded())
-        return String(format: "%d:%02d", mean / 60, mean % 60)
+        return units.paceNumber(secondsPerKm: paces.reduce(0, +) / Double(paces.count))
     }
 
     /// Faster is up: the pace axis is reversed so a better run reads as a
     /// higher point, like every other trend on this screen.
     private var paceChart: some View {
         Chart(recentPacedRuns) { run in
-            LineMark(x: .value("Date", run.startDate), y: .value("Pace s/km", run.averagePace ?? 0))
+            LineMark(x: .value("Date", run.startDate), y: .value("Pace", units.secondsPerUnit(secondsPerKm: run.averagePace ?? 0)))
                 .foregroundStyle(Color.teal)
                 .lineStyle(StrokeStyle(lineWidth: 2.2, lineCap: .round))
                 .interpolationMethod(.catmullRom)
-            PointMark(x: .value("Date", run.startDate), y: .value("Pace s/km", run.averagePace ?? 0))
+            PointMark(x: .value("Date", run.startDate), y: .value("Pace", units.secondsPerUnit(secondsPerKm: run.averagePace ?? 0)))
                 .foregroundStyle(Color.teal)
                 .symbolSize(18)
         }

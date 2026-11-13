@@ -76,6 +76,20 @@ public struct UnitFormatter: Sendable {
         "\(format((value(meters) * 10).rounded() / 10, decimals: 1)) \(unit.symbol)"
     }
 
+    /// "5.23 km": two decimals, for a recorded run.
+    public func distanceTwoDecimals(_ meters: Double) -> String {
+        "\(format(value(meters), decimals: 2)) \(unit.symbol)"
+    }
+
+    /// The number alone with two decimals: "5.23".
+    public func numberTwoDecimals(_ meters: Double) -> String { format(value(meters), decimals: 2) }
+
+    /// The number alone with one decimal: "32.0", "19.9".
+    public func numberOneDecimal(_ meters: Double) -> String { format(value(meters), decimals: 1) }
+
+    /// Seconds per unit, from seconds per km.
+    public func secondsPerUnit(secondsPerKm: Double) -> Double { secondsPerKm * unit.meters / 1_000 }
+
     /// "5:24": minutes and seconds per unit, from seconds per km, the
     /// seconds cut down as the plan has always shown them.
     public func paceNumber(secondsPerKm: Double) -> String {

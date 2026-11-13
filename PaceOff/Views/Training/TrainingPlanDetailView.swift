@@ -9,6 +9,9 @@ import SwiftUI
 struct TrainingPlanDetailView: View {
 
     let plan: TrainingPlan
+
+    /// The runner's unit (kilometres or miles).
+    private var units: UnitFormatter { .runner }
     /// False when showing the plan that's already active.
     var showsSelectButton = true
 
@@ -108,9 +111,10 @@ struct TrainingPlanDetailView: View {
 
     /// Why the plan's longest run is short, and, when a race date cut its
     /// weeks, what would help.
-    private static func shortfallText(_ shortfall: TrainingPlan.BuildShortfall) -> String {
-        let longest = String(format: "%.0f km", shortfall.longestLongRunMeters / 1000)
-        let full = String(format: "%.0f km", shortfall.fullBuildLongRunMeters / 1000)
+    private static func shortfallText(_ shortfall: TrainingPlan.BuildShortfall,
+                                      units: UnitFormatter = .runner) -> String {
+        let longest = units.distance((shortfall.longestLongRunMeters / units.unit.meters).rounded() * units.unit.meters)
+        let full = units.distance((shortfall.fullBuildLongRunMeters / units.unit.meters).rounded() * units.unit.meters)
         if shortfall.laterRaceDateHelps {
             return "Too few weeks to build up from your recent runs: the longest run here is \(longest), "
                 + "where a full plan reaches \(full). A later race date gives it room."
@@ -140,7 +144,7 @@ struct TrainingPlanDetailView: View {
                 Text("Week \(week.index)")
                     .font(.system(.headline, design: .rounded, weight: .semibold))
                 Spacer()
-                Text(String(format: "%.0f km", week.totalDistanceKm))
+                Text(units.distance((week.totalDistanceKm * 1000 / units.unit.meters).rounded() * units.unit.meters))
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundStyle(.secondary)
             }
@@ -175,7 +179,7 @@ struct TrainingPlanDetailView: View {
                                           weight: day.workout.kind.isKeySession ? .semibold : .regular))
                             .foregroundStyle(day.workout.kind == .rest ? .secondary : .primary)
                         if day.workout.kind != .rest {
-                            Text("· \(day.workout.summary)")
+                            Text("· \(day.workout.summary(in: units))")
                                 .font(.system(.subheadline, design: .rounded))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(2)

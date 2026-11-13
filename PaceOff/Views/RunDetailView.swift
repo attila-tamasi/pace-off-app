@@ -12,6 +12,9 @@ import Charts
 struct RunDetailView: View {
     let run: RunRecord
 
+    /// The runner's unit (kilometres or miles).
+    private var units: UnitFormatter { .runner }
+
     @State private var routeCoordinates: [CLLocationCoordinate2D] = []
     @State private var isLoadingRoute: Bool = true
     @State private var cameraPosition: MapCameraPosition = .automatic
@@ -220,11 +223,11 @@ struct RunDetailView: View {
             Text(run.startDate.formatted(.dateTime.weekday(.wide).month().day()))
                 .font(.system(.headline, design: .rounded))
                 .foregroundStyle(.secondary)
-            Text(String(format: "%.2f km", run.distanceKm))
+            Text(units.distanceTwoDecimals(run.distanceMeters))
                 .scaledFont(size: 56, weight: .bold, design: .rounded)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
-            Text("\(run.formattedPace) · \(run.formattedDuration)")
+            Text("\(run.formattedPace(in: units)) · \(run.formattedDuration)")
                 .font(.system(.title3, design: .rounded))
                 .foregroundStyle(.secondary)
             Text("\(run.startDate.formatted(date: .omitted, time: .shortened))–\(run.endDate.formatted(date: .omitted, time: .shortened))")
@@ -253,11 +256,11 @@ struct RunDetailView: View {
     private var summaryItems: [SummaryItem] {
         var items = [SummaryItem(label: "DURATION", value: run.formattedDuration, icon: "stopwatch")]
         if run.distanceMeters > 0 {
-            items.append(SummaryItem(label: "AVG PACE", value: run.formattedPace, icon: "speedometer"))
+            items.append(SummaryItem(label: "AVG PACE", value: run.formattedPace(in: units), icon: "speedometer"))
         }
         if run.distanceMeters > 0, run.durationSeconds > 0 {
-            let kmh = run.distanceKm / (run.durationSeconds / 3600)
-            items.append(SummaryItem(label: "AVG SPEED", value: String(format: "%.1f km/h", kmh), icon: "gauge.with.dots.needle.33percent"))
+            let speed = units.speed(metersPerSecond: run.distanceMeters / run.durationSeconds)
+            items.append(SummaryItem(label: "AVG SPEED", value: speed, icon: "gauge.with.dots.needle.33percent"))
         }
         if let avg = run.averageHeartRate ?? heartRate?.average {
             items.append(SummaryItem(label: "AVG HEART RATE", value: "\(Int(avg.rounded())) bpm", icon: "heart.fill"))
@@ -417,14 +420,14 @@ struct RunDetailView: View {
             Chart {
                 ForEach(elevation.points) { point in
                     AreaMark(
-                        x: .value("km", point.meters / 1000),
+                        x: .value(units.unit.symbol, units.value(point.meters)),
                         yStart: .value("Base", elevation.low - 5),
                         yEnd: .value("m", point.altitude)
                     )
                     .interpolationMethod(.monotone)
                     .foregroundStyle(BrandPalette.trackFill.opacity(0.35))
                     LineMark(
-                        x: .value("km", point.meters / 1000),
+                        x: .value(units.unit.symbol, units.value(point.meters)),
                         y: .value("m", point.altitude)
                     )
                     .interpolationMethod(.monotone)
@@ -436,8 +439,8 @@ struct RunDetailView: View {
                 AxisMarks(values: .automatic(desiredCount: 5)) { value in
                     AxisGridLine()
                     AxisValueLabel {
-                        if let km = value.as(Double.self) {
-                            Text(String(format: km == km.rounded() ? "%.0f km" : "%.1f km", km))
+                        if let distance = value.as(Double.self) {
+                            Text(units.distance(distance * units.unit.meters))
                                 .font(.system(.caption2, design: .rounded))
                         }
                     }

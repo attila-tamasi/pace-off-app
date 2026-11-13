@@ -252,14 +252,14 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - A day cached on an earlier date answers "Open Pace Off to get today's target", as the widget does.
 
 ### F-01 · Kilometres or miles
-- **Status:** todo (F-01a PR #73, F-01b PR #74 done; F-01c next)
+- **Status:** todo (F-01a PR #73, F-01b PR #74, F-01c PR #75 done; F-01d next)
 - **Size:** L   ·   **Merge:** auto
 - **Problem:** "km" and "/km" are hard-coded everywhere, and decimals ignore the locale. A runner in the US or the UK can't use the app as it is.
 - **Sub-items:**
   - **F-01a · One formatter** (M), **done (PR #73)**: a unit setting (default from the locale) and one formatter in `PaceOffShared` for distances, paces and speeds, with tests. The engines keep working in metres. Whole-unit rounding rules (R-04's "never above the cap") hold in miles too.
   - **F-01b · The day's words** (M), **done (PR #74)**: the day in the runner's unit everywhere it's said: the daily target in whole miles or km (under its cap), plan workouts, the voice lines, the pushes, the cap note, the widget, Siri, and Today's hero and plan line.
-  - **F-01c · The screens and the setting** (M): History, Trends, run detail, the week, Profile, the plan screens and best efforts through the formatter; a Kilometres/Miles choice in Profile's preferences.
-  - **F-01d · Session notes and the mile** (S): quality-session notes ("WU 2 km · 3 × 1.6 km @ T …") written in the runner's unit, and the mile as a best effort.
+  - **F-01c · The screens and the setting** (M), **done (PR #75)**: History, Trends, run detail, the week, Profile, the plan screens and best efforts through the formatter; a Kilometres/Miles choice in Profile's preferences.
+  - **F-01d · Session notes, splits and the mile** (M): quality-session notes ("WU 2 km · 3 × 1.6 km @ T …") written in the runner's unit, run detail's splits per mile, the "s/km" in the pace-decay note, and the mile as a best effort.
 
 ### F-08 · Languages: Hungarian first
 - **Status:** todo
@@ -983,6 +983,7 @@ All done.
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #75: Profile → Units (Kilometres/Miles menu) and, after switching to Miles: Today (hero, Last 7 days, Last run, Today's run), History rows, Trends (weekly distance, pace and their charts), run detail (distance, pace, speed, elevation axis), the week screen, the Plan tab and plan detail, Profile's goal and prediction line
 - [ ] PR #74: with the phone's region set to the US: Today's hero in miles ("6 mi"), the plan line, the voice line, a push, the widget and Siri all in miles; with a European region, unchanged
 - [ ] PR #72: "Hey Siri, what's my run today in Pace Off" and "How ready am I in Pace Off" (the Shortcuts app lists both), and the "Today's Run" control in Control Center opening Today
 - [ ] PR #71: run detail's "Heart rate zones" card (one bar, five rows with bpm ranges and minutes, the orange tortoise note on an easy run run too hard), and the week screen's "Easy and hard" card ("78% easy · 22% hard", its bar and notes)
@@ -1025,6 +1026,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-13 · F-01c: History, Trends, run detail, the week, the plan screens and Profile show the runner's unit, and Profile has a Kilometres/Miles choice that reworks Today at once (PR #75)
 - 2026-11-13 · F-01b: the day is said in the runner's unit (miles from a US or UK locale): the daily target in whole units under its cap, plan workouts, voice lines, pushes, the widget, Siri and Today's hero (PR #74)
 - 2026-11-12 · F-01a: `DistanceUnit` (kilometres or miles, the locale's by default, kept in App Group defaults) and `UnitFormatter` for distances, paces, speeds and whole units under a cap, locale decimals; nothing uses it until F-01b (PR #73)
 - 2026-11-12 · F-16: Siri and Shortcuts answer "What's my run today?" and "How ready am I?" from the cached day, and a Control Center control opens Today (PR #72)
