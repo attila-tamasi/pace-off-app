@@ -152,6 +152,46 @@ final class PaceDecayAnalyserTests: XCTestCase {
         XCTAssertEqual(samples[1].cumulativeMeters, 111_195, accuracy: 500)
     }
 
+    // MARK: - Miles
+
+    func test_splits_perMile() {
+        // 5 km at 300 s/km: three whole miles, each 482.8 s, 300 s/km.
+        let samples: [PaceDecayAnalyser.LocationSample] = (0...50).map { step in
+            PaceDecayAnalyser.LocationSample(
+                date: epoch.addingTimeInterval(Double(step) * 30),
+                cumulativeMeters: Double(step) * 100
+            )
+        }
+        let splits = analyser.splits(locations: samples, splitMeters: DistanceUnit.metersPerMile)
+        XCTAssertEqual(splits.map(\.index), [1, 2, 3])
+        for split in splits { XCTAssertEqual(split.secondsPerKm, 300, accuracy: 0.5) }
+        XCTAssertEqual(splits[2].cumulativeSeconds, 3 * 482.8, accuracy: 0.5)
+        let mi = UnitFormatter(unit: .miles, locale: Locale(identifier: "en_US_POSIX"))
+        XCTAssertEqual(mi.paceNumber(secondsPerKm: splits[0].secondsPerKm), "8:02")
+    }
+
+    // MARK: - Headline
+
+    private func splits(_ paces: [Double]) -> [KilometerSplit] {
+        paces.enumerated().map { KilometerSplit(index: $0.offset + 1, secondsPerKm: $0.element,
+                                                averageHeartRate: nil, cumulativeSeconds: 0) }
+    }
+
+    func test_headline_inTheRunnersUnit() {
+        let km = UnitFormatter.metric
+        let mi = UnitFormatter(unit: .miles, locale: Locale(identifier: "en_US_POSIX"))
+        let slowing = splits([300, 300, 310, 330, 330, 330])
+        XCTAssertEqual(PaceDecayAnalyser.headline(slowing, units: km),
+                       "Slowed 30 s/km in the final third — likely fatigue or effort dip.")
+        XCTAssertEqual(PaceDecayAnalyser.headline(slowing, units: mi),
+                       "Slowed 48 s/mi in the final third — likely fatigue or effort dip.")
+        XCTAssertEqual(PaceDecayAnalyser.headline(splits([330, 330, 320, 300]), units: km),
+                       "Sped up 30 s/km toward the end — strong finish.")
+        XCTAssertEqual(PaceDecayAnalyser.headline(splits([300, 305, 300, 305]), units: km),
+                       "Pace held steady across the run — well-judged effort.")
+        XCTAssertNil(PaceDecayAnalyser.headline(splits([300, 400, 500]), units: km))
+    }
+
     // MARK: - Formatting
 
     func test_split_formattedPace_isMinuteSeconds() {

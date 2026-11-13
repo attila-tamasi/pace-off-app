@@ -122,6 +122,29 @@ public struct UnitFormatter: Sendable {
         return max(1, min(roundedUp, underCap))
     }
 
+    /// A plan workout's notes in the unit: each "<n> km" the generator
+    /// wrote goes through `distance` ("WU 3 km" → "WU 1.9 mi", "2,2 km" in
+    /// Hungarian). In miles a rep under 2 km reads in metres, as a track
+    /// session does ("5 × 1.6 km" → "5 × 1600 m"); metres stay as written.
+    public func sessionNotes(_ text: String) -> String {
+        var words = text.components(separatedBy: " ")
+        var i = 0
+        while i + 1 < words.count {
+            let next = words[i + 1]
+            let tail = next.dropFirst(2)
+            guard next.hasPrefix("km"), tail.allSatisfy({ !$0.isLetter }),
+                  let km = Double(words[i]), km > 0
+            else { i += 1; continue }
+            let isRep = i > 0 && words[i - 1] == "×"
+            let shown = unit == .miles && isRep && km < 2
+                ? "\(Int((km * 100).rounded()) * 10) m"
+                : distance(km * 1_000)
+            words.replaceSubrange(i...(i + 1), with: [shown + String(tail)])
+            i += 1
+        }
+        return words.joined(separator: " ")
+    }
+
     private func format(_ value: Double, decimals: Int) -> String {
         value.formatted(.number.precision(.fractionLength(decimals)).locale(locale).grouping(.never))
     }

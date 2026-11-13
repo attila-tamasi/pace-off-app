@@ -112,7 +112,7 @@ private struct ActivePlanView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.trailing, 96)
 
-            if let notes = workout?.notes, workout?.kind != .rest {
+            if let notes = workout?.notes(in: .runner), workout?.kind != .rest {
                 Text(notes)
                     .font(.system(.footnote, design: .rounded))
                     .foregroundStyle(.white.opacity(0.85))

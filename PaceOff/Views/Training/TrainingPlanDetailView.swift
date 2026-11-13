@@ -185,7 +185,7 @@ struct TrainingPlanDetailView: View {
                                 .lineLimit(2)
                         }
                     }
-                    if let notes = day.workout.notes {
+                    if let notes = day.workout.notes(in: units) {
                         Text(notes)
                             .font(.system(.caption, design: .rounded))
                             .foregroundStyle(.tertiary)

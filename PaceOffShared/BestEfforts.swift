@@ -1,5 +1,5 @@
 // BestEfforts.swift
-// A run's fastest 1 km, 5 km, 10 km and half marathon, found inside it from
+// A run's fastest 1 km, mile, 5 km, 10 km and half marathon, found inside it from
 // its GPS route: the shortest time over each distance, from any point of
 // the route, with the end interpolated between the two points that
 // straddle it. Pure (latitudes, longitudes and times in, seconds out), so
@@ -23,6 +23,7 @@ public struct RoutePoint: Equatable, Sendable {
 
 public enum BestEffortDistance: String, Codable, CaseIterable, Sendable, Identifiable {
     case oneK
+    case mile
     case fiveK
     case tenK
     case halfMarathon
@@ -32,6 +33,7 @@ public enum BestEffortDistance: String, Codable, CaseIterable, Sendable, Identif
     public var meters: Double {
         switch self {
         case .oneK:         return 1_000
+        case .mile:         return DistanceUnit.metersPerMile
         case .fiveK:        return 5_000
         case .tenK:         return 10_000
         case .halfMarathon: return 21_097.5
@@ -41,16 +43,18 @@ public enum BestEffortDistance: String, Codable, CaseIterable, Sendable, Identif
     public var displayName: String {
         switch self {
         case .oneK:         return "1 km"
+        case .mile:         return "Mile"
         case .fiveK:        return "5 km"
         case .tenK:         return "10 km"
         case .halfMarathon: return "Half marathon"
         }
     }
 
-    /// The race goal a best over this distance is a PB for; the 1 km has none.
+    /// The race goal a best over this distance is a PB for; the 1 km and
+    /// the mile have none.
     public var goal: RunningGoal? {
         switch self {
-        case .oneK:         return nil
+        case .oneK, .mile:  return nil
         case .fiveK:        return .fiveK
         case .tenK:         return .tenK
         case .halfMarathon: return .halfMarathon

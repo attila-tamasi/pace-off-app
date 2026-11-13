@@ -173,7 +173,8 @@ struct RunDetailView: View {
         }
         splits = PaceDecayAnalyser().splits(
             locations: locationSamples,
-            heartRates: hrSamples
+            heartRates: hrSamples,
+            splitMeters: units.unit.meters
         )
         isLoadingSplits = false
 
@@ -458,9 +459,9 @@ struct RunDetailView: View {
     // MARK: - Pace-decay chart
 
     /// Nothing to render when the run had no route (indoor, permission
-    /// denied) or was shorter than 1 km. Otherwise: bar chart of per-km
-    /// pace + a HR line overlay when we have HR data, and a headline
-    /// naming any big shift ("Pace slowed 22 s/km after km 4").
+    /// denied) or was shorter than two splits. Otherwise: bar chart of the
+    /// pace per km (or mile) + a HR line overlay when we have HR data, and a
+    /// headline naming any big shift ("Slowed 22 s/km in the final third").
     @ViewBuilder
     private var splitsSection: some View {
         if isLoadingSplits {
@@ -501,7 +502,7 @@ struct RunDetailView: View {
 
     private var splitsLoading: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionLabel("PACE PER KM")
+            sectionLabel(splitsLabel)
             HStack {
                 ProgressView()
                 Text("Computing splits…")
@@ -524,8 +525,8 @@ struct RunDetailView: View {
         let hasHR = splits.contains { $0.averageHeartRate != nil }
 
         return VStack(alignment: .leading, spacing: 12) {
-            sectionLabel("PACE PER KM")
-            if let headline = decayHeadline {
+            sectionLabel(splitsLabel)
+            if let headline = PaceDecayAnalyser.headline(splits, units: units) {
                 Text(headline)
                     .font(.system(.subheadline, design: .rounded, weight: .medium))
                     .foregroundStyle(.primary)
@@ -540,7 +541,7 @@ struct RunDetailView: View {
                     .foregroundStyle(BrandPalette.trackFill)
                     .cornerRadius(4)
                     .annotation(position: .top, alignment: .center) {
-                        Text(split.formattedPace)
+                        Text(units.paceNumber(secondsPerKm: split.secondsPerKm))
                             .font(.system(.caption2, design: .rounded, weight: .semibold))
                             .foregroundStyle(.secondary)
                     }
@@ -552,7 +553,7 @@ struct RunDetailView: View {
                     AxisGridLine()
                     AxisValueLabel {
                         if let sec = value.as(Double.self) {
-                            Text(formatPace(sec))
+                            Text(units.paceNumber(secondsPerKm: sec))
                                 .font(.system(.caption2, design: .rounded))
                         }
                     }
@@ -577,16 +578,16 @@ struct RunDetailView: View {
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
-    /// One row per km: its pace, its average heart rate (when recorded,
+    /// One row per km (or mile): its pace, its average heart rate (when recorded,
     /// red above the run's median) and the elapsed time at its end.
     private func splitsTable(showsHR: Bool) -> some View {
         VStack(spacing: 0) {
-            splitRow(km: "KM", pace: "PACE", hr: showsHR ? "HR" : nil, time: "TIME", isHeader: true)
+            splitRow(km: units.unit.symbol.uppercased(), pace: "PACE", hr: showsHR ? "HR" : nil, time: "TIME", isHeader: true)
             ForEach(splits) { split in
                 Divider()
                 splitRow(
                     km: "\(split.index)",
-                    pace: split.formattedPace,
+                    pace: units.paceNumber(secondsPerKm: split.secondsPerKm),
                     hr: showsHR ? (split.averageHeartRate.map { "\(Int($0.rounded()))" } ?? "—") : nil,
                     hrColor: hrColor(for: split.averageHeartRate),
                     time: formatElapsed(split.cumulativeSeconds),
@@ -634,40 +635,9 @@ struct RunDetailView: View {
         return bpm > median + 5 ? .red : .primary
     }
 
-    /// Headline sentence: names where the run's pace drifted meaningfully.
-    /// Uses the tercile split (first vs last third) so a single slow km
-    /// doesn't trigger noise on longer runs.
-    private var decayHeadline: String? {
-        guard splits.count >= 4 else { return nil }
-        let thirdSize = max(1, splits.count / 3)
-        let firstAvg = averagePace(splits.prefix(thirdSize))
-        let lastAvg = averagePace(splits.suffix(thirdSize))
-        let delta = lastAvg - firstAvg  // positive = slower at the end
-        if delta > 12 {
-            return String(
-                format: "Slowed %d s/km in the final third — likely fatigue or effort dip.",
-                Int(delta.rounded())
-            )
-        } else if delta < -8 {
-            return String(
-                format: "Sped up %d s/km toward the end — strong finish.",
-                Int(-delta.rounded())
-            )
-        } else {
-            return "Pace held steady across the run — well-judged effort."
-        }
-    }
-
-    private func averagePace(_ slice: ArraySlice<KilometerSplit>) -> Double {
-        let vals = slice.map(\.secondsPerKm)
-        guard !vals.isEmpty else { return 0 }
-        return vals.reduce(0, +) / Double(vals.count)
-    }
-
-    private func formatPace(_ secPerKm: Double) -> String {
-        let m = Int(secPerKm) / 60
-        let s = Int(secPerKm) % 60
-        return String(format: "%d:%02d", m, s)
+    /// "PACE PER KM", "PACE PER MILE".
+    private var splitsLabel: String {
+        units.unit == .miles ? "PACE PER MILE" : "PACE PER KM"
     }
 
     private func sectionLabel(_ text: String) -> some View {
