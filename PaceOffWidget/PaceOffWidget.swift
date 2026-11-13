@@ -70,8 +70,8 @@ struct PaceOffWidgetView: View {
                     Text(distanceShort)
                         .font(.system(.title3, design: .rounded, weight: .bold))
                         .minimumScaleFactor(0.6)
-                    if today.distanceText != nil {
-                        Text("km")
+                    if today.distanceText(in: units) != nil {
+                        Text(units.unit.symbol)
                             .font(.system(.caption2, design: .rounded))
                     }
                 }
@@ -139,14 +139,17 @@ struct PaceOffWidgetView: View {
     /// The day's distance ("8", "10.8"), "Rest" on a plan rest day, "—"
     /// with nothing for today.
     private var distanceShort: String {
-        if let km = today.distanceText { return km }
+        if let distance = today.distanceText(in: units) { return distance }
         return today.target == nil ? "—" : "Rest"
     }
 
-    /// "8 km", "Rest" or "—".
+    /// "8 km", "5 mi", "Rest" or "—".
     private var distanceLabel: String {
-        today.distanceText.map { "\($0) km" } ?? distanceShort
+        today.distanceText(in: units).map { "\($0) \(units.unit.symbol)" } ?? distanceShort
     }
+
+    /// The runner's unit, read from the App Group as the app saved it.
+    private var units: UnitFormatter { .runner }
 
     private var inlineText: String {
         guard today.target != nil else { return "Open Pace Off" }

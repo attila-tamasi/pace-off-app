@@ -161,7 +161,7 @@ struct TodayView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.6)
                 if heroDistance != nil {
-                    Text("km")
+                    Text(units.unit.symbol)
                         .font(.system(.title2, design: .rounded, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.8))
                 }
@@ -177,7 +177,7 @@ struct TodayView: View {
             if let planLine {
                 planLineRow(planLine)
             }
-            if let capNote = todayVM.prescription?.capNote {
+            if let capNote = todayVM.prescription?.capNote(in: units) {
                 Text("\(capNote).")
                     .font(.system(.footnote, design: .rounded))
                     .foregroundStyle(.white.opacity(0.85))
@@ -237,9 +237,12 @@ struct TodayView: View {
     /// The day's distance: the prescription's ("8", "10.8"), else the
     /// target's whole km. Nil on a plan rest day and before any target.
     private var heroDistance: String? {
-        if let prescription = todayVM.prescription { return prescription.distanceText }
-        return todayVM.target.map { "\($0.displayedDistanceKm)" }
+        if let prescription = todayVM.prescription { return prescription.distanceText(in: units) }
+        return todayVM.target.map { "\(units.wholeUnits($0.distanceMeters, capMeters: $0.capMeters))" }
     }
+
+    /// The runner's unit (kilometres or miles).
+    private var units: UnitFormatter { .runner }
 
     private var isPlanRestDay: Bool {
         guard let kind = todayVM.prescription?.kind else { return false }
@@ -279,7 +282,7 @@ struct TodayView: View {
         case nil: break
         }
         if todayVM.prescription?.cappedAtMeters != nil {
-            line += " (plan: \(String(format: "%.1f km", day.workout.distanceKm)))"
+            line += " (plan: \(units.distanceOneDecimal(day.workout.distanceMeters)))"
         }
         return day.strength == nil ? line : "\(line) + strength\(tick)"
     }
@@ -585,7 +588,7 @@ struct TodayView: View {
         } else if askedKm == 0 {
             label = "Logged"; color = .accentColor
         } else {
-            label = "Short by \(String(format: "%.1f km", askedKm - actualKm))"
+            label = "Short by \(units.distanceOneDecimal((askedKm - actualKm) * 1000))"
             color = .orange
         }
 

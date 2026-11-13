@@ -11,7 +11,7 @@ struct RunTodayIntent: AppIntent {
     static var description: IntentDescription { IntentDescription("Says today's run from Pace Off: the plan's workout or the daily target.") }
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let answer = SiriAnswer.runToday(WidgetCache.load(from: AppGroup.sharedDefaults))
+        let answer = SiriAnswer.runToday(WidgetCache.load(from: AppGroup.sharedDefaults), units: .runner)
         return .result(dialog: IntentDialog(stringLiteral: answer))
     }
 }

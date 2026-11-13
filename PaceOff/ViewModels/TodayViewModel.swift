@@ -62,7 +62,8 @@ public final class TodayViewModel {
 
     @ObservationIgnored private let engine = PushTargetEngine()
     @ObservationIgnored private let readinessEngine = ReadinessEngine()
-    @ObservationIgnored private let voice = VoiceCopy()
+    /// The voice lines in the runner's unit, read each time.
+    private var voice: VoiceCopy { VoiceCopy(units: .runner) }
 
     public init() {}
 
@@ -170,7 +171,7 @@ public final class TodayViewModel {
         if isFresh {
             let day = WidgetCache(target: target, voiceLine: self.voiceLine,
                                   runCompletedToday: todayRun != nil, planStatus: planStatus,
-                                  prescription: prescription, readiness: readiness)
+                                  prescription: prescription, readiness: readiness, units: .runner)
             if day.save(to: AppGroup.sharedDefaults) {
                 WidgetCenter.shared.reloadAllTimelines()
             }
@@ -235,7 +236,8 @@ public final class TodayViewModel {
             easyPace: plan.flatMap { DayPrescription.easyPaceBand(in: $0, today: now) },
             longestRunTodayMeters: DayPrescription.longestRun(on: now, in: runs),
             singleRunCapMeters: SingleRunCap.capMeters(runs: runs, today: now),
-            unwell: self.readiness?.feeling == .unwell
+            unwell: self.readiness?.feeling == .unwell,
+            units: .runner
         )
         self.yesterday = mostRecentRunBefore(today: now, in: runs)
         self.todayRun = mostRecentRunOn(day: now, in: runs)

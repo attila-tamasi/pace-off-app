@@ -48,9 +48,10 @@ public enum VoiceState: Sendable, Equatable {
             return
         }
         let planDay = prescription?.source == .plan ? prescription : nil
-        // The distance Today's hero shows: the plan's on a plan day, else the
+        // The distance Today's hero shows: the prescription's (the plan's
+        // run, or the target in the runner's whole units), else the
         // *displayed* (rounded-up) target, so the line matches the hero.
-        let displayedKm = planDay?.distanceKm ?? Double(target.displayedDistanceKm)
+        let displayedKm = prescription?.distanceKm ?? Double(target.displayedDistanceKm)
         let gap = target.daysSinceLastRun
 
         // Today's run is in: nothing left to push for, unless it fell short
@@ -117,27 +118,32 @@ public enum VoiceState: Sendable, Equatable {
 
 public struct VoiceCopy: Sendable {
 
-    public init() {}
+    /// Distances are said in this unit; the states carry kilometres.
+    public let units: UnitFormatter
+
+    public init(units: UnitFormatter = .metric) {
+        self.units = units
+    }
 
     /// Notification body — max ~8 words per PRD §8.1.
     public func notification(for state: VoiceState) -> String {
         switch state {
         case .streakDay1(_, let today):
-            return "Yesterday: done. Today: \(format(today)) km."
+            return "Yesterday: done. Today: \(format(today)) \(units.unit.symbol)."
         case .streakDay7Plus(let days):
             return "Day \(days). Don't waste it."
         case .onTrack(let today):
-            return "On track. \(format(today)) km today."
+            return "On track. \(format(today)) \(units.unit.symbol) today."
         case .skipOneDay(let today):
-            return "You skipped yesterday. Run \(format(today)) km."
+            return "You skipped yesterday. Run \(format(today)) \(units.unit.symbol)."
         case .skipTwoDays(_):
             return "Two days. This is the run."
         case .skipThreePlusDays(let today):
-            return "Restart. \(format(today)) km. Now."
+            return "Restart. \(format(today)) \(units.unit.symbol). Now."
         case .vo2MaxDeclining(_, let today):
-            return "Fitness dropped. \(format(today)) km today."
+            return "Fitness dropped. \(format(today)) \(units.unit.symbol) today."
         case .recovery(let today):
-            return "Recovery day. Easy \(format(today)) km, nothing more."
+            return "Recovery day. Easy \(format(today)) \(units.unit.symbol), nothing more."
         case .ranToday:
             return "Run logged. Recover and go again tomorrow."
         case .planStillToDo:
@@ -151,7 +157,7 @@ public struct VoiceCopy: Sendable {
         case .planRestDay(let strength):
             return strength.map { "Strength day: \($0). No run today." } ?? "Rest day. Recovery is training too."
         case .raceDay(let km):
-            return "Race day. \(format(km)) km. Start controlled."
+            return "Race day. \(format(km)) \(units.unit.symbol). Start controlled."
         case .unwellRest:
             return "You said you're unwell. Rest today: getting well comes first."
         }
@@ -165,17 +171,17 @@ public struct VoiceCopy: Sendable {
         case .streakDay7Plus(let days):
             return "\(days) days. The streak is the product. Protect it."
         case .onTrack(let t):
-            return "On track. Keep it rolling. Today: \(format(t)) km."
+            return "On track. Keep it rolling. Today: \(format(t)) \(units.unit.symbol)."
         case .skipOneDay(let t):
-            return "One skip. Two becomes a habit. Today: \(format(t)) km."
+            return "One skip. Two becomes a habit. Today: \(format(t)) \(units.unit.symbol)."
         case .skipTwoDays(let t):
-            return "Two skips. Today is mandatory. Target: \(format(t)) km."
+            return "Two skips. Today is mandatory. Target: \(format(t)) \(units.unit.symbol)."
         case .skipThreePlusDays(let t):
-            return "Restart day. Don't argue. \(format(t)) km. Lace up."
+            return "Restart day. Don't argue. \(format(t)) \(units.unit.symbol). Lace up."
         case .vo2MaxDeclining(let d, let t):
-            return "VO2Max down \(formatDecimal(d, places: 1)) this month. Fix it. \(format(t)) km."
+            return "VO2Max down \(formatDecimal(d, places: 1)) this month. Fix it. \(format(t)) \(units.unit.symbol)."
         case .recovery(let t):
-            return "Recovery day. \(format(t)) km, easy pace. Rest is part of training."
+            return "Recovery day. \(format(t)) \(units.unit.symbol), easy pace. Rest is part of training."
         case .ranToday(let days):
             return days >= 2
                 ? "Run logged. \(days) days straight. Recover and go again tomorrow."
@@ -183,7 +189,7 @@ public struct VoiceCopy: Sendable {
         case .planStillToDo:
             return "Run logged, but today's plan workout is still to do."
         case .runCompletedHitTarget(let tomorrow):
-            return "Done. Tomorrow: \(format(tomorrow)) km."
+            return "Done. Tomorrow: \(format(tomorrow)) \(units.unit.symbol)."
         case .runCompletedShortfall(let actual, let target):
             return "Finished \(format(actual)) of \(format(target)). Tomorrow we close the gap."
         case .fatigueGuard:
@@ -192,7 +198,7 @@ public struct VoiceCopy: Sendable {
             return strength.map { "Strength day on your plan: \($0). No run today." }
                 ?? "Rest day on your plan. Recovery is training too."
         case .raceDay(let km):
-            return "Race day: \(format(km)) km. Start controlled and let the taper work."
+            return "Race day: \(format(km)) \(units.unit.symbol). Start controlled and let the taper work."
         case .unwellRest:
             return "You said you're unwell, so no run today. Rest and get well."
         }
@@ -202,10 +208,7 @@ public struct VoiceCopy: Sendable {
     /// integral or one decimal place (`"5.4"`) otherwise. Targets are always
     /// integral after rounding-up; actual run distances keep their decimal.
     private func format(_ km: Double) -> String {
-        if km == km.rounded() {
-            return String(format: "%.0f", km)
-        }
-        return String(format: "%.1f", km)
+        units.number(km * 1000)
     }
     private func formatDecimal(_ v: Double, places: Int) -> String { String(format: "%.\(places)f", v) }
 }

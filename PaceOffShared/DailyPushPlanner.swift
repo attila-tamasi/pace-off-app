@@ -90,6 +90,8 @@ public struct DailyPushPlanner: Sendable {
         /// its run, as readiness changed it, and nothing else.
         public let prescription: DayPrescription?
         public let schedule: Schedule
+        /// The runner's unit for the distances and paces the pushes name.
+        public let units: UnitFormatter
 
         public init(now: Date,
                     body: String,
@@ -97,7 +99,8 @@ public struct DailyPushPlanner: Sendable {
                     plan: TrainingPlan?,
                     planStatus: PlanDayStatus?,
                     prescription: DayPrescription? = nil,
-                    schedule: Schedule = .standard) {
+                    schedule: Schedule = .standard,
+                    units: UnitFormatter = .metric) {
             self.now = now
             self.body = body
             self.runs = runs
@@ -105,6 +108,7 @@ public struct DailyPushPlanner: Sendable {
             self.planStatus = planStatus
             self.prescription = prescription
             self.schedule = schedule
+            self.units = units
         }
     }
 
@@ -147,11 +151,11 @@ public struct DailyPushPlanner: Sendable {
         var body = inputs.body
         if let planRun, let run = planRun.runWorkout {
             // The prescription alone, so a push never names two distances.
-            body = "\(Self.planLine(run, then: strength))."
+            body = "\(Self.planLine(run, then: strength, units: inputs.units))."
             if let note = planRun.adjustmentNote { body += " \(note)." }
-            if let note = planRun.capNote { body += " \(note)." }
+            if let note = planRun.capNote(in: inputs.units) { body += " \(note)." }
         } else if let planWorkout {
-            body = "\(Self.planLine(planWorkout, then: strength)). \(body)"
+            body = "\(Self.planLine(planWorkout, then: strength, units: inputs.units)). \(body)"
         }
 
         var pushes: [DailyPush] = []
@@ -179,7 +183,7 @@ public struct DailyPushPlanner: Sendable {
                 pushes.append(DailyPush(
                     slot: .morning,
                     fireDate: time(of: .morning, in: inputs.schedule, on: inputs.now),
-                    body: Self.raceDayBody(planWorkout)
+                    body: Self.raceDayBody(planWorkout, units: inputs.units)
                 ))
             }
         } else if doneToday, let strength {
@@ -221,7 +225,7 @@ public struct DailyPushPlanner: Sendable {
             pushes.append(DailyPush(
                 slot: .nextMorning,
                 fireDate: time(of: .nextMorning, in: inputs.schedule, on: tomorrow),
-                body: nextMorningBody(plan: inputs.plan, tomorrow: tomorrow)
+                body: nextMorningBody(plan: inputs.plan, tomorrow: tomorrow, units: inputs.units)
             ))
         }
         return pushes
@@ -242,8 +246,9 @@ public struct DailyPushPlanner: Sendable {
 
     /// "Today's plan: 8.0 km · 5:25–5:45/km", with ", then strength
     /// (Kettlebell · 35 min)" when a session follows the run.
-    static func planLine(_ workout: Workout, then strength: StrengthSession?) -> String {
-        let line = "Today's plan: \(workout.summary)"
+    static func planLine(_ workout: Workout, then strength: StrengthSession?,
+                         units: UnitFormatter = .metric) -> String {
+        let line = "Today's plan: \(workout.summary(in: units))"
         return strength.map { "\(line), then strength (\($0.summary))" } ?? line
     }
 
@@ -251,20 +256,20 @@ public struct DailyPushPlanner: Sendable {
     static let unwellBody = "You said you're unwell, so no run today. Rest and get well."
 
     /// "Race day · 21.1 km. Start controlled and let the taper work."
-    static func raceDayBody(_ race: Workout) -> String {
-        "\(race.headline). Start controlled and let the taper work."
+    static func raceDayBody(_ race: Workout, units: UnitFormatter = .metric) -> String {
+        "\(race.headline(in: units)). Start controlled and let the taper work."
     }
 
     /// Tomorrow's plan workout when there is one, else a nudge to open the
     /// app. Today's target never carries over.
-    private func nextMorningBody(plan: TrainingPlan?, tomorrow: Date) -> String {
+    private func nextMorningBody(plan: TrainingPlan?, tomorrow: Date, units: UnitFormatter) -> String {
         // Midday, so the plan's own calendar lands on the same day.
         let midday = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: tomorrow) ?? tomorrow
         guard let day = plan?.todayDay(today: midday) else { return Self.newDayBody }
         let workout = day.workout
         if workout.kind == .rest { return day.strength.map(Self.strengthDayBody) ?? Self.restDayBody }
-        if workout.kind == .race { return Self.raceDayBody(workout) }
-        return "\(Self.planLine(workout, then: day.strength)). Open Pace Off for your target."
+        if workout.kind == .race { return Self.raceDayBody(workout, units: units) }
+        return "\(Self.planLine(workout, then: day.strength, units: units)). Open Pace Off for your target."
     }
 
     /// Days earlier this week (Monday-based, as the training plan's weeks)

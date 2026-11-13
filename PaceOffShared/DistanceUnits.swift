@@ -47,6 +47,16 @@ public struct UnitFormatter: Sendable {
         self.locale = locale
     }
 
+    /// Kilometres with "." decimals: the default for text built in shared
+    /// code, so its output doesn't depend on the device it's tested on.
+    public static let metric = UnitFormatter(unit: .kilometers, locale: Locale(identifier: "en_US_POSIX"))
+
+    /// The runner's unit (App Group defaults, else the locale's), in the
+    /// device's locale. For the app's call sites.
+    public static var runner: UnitFormatter {
+        UnitFormatter(unit: DistanceUnit.current(in: AppGroup.sharedDefaults))
+    }
+
     /// Metres in the unit.
     public func value(_ meters: Double) -> Double { meters / unit.meters }
 
@@ -66,9 +76,10 @@ public struct UnitFormatter: Sendable {
         "\(format((value(meters) * 10).rounded() / 10, decimals: 1)) \(unit.symbol)"
     }
 
-    /// "5:24": minutes and seconds per unit, from seconds per km.
+    /// "5:24": minutes and seconds per unit, from seconds per km, the
+    /// seconds cut down as the plan has always shown them.
     public func paceNumber(secondsPerKm: Double) -> String {
-        let perUnit = Int((secondsPerKm * unit.meters / 1_000).rounded())
+        let perUnit = unit == .kilometers ? Int(secondsPerKm) : Int(secondsPerKm * unit.meters / 1_000)
         return String(format: "%d:%02d", perUnit / 60, perUnit % 60)
     }
 

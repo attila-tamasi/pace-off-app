@@ -167,29 +167,29 @@ public struct Workout: Codable, Sendable, Equatable {
     /// The summary on one line that also names the day: "Race day · 21.1 km"
     /// on the race, the plain summary otherwise. For notifications and the
     /// widget, which show no workout-kind label next to it.
-    public var headline: String {
-        kind == .race ? "Race day · \(summary)" : summary
+    public var headline: String { headline(in: .metric) }
+
+    /// `headline` in the runner's unit.
+    public func headline(in units: UnitFormatter) -> String {
+        kind == .race ? "Race day · \(summary(in: units))" : summary(in: units)
     }
 
-    /// "12 km · 5:25–5:45/km" / "Rest" / "Strides".
-    public var summary: String {
+    /// "12.0 km · 5:25–5:45/km" / "Rest" / "Strides".
+    public var summary: String { summary(in: .metric) }
+
+    /// `summary` in the runner's unit: "7.5 mi · 8:43–9:15/mi".
+    public func summary(in units: UnitFormatter) -> String {
         if kind == .rest { return "Rest" }
-        let km = String(format: "%.1f km", distanceKm)
-        if paceMinSecPerKm <= 0 { return km }
-        return "\(km) · \(formattedPaceRange)"
+        let distance = units.distanceOneDecimal(distanceMeters)
+        if paceMinSecPerKm <= 0 { return distance }
+        return "\(distance) · \(formattedPaceRange(in: units))"
     }
 
-    public var formattedPaceRange: String {
+    public var formattedPaceRange: String { formattedPaceRange(in: .metric) }
+
+    public func formattedPaceRange(in units: UnitFormatter) -> String {
         guard paceMinSecPerKm > 0 else { return "" }
-        let lo = Self.formatPace(paceMinSecPerKm)
-        let hi = Self.formatPace(paceMaxSecPerKm)
-        return lo == hi ? "\(lo)/km" : "\(lo)–\(hi)/km"
-    }
-
-    private static func formatPace(_ secPerKm: Double) -> String {
-        let m = Int(secPerKm) / 60
-        let s = Int(secPerKm) % 60
-        return String(format: "%d:%02d", m, s)
+        return units.paceBand(minSecondsPerKm: paceMinSecPerKm, maxSecondsPerKm: paceMaxSecPerKm)
     }
 }
 
