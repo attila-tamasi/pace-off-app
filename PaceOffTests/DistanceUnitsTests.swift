@@ -68,3 +68,57 @@ final class DistanceUnitsTests: XCTestCase {
         }
     }
 }
+
+// MARK: - The day's text in miles
+
+final class MilesTextTests: XCTestCase {
+
+    private let mi = UnitFormatter(unit: .miles, locale: Locale(identifier: "en_US_POSIX"))
+
+    private func target(km: Double, capKm: Double) -> RunTarget {
+        RunTarget(distanceMeters: km * 1000, tone: .firm, daysSinceLastRun: 1, vo2MaxSlope: nil,
+                  baselineMeters: km * 1000, ceilingClamped: false, fatigueGuardActive: false,
+                  capMeters: capKm * 1000)
+    }
+
+    private let easy = Workout(kind: .easy, distanceMeters: 12_000, paceMinSecPerKm: 325, paceMaxSecPerKm: 345)
+
+    func testAWorkoutInMiles() {
+        XCTAssertEqual(easy.summary(in: mi), "7.5 mi · 8:43–9:15/mi")
+        XCTAssertEqual(easy.summary, "12.0 km · 5:25–5:45/km", "kilometres stay as they were")
+    }
+
+    func testTheDailyTargetIsWholeMiles() throws {
+        // 9 km is 5.6 mi: 6 mi, under a 12 km (7.5 mi) cap.
+        let day = try XCTUnwrap(DayPrescription.make(planStatus: nil, readiness: nil, target: target(km: 9, capKm: 12),
+                                                     easyPace: nil, units: mi))
+        XCTAssertEqual(day.distanceText(in: mi), "6")
+        XCTAssertEqual(day.summary(in: mi), "6 mi")
+        XCTAssertEqual(day.distanceMeters!, 6 * DistanceUnit.metersPerMile, accuracy: 1e-6)
+        XCTAssertTrue(day.isMet(byRunMeters: 5.8 * DistanceUnit.metersPerMile))
+    }
+
+    func testTheVoiceLineAndPushSayMiles() throws {
+        let day = try XCTUnwrap(DayPrescription.make(planStatus: nil, readiness: nil, target: target(km: 9, capKm: 12),
+                                                     easyPace: nil, units: mi))
+        let state = VoiceState(target: target(km: 9, capKm: 12), yesterday: nil, currentStreak: 0, prescription: day)
+        XCTAssertEqual(VoiceCopy(units: mi).todayCard(for: state), "On track. Keep it rolling. Today: 6 mi.")
+        let status = PlanDayStatus(workout: easy, isCompleted: false, strength: nil)
+        let planDay = try XCTUnwrap(DayPrescription.make(planStatus: status, readiness: .green, target: nil,
+                                                         easyPace: nil, units: mi))
+        let morning = Calendar.current.date(from: DateComponents(year: 2026, month: 1, day: 6, hour: 6))!
+        let push = DailyPushPlanner().pushes(for: DailyPushPlanner.Inputs(
+            now: morning, body: "x", runs: [], plan: nil, planStatus: status, prescription: planDay, units: mi
+        )).first { $0.slot == .morning }
+        XCTAssertEqual(push?.body, "Today's plan: 7.5 mi · 8:43–9:15/mi.")
+    }
+
+    func testTheWidgetAndSiriSayMiles() throws {
+        let t = target(km: 9, capKm: 12)
+        let day = try XCTUnwrap(DayPrescription.make(planStatus: nil, readiness: nil, target: t, easyPace: nil, units: mi))
+        let cache = WidgetCache(target: t, voiceLine: "x", runCompletedToday: false, planStatus: nil,
+                                prescription: day, units: mi)
+        XCTAssertEqual(cache.distanceText(in: mi), "6")
+        XCTAssertEqual(SiriAnswer.runToday(cache, units: mi, now: t.computedAt), "Today's run: 6 mi.")
+    }
+}

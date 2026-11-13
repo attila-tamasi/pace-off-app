@@ -265,12 +265,13 @@ public final class BackgroundRefreshService {
             easyPace: activePlan.flatMap { DayPrescription.easyPaceBand(in: $0, today: now) },
             longestRunTodayMeters: DayPrescription.longestRun(on: now, in: runs),
             singleRunCapMeters: SingleRunCap.capMeters(runs: runs, today: now),
-            unwell: readiness?.feeling == .unwell
+            unwell: readiness?.feeling == .unwell,
+            units: .runner
         )
 
         let state = VoiceState(target: target, yesterday: yesterday, currentStreak: streak,
                                planStatus: planStatus, prescription: prescription)
-        let voice = VoiceCopy()
+        let voice = VoiceCopy(units: .runner)
         // The canned lines: the system rate-limits the on-device model in
         // the background, so the Apple Intelligence rewrite happens only in
         // the foreground refresh.
@@ -282,7 +283,7 @@ public final class BackgroundRefreshService {
         // Hand the day to the widget in one write, and have it redraw.
         let day = WidgetCache(target: target, voiceLine: voiceLine,
                               runCompletedToday: todayRun != nil, planStatus: planStatus,
-                              prescription: prescription, readiness: readiness)
+                              prescription: prescription, readiness: readiness, units: .runner)
         if day.save(to: AppGroup.sharedDefaults) {
             WidgetCenter.shared.reloadAllTimelines()
         }

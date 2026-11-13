@@ -76,6 +76,12 @@ public enum SingleRunCap {
 
     /// "Kept to 11 km: 10% past your longest run of the last 30 days."
     public static func note(keptToKm km: String) -> String {
-        "Kept to \(km) km: 10% past your longest run of the last 30 days"
+        note(kept: "\(km) km")
+    }
+
+    /// The same with the distance already written in the runner's unit
+    /// ("7 mi").
+    public static func note(kept distance: String) -> String {
+        "Kept to \(distance): 10% past your longest run of the last 30 days"
     }
 }

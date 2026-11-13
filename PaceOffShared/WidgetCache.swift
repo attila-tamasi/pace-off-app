@@ -59,7 +59,8 @@ public struct WidgetCache: Equatable, Sendable {
                 runCompletedToday: Bool,
                 planStatus: PlanDayStatus?,
                 prescription: DayPrescription? = nil,
-                readiness: DailyReadiness? = nil) {
+                readiness: DailyReadiness? = nil,
+                units: UnitFormatter = .metric) {
         let planDay = prescription?.source == .plan ? prescription : nil
         let planRun = planDay?.kind == .run ? planDay : nil
         // Unwell: the widget shows rest, with or without a plan.
@@ -67,7 +68,8 @@ public struct WidgetCache: Equatable, Sendable {
         self.init(target: target,
                   voiceLine: voiceLine,
                   runCompletedToday: runCompletedToday,
-                  planSummary: unwell ? Workout.rest.summary : planRun?.summary ?? planStatus?.workout?.headline,
+                  planSummary: unwell ? Workout.rest.summary
+                      : planRun?.summary(in: units) ?? planStatus?.workout?.headline(in: units),
                   planCompletedToday: unwell ? false : planRun?.isDone ?? planStatus?.isCompleted ?? false,
                   strengthSummary: unwell ? nil : planStatus?.strength?.summary,
                   strengthCompletedToday: planStatus?.isStrengthCompleted ?? false,
@@ -82,9 +84,13 @@ public struct WidgetCache: Equatable, Sendable {
 
     /// The distance the widget shows: "8", "10.8". Nil on a plan rest day
     /// and with no target.
-    public var distanceText: String? {
+    public var distanceText: String? { distanceText(in: .metric) }
+
+    /// `distanceText` in the runner's unit.
+    public func distanceText(in units: UnitFormatter) -> String? {
         guard let target, !isPlanRestDay else { return nil }
-        return dayDistanceKm.map(DayPrescription.formatKm) ?? "\(target.displayedDistanceKm)"
+        if let dayDistanceKm { return units.number(dayDistanceKm * 1000) }
+        return "\(units.wholeUnits(target.distanceMeters, capMeters: target.capMeters))"
     }
 
     /// A planned day without a run but with a strength session.

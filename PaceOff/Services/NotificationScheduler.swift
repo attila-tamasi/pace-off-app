@@ -12,7 +12,8 @@ public final class NotificationScheduler {
     public static let shared = NotificationScheduler()
 
     @ObservationIgnored private let center = UNUserNotificationCenter.current()
-    @ObservationIgnored private let voice = VoiceCopy()
+    /// The voice lines in the runner's unit, read each time.
+    private var voice: VoiceCopy { VoiceCopy(units: .runner) }
 
     public private(set) var permissionGranted: Bool = false
 
@@ -90,7 +91,8 @@ public final class NotificationScheduler {
             plan: plan,
             planStatus: planStatus,
             prescription: prescription,
-            schedule: times
+            schedule: times,
+            units: .runner
         ))
 
         for push in pushes {

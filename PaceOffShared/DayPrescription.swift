@@ -76,7 +76,10 @@ public struct DayPrescription: Sendable, Equatable {
 
     /// The distance as Today's hero shows it: "8", "10.8". Nil on rest and
     /// strength days.
-    public var distanceText: String? { distanceKm.map(Self.formatKm) }
+    public var distanceText: String? { distanceText(in: .metric) }
+
+    /// `distanceText` in the runner's unit: "5", "6.2".
+    public func distanceText(in units: UnitFormatter) -> String? { distanceMeters.map(units.number) }
 
     /// The plan run to do, as written or eased, with its pace band. Nil for
     /// the daily target and on rest and strength days.
@@ -90,11 +93,14 @@ public struct DayPrescription: Sendable, Equatable {
     /// The day on one line, for pushes and the widget: "8.0 km ·
     /// 5:25–5:45/km", "Race day · 21.1 km", "6 km" for the daily target.
     /// Nil on rest and strength days.
-    public var summary: String? {
+    public var summary: String? { summary(in: .metric) }
+
+    /// `summary` in the runner's unit.
+    public func summary(in units: UnitFormatter) -> String? {
         switch kind {
         case .rest, .strength: return nil
-        case .race: return runWorkout?.headline
-        case .run: return runWorkout?.summary ?? distanceText.map { "\($0) km" }
+        case .race: return runWorkout?.headline(in: units)
+        case .run: return runWorkout?.summary(in: units) ?? distanceMeters.map(units.distance)
         }
     }
 
@@ -115,8 +121,10 @@ public struct DayPrescription: Sendable, Equatable {
 
     /// "Kept to 11 km: 10% past your longest run of the last 30 days", when
     /// the single-run cap cut today's run.
-    public var capNote: String? {
-        cappedAtMeters.map { SingleRunCap.note(keptToKm: Self.formatKm($0 / 1000)) }
+    public var capNote: String? { capNote(in: .metric) }
+
+    public func capNote(in units: UnitFormatter) -> String? {
+        cappedAtMeters.map { SingleRunCap.note(kept: units.distance($0)) }
     }
 
     /// Whole km without a decimal ("8"), else one decimal ("10.8").
@@ -150,13 +158,16 @@ public struct DayPrescription: Sendable, Equatable {
     ///     already capped.
     ///   - unwell: the runner said they're unwell this morning. A run or a
     ///     strength day becomes rest; the race is left to the runner.
+    ///   - units: the runner's unit. The daily target is a whole number of
+    ///     it, rounded up but never above the target's cap.
     public static func make(planStatus: PlanDayStatus?,
                             readiness: ReadinessLevel?,
                             target: RunTarget?,
                             easyPace: ClosedRange<Double>?,
                             longestRunTodayMeters: Double = 0,
                             singleRunCapMeters: Double? = nil,
-                            unwell: Bool = false) -> DayPrescription? {
+                            unwell: Bool = false,
+                            units: UnitFormatter = .metric) -> DayPrescription? {
         var day: DayPrescription
         if let status = planStatus, let workout = status.workout {
             day = fromPlan(workout, strength: status.strength, readiness: readiness, easyPace: easyPace)
@@ -172,11 +183,12 @@ public struct DayPrescription: Sendable, Equatable {
                 day.cappedAtMeters = kept
             }
         } else if let target {
+            let whole = units.wholeUnits(target.distanceMeters, capMeters: target.capMeters)
             day = DayPrescription(kind: .run, source: .dailyTarget, workoutKind: nil,
-                                  distanceMeters: target.displayedDistanceMeters,
+                                  distanceMeters: Double(whole) * units.unit.meters,
                                   paceMinSecPerKm: nil, paceMaxSecPerKm: nil,
                                   adjustment: nil, planWorkout: nil, strength: nil)
-            if target.singleRunCapMeters != nil { day.cappedAtMeters = target.displayedDistanceMeters }
+            if target.singleRunCapMeters != nil { day.cappedAtMeters = day.distanceMeters }
         } else {
             return nil
         }
