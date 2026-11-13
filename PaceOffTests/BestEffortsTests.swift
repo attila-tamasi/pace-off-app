@@ -87,8 +87,15 @@ final class BestEffortsTests: XCTestCase {
         XCTAssertTrue(improved.isEmpty)
     }
 
+    func testTheMileIsABestEffort() throws {
+        let efforts = BestEfforts.efforts(route: route([(3_000, 4)]), runStart: start)
+        XCTAssertEqual(efforts.map(\.distance), [.oneK, .mile])
+        XCTAssertEqual(try XCTUnwrap(seconds(efforts, .mile)), DistanceUnit.metersPerMile / 4, accuracy: 0.5)
+    }
+
     func testDistancesMapToRaceGoals() {
         XCTAssertNil(BestEffortDistance.oneK.goal)
+        XCTAssertNil(BestEffortDistance.mile.goal)
         XCTAssertEqual(BestEffortDistance.fiveK.goal, .fiveK)
         XCTAssertEqual(BestEffortDistance.halfMarathon.goal, .halfMarathon)
     }

@@ -56,6 +56,20 @@ final class DistanceUnitsTests: XCTestCase {
             .formattedPace(in: mi), "—")
     }
 
+    func testSessionNotes() {
+        let notes = "WU 3 km · 5 × 1.6 km @ T w/ 200 m jog · CD 2.2 km"
+        XCTAssertEqual(km.sessionNotes(notes), notes)
+        XCTAssertEqual(mi.sessionNotes(notes), "WU 1.9 mi · 5 × 1600 m @ T w/ 200 m jog · CD 1.4 mi")
+        XCTAssertEqual(UnitFormatter(unit: .kilometers, locale: Locale(identifier: "hu_HU")).sessionNotes(notes),
+                       "WU 3 km · 5 × 1,6 km @ T w/ 200 m jog · CD 2,2 km")
+        XCTAssertEqual(mi.sessionNotes("WU 2 km · 1 × 3.2 km @ T · CD 2 km"), "WU 1.2 mi · 1 × 2 mi @ T · CD 1.2 mi")
+        XCTAssertEqual(mi.sessionNotes("Easy run + 4–6 × 20 s strides on the flats."),
+                       "Easy run + 4–6 × 20 s strides on the flats.")
+        let workout = Workout(kind: .threshold, distanceMeters: 10_000, paceMinSecPerKm: 250, paceMaxSecPerKm: 260,
+                              notes: "WU 2 km · 3 × 1 km @ T w/ 400 m jog · CD 2 km")
+        XCTAssertEqual(workout.notes(in: mi), "WU 1.2 mi · 3 × 1000 m @ T w/ 400 m jog · CD 1.2 mi")
+    }
+
     func testSpeeds() {
         XCTAssertEqual(km.speed(metersPerSecond: 3.0833), "11.1 km/h")
         XCTAssertEqual(mi.speed(metersPerSecond: 3.0833), "6.9 mph")

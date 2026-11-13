@@ -1,8 +1,8 @@
 // PaceDecayAnalyser.swift
 // Turns a stream of timestamped GPS samples (as cumulative meters from the
 // run's start) plus a stream of timestamped heart-rate samples into
-// per-kilometre splits — pace, avg HR, and where in the run each split
-// falls. Pure Swift, `Sendable`, no HealthKit / CoreLocation imports —
+// per-kilometre (or per-mile) splits — pace, avg HR, and where in the run
+// each split falls. Pure Swift, `Sendable`, no HealthKit / CoreLocation imports —
 // callers do the CLLocation → cumulative-distance conversion before
 // handing values here, so the analyser stays unit-testable in isolation.
 
@@ -10,11 +10,12 @@ import Foundation
 
 // MARK: - Split
 
-/// One kilometre of a run.
+/// One kilometre, or one mile, of a run.
 public struct KilometerSplit: Sendable, Equatable, Identifiable {
-    /// 1-based km number (1 = first kilometre, 2 = second, …).
+    /// 1-based split number (1 = first kilometre or mile, 2 = second, …).
     public let index: Int
-    /// Time to cover this km, in seconds. Pace = this / 1 km.
+    /// The split's pace in seconds per km: its time itself for a km split,
+    /// its time over 1.609 for a mile split.
     public let secondsPerKm: Double
     /// Average heart rate over this km, if any HR samples fell within it.
     public let averageHeartRate: Double?
@@ -68,14 +69,16 @@ public struct PaceDecayAnalyser: Sendable {
 
     public init() {}
 
-    /// Compute per-km splits. Requires `locations` sorted ascending by date
-    /// and starting at ~0 metres. Returns an empty array when there aren't
-    /// at least two samples or the run didn't cover a full kilometre.
+    /// Compute a split every `splitMeters` (1 km, or a mile). Requires
+    /// `locations` sorted ascending by date and starting at ~0 metres.
+    /// Returns an empty array when there aren't at least two samples or the
+    /// run didn't cover a full split.
     public func splits(
         locations: [LocationSample],
-        heartRates: [HeartRateSample] = []
+        heartRates: [HeartRateSample] = [],
+        splitMeters: Double = 1_000
     ) -> [KilometerSplit] {
-        guard locations.count >= 2 else { return [] }
+        guard locations.count >= 2, splitMeters > 0 else { return [] }
 
         // We produce a split every time cumulative distance crosses an integer
         // km boundary. Between two consecutive samples that straddle a
@@ -100,21 +103,21 @@ public struct PaceDecayAnalyser: Sendable {
             // a boundary already produced — a noisy backward sample can put
             // `prev` below a boundary we've crossed, and without this floor
             // that boundary would be counted twice as a phantom split.
-            let firstBoundary = max(Int(prev.cumulativeMeters / 1000) + 1,
+            let firstBoundary = max(Int(prev.cumulativeMeters / splitMeters) + 1,
                                     lastEmittedBoundary + 1)
-            let lastBoundary = Int(curr.cumulativeMeters / 1000)
+            let lastBoundary = Int(curr.cumulativeMeters / splitMeters)
             guard lastBoundary >= firstBoundary else { continue }
 
             for boundary in firstBoundary...lastBoundary {
-                let boundaryMeters = Double(boundary) * 1000
+                let boundaryMeters = Double(boundary) * splitMeters
                 let frac = (boundaryMeters - prev.cumulativeMeters) /
                            (curr.cumulativeMeters - prev.cumulativeMeters)
                 let segSeconds = curr.date.timeIntervalSince(prev.date)
                 let boundaryDate = prev.date.addingTimeInterval(segSeconds * frac)
 
-                // Km duration = time between the previous km boundary crossing
-                // (or start) and this one. That is exactly `secondsPerKm`.
-                let kmSeconds = boundaryDate.timeIntervalSince(lastBoundaryDate)
+                // Split duration = time between the previous boundary crossing
+                // (or start) and this one; per km, for a mile split.
+                let kmSeconds = boundaryDate.timeIntervalSince(lastBoundaryDate) * 1_000 / splitMeters
                 let avgHR = averageHR(in: heartRates, from: lastBoundaryDate, to: boundaryDate)
                 let cumulativeSeconds = boundaryDate.timeIntervalSince(startDate)
                 results.append(
@@ -130,6 +133,26 @@ public struct PaceDecayAnalyser: Sendable {
             }
         }
         return results
+    }
+
+    /// The sentence over the splits: where the pace drifted, from the first
+    /// third of the splits to the last (more than 12 s/km slower, or 8 s/km
+    /// faster), said in the runner's unit. Nil under four splits.
+    public static func headline(_ splits: [KilometerSplit], units: UnitFormatter) -> String? {
+        guard splits.count >= 4 else { return nil }
+        let third = max(1, splits.count / 3)
+        func average(_ slice: ArraySlice<KilometerSplit>) -> Double {
+            slice.map(\.secondsPerKm).reduce(0, +) / Double(slice.count)
+        }
+        let delta = average(splits.suffix(third)) - average(splits.prefix(third))  // + = slower at the end
+        let seconds = Int(units.secondsPerUnit(secondsPerKm: abs(delta)).rounded())
+        let per = "s/\(units.unit.symbol)"
+        if delta > 12 {
+            return "Slowed \(seconds) \(per) in the final third — likely fatigue or effort dip."
+        } else if delta < -8 {
+            return "Sped up \(seconds) \(per) toward the end — strong finish."
+        }
+        return "Pace held steady across the run — well-judged effort."
     }
 
     /// Arithmetic mean of the HR samples falling within `[start, end]`.

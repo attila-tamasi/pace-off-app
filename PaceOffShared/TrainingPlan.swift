@@ -187,6 +187,11 @@ public struct Workout: Codable, Sendable, Equatable {
 
     public var formattedPaceRange: String { formattedPaceRange(in: .metric) }
 
+    /// `notes` in the runner's unit (`UnitFormatter.sessionNotes`).
+    public func notes(in units: UnitFormatter) -> String? {
+        notes.map(units.sessionNotes)
+    }
+
     public func formattedPaceRange(in units: UnitFormatter) -> String {
         guard paceMinSecPerKm > 0 else { return "" }
         return units.paceBand(minSecondsPerKm: paceMinSecPerKm, maxSecondsPerKm: paceMaxSecPerKm)
