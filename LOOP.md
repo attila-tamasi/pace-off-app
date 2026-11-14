@@ -81,6 +81,7 @@ There is no Swift compiler in the cloud: CI is the compiler, and every red run c
 - `@MainActor` code isn't called from a nonisolated context.
 - Charts and MapKit initializers use their real argument labels.
 - Nothing in `PaceOffShared` imports UIKit or HealthKit.
+- New text a runner reads is localizable: a SwiftUI literal, a `LocalizedStringKey` label, or `String(localized:)` for text built in code (`CLAUDE.md`, Tech stack).
 
 Run what does run here: `python3 scripts/pbxproj.py` for project edits, and `plutil` or a JSON parser for any asset-catalog `Contents.json` you touched.
 

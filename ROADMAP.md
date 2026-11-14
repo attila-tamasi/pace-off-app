@@ -262,12 +262,16 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - **F-01d · Session notes, splits and the mile** (M), **done (PR #76)**: quality-session notes ("WU 2 km · 3 × 1.6 km @ T …") written in the runner's unit, run detail's splits per mile, the "s/km" in the pace-decay note, and the mile as a best effort.
 
 ### F-08 · Languages: Hungarian first
-- **Status:** todo
+- **Status:** todo (F-08a1 PR #77 done; F-08a2 next)
 - **Size:** L   ·   **Merge:** auto
 - **Problem:** The app is English only. Hungarian is the first target language. The on-device model doesn't write Hungarian as far as the evidence shows, so for a Hungarian runner the canned lines and the templates are the whole product.
 - **Sub-items:**
-  - **F-08a · A String Catalog and the rule** (L; the loop splits it by area: views, shared copy, notifications): every user-facing string goes through the catalog, including notifications, `VoiceCopy`, plan and session notes. Keys are the English text, so the unit tests keep asserting English. Dates and numbers use the locale. `CLAUDE.md` gains the rule that new copy ships in every supported language.
-  - **F-08b · Hungarian** (M): complete translations, in the informal register a running friend would use. The Apple Intelligence rewrite is skipped when the model doesn't support the app's language (ask `supportsLocale`, don't keep a list).
+  - **F-08a · A String Catalog and the rule** (L, split by area below): every user-facing string goes through the catalog, including notifications, `VoiceCopy`, plan and session notes. Keys are the English text, so the unit tests keep asserting English. Dates and numbers use the locale. `CLAUDE.md` gains the rule that new copy ships in every supported language. **Done when:** CI's exported string list (the "Export localizable strings" step) holds every string a runner reads.
+    - **F-08a1 · The catalogs** (S), **done (PR #77)**: `Localizable.xcstrings` in the app and the widget, the compiler extracting strings (`SWIFT_EMIT_LOC_STRINGS`), CI exporting the list to its log and a "localizations" artifact, `scripts/pbxproj.py` adding catalogs, and the rule in `CLAUDE.md`.
+    - **F-08a2 · The screens** (M): every string a view shows reaches the catalog: helpers that take a `String` label (`sectionLabel`, chips, rows, `MetricCard` titles) take a `LocalizedStringKey`, text built in a view uses `String(localized:)`, and dates are formatted by the locale, not by a fixed English pattern.
+    - **F-08a3 · Shared copy** (M): the text `PaceOffShared` writes goes through `String(localized:)`: `VoiceCopy`, `DayPrescription`, `ReadinessEngine`'s sentences, `PaceSource` notes, session notes, `PaceDecayAnalyser.headline`, `WeekReview`, `EasyRunCheck`, `SingleRunCap`, `RunWindowPlanner`. The unit tests keep asserting English.
+    - **F-08a4 · Notifications, the widget and Siri** (M): `DailyPushPlanner`, `BestEffortLog`'s notification, `NotificationScheduler`'s actions, `WidgetCache` and the widget's views, `SiriAnswer`, the App Intents' titles and phrases (`LocalizedStringResource`), and the `Info.plist` strings through an `InfoPlist.xcstrings`.
+  - **F-08b · Hungarian** (M): Hungarian added to the project's regions and both catalogs, complete translations, in the informal register a running friend would use. The Apple Intelligence rewrite is skipped when the model doesn't support the app's language (ask `supportsLocale`, don't keep a list).
 
 ### F-19 · The coach's note: how the run went, and why today's is what it is
 - **Status:** todo
@@ -1027,6 +1031,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-14 · F-08a1: String Catalogs in the app and the widget, the compiler extracting their strings, CI exporting the list, and the rule for new copy in CLAUDE.md; F-08 split into F-08a1–a4 and F-08b (PR #77)
 - 2026-11-13 · F-01d: quality-session notes in the runner's unit (in miles, reps under 2 km in metres), run detail's splits per mile with the pace-decay note in s/mi, and the mile as a best effort; F-01 is done (PR #76)
 - 2026-11-13 · F-01c: History, Trends, run detail, the week, the plan screens and Profile show the runner's unit, and Profile has a Kilometres/Miles choice that reworks Today at once (PR #75)
 - 2026-11-13 · F-01b: the day is said in the runner's unit (miles from a US or UK locale): the daily target in whole units under its cap, plan workouts, voice lines, pushes, the widget, Siri and Today's hero (PR #74)

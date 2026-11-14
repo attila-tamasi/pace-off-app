@@ -41,7 +41,7 @@ Pace Off/
 ├── LOOP.md                          ← how Claude works the roadmap on its own
 ├── ARCHITECTURE.md                  ← where the app is going, and why it has no backend
 ├── docs/research-2026-11.md         ← the competitor research behind the roadmap (Hungarian)
-├── scripts/pbxproj.py               ← adds Swift files to the project without XcodeGen
+├── scripts/pbxproj.py               ← adds Swift files and String Catalogs to the project without XcodeGen
 ├── README.md
 └── .gitignore
 ```

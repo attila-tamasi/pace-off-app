@@ -15,6 +15,7 @@ Companion docs: `ROADMAP.md` (the prioritised backlog: what to build next), `LOO
 - Modern Swift Observation framework (`@Observable`, `@Environment(Type.self)`) — **not** `ObservableObject`
 - Swift Concurrency (async/await); no Combine unless unavoidable. `SWIFT_STRICT_CONCURRENCY` is currently `minimal` (MVP scaffold — to be tightened later).
 - FoundationModels (Apple Intelligence, on-device) is used for optional voice-line rewrites — system framework, always behind `#if canImport` with a canned-copy fallback, in the foreground only, and a rewrite is shown only when `NarrationCheck` finds the canned line's numbers in it
+- Copy is localizable: `PaceOff/Localizable.xcstrings` (app) and `PaceOffWidget/Localizable.xcstrings` (widget) are the String Catalogs, the key is the English text. A SwiftUI literal (`Text("…")`, `Button("…")`) reaches the catalog by itself; a helper that takes a label takes `LocalizedStringKey`, and text built in code (including `PaceOffShared`) uses `String(localized:)`. Dates and numbers are formatted by the locale. New copy ships in every language the app supports (English now; Hungarian with F-08b). CI's "Export localizable strings" step lists every string the compiler found
 - Persistence: App Group `UserDefaults` + small JSON files in the App Group container. **No SwiftData, no CoreData, no CloudKit, no third-party backend.**
 - XcodeGen (`project.yml`) generates `PaceOff.xcodeproj` — regenerate after changing targets: `xcodegen generate`
 - No third-party Swift packages in V1 unless explicitly agreed
@@ -80,7 +81,7 @@ Regenerate the project after editing `project.yml`: `xcodegen generate` (the gen
 
 Every push to `main` also runs `.github/workflows/testflight.yml`: a Release device build, then, once the App Store Connect key's secrets exist, an archive uploaded to TestFlight (README: TestFlight).
 
-**Cloud sessions have no Xcode, XcodeGen or Swift toolchain.** GitHub Actions CI (`.github/workflows/ci.yml`: build + `PaceOffTests` on a macOS runner) is the compiler there, so re-read a diff for build errors before pushing; `LOOP.md` § 4 has the checklist. Add a new Swift file to the project with `python3 scripts/pbxproj.py add <path> <target>…`, which makes the same edits XcodeGen would.
+**Cloud sessions have no Xcode, XcodeGen or Swift toolchain.** GitHub Actions CI (`.github/workflows/ci.yml`: build + `PaceOffTests` on a macOS runner) is the compiler there, so re-read a diff for build errors before pushing; `LOOP.md` § 4 has the checklist. Add a new Swift file (or a `.xcstrings` catalog) to the project with `python3 scripts/pbxproj.py add <path> <target>…`, which makes the same edits XcodeGen would.
 
 Do not run `xcodebuild test` in ad-hoc automation — it hangs on host device discovery in some environments. Run tests from Xcode (the `PaceOff` scheme's test action runs `PaceOffTests`). Test files compile `PaceOffShared` sources directly, so engine tests need no simulator-hosted app state.
 

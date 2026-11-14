@@ -22,6 +22,10 @@ settings:
     CURRENT_PROJECT_VERSION: "1"
     ENABLE_USER_SCRIPT_SANDBOXING: NO
     SWIFT_STRICT_CONCURRENCY: minimal  # Relaxed for MVP scaffold; tighten to "targeted" or "complete" later
+    # Strings go through the String Catalogs (PaceOff/ and PaceOffWidget/
+    # Localizable.xcstrings): the compiler extracts every localizable string.
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+    SWIFT_EMIT_LOC_STRINGS: YES
 
 # ---------- Targets ----------
 
