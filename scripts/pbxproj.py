@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Add or remove a Swift file in PaceOff.xcodeproj without XcodeGen.
+"""Add or remove a Swift file or a String Catalog in PaceOff.xcodeproj without XcodeGen.
 
 XcodeGen (`xcodegen generate`) is the normal way to update the project, but
 cloud sessions have no XcodeGen or Xcode. This script makes the same edits
 XcodeGen would for a single source file: a file reference in the group that
 matches the file's folder, and a build file in each named target's Sources
-phase. Running `xcodegen generate` later gives an equivalent project.
+phase (a `.xcstrings` String Catalog goes in the Resources phase instead). Running `xcodegen generate` later gives an equivalent project.
 
 usage:
-  python3 scripts/pbxproj.py add    <path/to/File.swift> <target> [<target> ...]
-  python3 scripts/pbxproj.py remove <path/to/File.swift>
+  python3 scripts/pbxproj.py add    <path/to/File.swift|Localizable.xcstrings> <target> [<target> ...]
+  python3 scripts/pbxproj.py remove <path/to/File.swift|Localizable.xcstrings>
 
 <path> is relative to the repository root and its folder must already be a
 group in the project. Targets are named as in project.yml: PaceOff,
@@ -65,47 +65,59 @@ def find_group(text: str, folder: str) -> str:
     return current
 
 
-def sources_phase(text: str, target: str) -> str:
+# Per kind of file: its file type, and the build phase it goes in.
+KINDS = {
+    ".swift": ("sourcecode.swift", "Sources", "PBXSourcesBuildPhase"),
+    ".xcstrings": ("text.json.xcstrings", "Resources", "PBXResourcesBuildPhase"),
+}
+
+
+def build_phase(text: str, target: str, phase_name: str = "Sources") -> str:
     for body in objects(text, "PBXNativeTarget").values():
         if field(body, "name") == target:
             phases = re.search(r"buildPhases = \((.*?)\);", body, re.S).group(1)
-            m = re.search(r"([0-9A-F]{24}) /\* Sources \*/", phases)
+            m = re.search(r"([0-9A-F]{24}) /\* " + phase_name + r" \*/", phases)
             if m:
                 return m.group(1)
+            sys.exit(f"target '{target}' has no {phase_name} phase")
     sys.exit(f"no target named '{target}'")
 
 
 def add(path: str, targets: list[str]) -> None:
     text = open(PROJECT).read()
     folder, name = os.path.split(path)
-    if not name.endswith(".swift"):
-        sys.exit("only .swift files are supported")
+    kind = KINDS.get(os.path.splitext(name)[1])
+    if kind is None:
+        sys.exit("only .swift files and .xcstrings catalogs are supported")
+    file_type, phase_name, phase_isa = kind
     if not os.path.exists(os.path.join(REPO, path)):
         sys.exit(f"{path} does not exist; write the file first")
-    if f"/* {name} */ = {{isa = PBXFileReference" in text:
-        sys.exit(f"{name} is already in the project")
+    ref = new_id("ref:" + path)
+    # Swift file names are unique in the project; catalogs share theirs
+    # (one Localizable.xcstrings per target), so those are told apart by path.
+    if ref in text or (name.endswith(".swift") and f"/* {name} */ = {{isa = PBXFileReference" in text):
+        sys.exit(f"{path} is already in the project")
     if not targets:
         sys.exit("name at least one target")
 
     group = find_group(text, folder)
-    ref = new_id("ref:" + path)
     text = text.replace(
         "/* End PBXFileReference section */",
-        f"\t\t{ref} /* {name} */ = {{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; "
+        f"\t\t{ref} /* {name} */ = {{isa = PBXFileReference; lastKnownFileType = {file_type}; "
         f"path = {name}; sourceTree = \"<group>\"; }};\n/* End PBXFileReference section */", 1)
     m = re.search(re.escape(group) + r"(?: /\* [^*]+ \*/)? = \{\n\t\t\tisa = PBXGroup;\n\t\t\tchildren = \(\n", text)
     text = text[:m.end()] + f"\t\t\t\t{ref} /* {name} */,\n" + text[m.end():]
 
     for target in targets:
-        phase = sources_phase(text, target)
+        phase = build_phase(text, target, phase_name)
         build = new_id(f"build:{path}:{target}")
         text = text.replace(
             "/* End PBXBuildFile section */",
-            f"\t\t{build} /* {name} in Sources */ = {{isa = PBXBuildFile; fileRef = {ref} /* {name} */; }};\n"
+            f"\t\t{build} /* {name} in {phase_name} */ = {{isa = PBXBuildFile; fileRef = {ref} /* {name} */; }};\n"
             "/* End PBXBuildFile section */", 1)
-        m = re.search(re.escape(phase) + r" /\* Sources \*/ = \{\n\t\t\tisa = PBXSourcesBuildPhase;\n"
+        m = re.search(re.escape(phase) + r" /\* " + phase_name + r" \*/ = \{\n\t\t\tisa = " + phase_isa + r";\n"
                       r"\t\t\tbuildActionMask = \d+;\n\t\t\tfiles = \(\n", text)
-        text = text[:m.end()] + f"\t\t\t\t{build} /* {name} in Sources */,\n" + text[m.end():]
+        text = text[:m.end()] + f"\t\t\t\t{build} /* {name} in {phase_name} */,\n" + text[m.end():]
 
     open(PROJECT, "w").write(text)
     print(f"added {path} to {', '.join(targets)}")
@@ -114,7 +126,14 @@ def add(path: str, targets: list[str]) -> None:
 def remove(path: str) -> None:
     text = open(PROJECT).read()
     name = os.path.basename(path)
-    updated, count = re.subn(r"[^\n]*/\* " + re.escape(name) + r"( in Sources)? \*/[^\n]*\n", "", text)
+    ref = new_id("ref:" + path)
+    if ref in text:
+        # Added by this script: its reference and every build file using it.
+        builds = re.findall(r"\t\t([0-9A-F]{24}) /\* [^*]+ \*/ = \{isa = PBXBuildFile; fileRef = " + ref, text)
+        pattern = "|".join([ref] + builds)
+        updated, count = re.subn(r"[^\n]*\b(?:" + pattern + r")\b[^\n]*\n", "", text)
+    else:
+        updated, count = re.subn(r"[^\n]*/\* " + re.escape(name) + r"( in (?:Sources|Resources))? \*/[^\n]*\n", "", text)
     if count == 0:
         sys.exit(f"{name} is not in the project")
     open(PROJECT, "w").write(updated)

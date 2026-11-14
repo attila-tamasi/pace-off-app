@@ -59,3 +59,29 @@ jobs:
             -destination "platform=iOS Simulator,name=$DEVICE" \
             CODE_SIGNING_ALLOWED=NO \
             | tail -n 300
+
+      # The strings the compiler finds for the String Catalogs, as XLIFF:
+      # the list a translation works from. It never fails the job; the list
+      # is in the log and in the run's "localizations" artifact.
+      - name: Export localizable strings
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          xcodebuild -exportLocalizations \
+            -project PaceOff.xcodeproj \
+            -localizationPath build/localizations \
+            -exportLanguage en \
+            CODE_SIGNING_ALLOWED=NO \
+            | tail -n 40
+          XLIFF=$(find build/localizations -name '*.xliff' | head -1)
+          echo "Strings in $XLIFF: $(grep -c '<trans-unit' "$XLIFF")"
+          grep -o '<source>[^<]*</source>' "$XLIFF" | sed -E 's#</?source>##g' | sort -u
+
+      - name: Upload localizable strings
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: localizations
+          path: build/localizations
+          if-no-files-found: ignore
