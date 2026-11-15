@@ -262,13 +262,14 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - **F-01d · Session notes, splits and the mile** (M), **done (PR #76)**: quality-session notes ("WU 2 km · 3 × 1.6 km @ T …") written in the runner's unit, run detail's splits per mile, the "s/km" in the pace-decay note, and the mile as a best effort.
 
 ### F-08 · Languages: Hungarian first
-- **Status:** todo (F-08a1 PR #77 done; F-08a2 next)
+- **Status:** todo (F-08a1 PR #77, F-08a2 PR #78 done; F-08a2b next)
 - **Size:** L   ·   **Merge:** auto
 - **Problem:** The app is English only. Hungarian is the first target language. The on-device model doesn't write Hungarian as far as the evidence shows, so for a Hungarian runner the canned lines and the templates are the whole product.
 - **Sub-items:**
   - **F-08a · A String Catalog and the rule** (L, split by area below): every user-facing string goes through the catalog, including notifications, `VoiceCopy`, plan and session notes. Keys are the English text, so the unit tests keep asserting English. Dates and numbers use the locale. `CLAUDE.md` gains the rule that new copy ships in every supported language. **Done when:** CI's exported string list (the "Export localizable strings" step) holds every string a runner reads.
     - **F-08a1 · The catalogs** (S), **done (PR #77)**: `Localizable.xcstrings` in the app and the widget, the compiler extracting strings (`SWIFT_EMIT_LOC_STRINGS`), CI exporting the list to its log and a "localizations" artifact, `scripts/pbxproj.py` adding catalogs, and the rule in `CLAUDE.md`.
-    - **F-08a2 · The screens** (M): every string a view shows reaches the catalog: helpers that take a `String` label (`sectionLabel`, chips, rows, `MetricCard` titles) take a `LocalizedStringKey`, text built in a view uses `String(localized:)`, and dates are formatted by the locale, not by a fixed English pattern.
+    - **F-08a2 · The daily screens** (M), **done (PR #78)**: Today, History, Trends, run detail, the week, readiness, HRV and resting HR, VO₂ max, and the shared `MetricCard`, `MetricSectionHeader` and `BrandHero`. Helpers that take a label take a `LocalizedStringKey`; text built in a view uses `String(localized:)`, with whole sentences rather than glued fragments where the words move ("8% below your 30-day baseline…"), and "1 day" / "%lld days" as separate keys. Decimals that `String(format:)` wrote with a fixed "." go through the locale; History's month headers use a localized template.
+    - **F-08a2b · Onboarding, Profile, the plan screens, sign-in and legal** (M): the same for `OnboardingFlow`, `OnboardingStepScaffold`, `ProfileView`, `ProfileEditView`, `PlanTabView`, `TrainingPlanDetailView`, `TrainingPlanPickerView`, `TrainingPlanSettingsView`, `AuthGateView`, `SplashView`, `LegalView` and `LegalLinksFooter` (the PR says it touches legal copy).
     - **F-08a3 · Shared copy** (M): the text `PaceOffShared` writes goes through `String(localized:)`: `VoiceCopy`, `DayPrescription`, `ReadinessEngine`'s sentences, `PaceSource` notes, session notes, `PaceDecayAnalyser.headline`, `WeekReview`, `EasyRunCheck`, `SingleRunCap`, `RunWindowPlanner`. The unit tests keep asserting English.
     - **F-08a4 · Notifications, the widget and Siri** (M): `DailyPushPlanner`, `BestEffortLog`'s notification, `NotificationScheduler`'s actions, `WidgetCache` and the widget's views, `SiriAnswer`, the App Intents' titles and phrases (`LocalizedStringResource`), and the `Info.plist` strings through an `InfoPlist.xcstrings`.
   - **F-08b · Hungarian** (M): Hungarian added to the project's regions and both catalogs, complete translations, in the informal register a running friend would use. The Apple Intelligence rewrite is skipped when the model doesn't support the app's language (ask `supportsLocale`, don't keep a list).
@@ -987,6 +988,7 @@ All done.
 
 The loop works in a cloud session with no simulator: CI proves a change compiles and the tests pass, not how it looks. Every merged PR that changes UI is added here. The owner ticks it after a look on a device, in Light and Dark Mode.
 
+- [ ] PR #78: nothing should look different in English: Today (race countdown, plan line, streak, "Last run", today's run badge), run detail (summary tiles, zones, splits header, dynamics decimals), the week, readiness and the HRV / resting HR / VO₂ max screens' baseline and trend lines; History's month headers
 - [ ] PR #76: in Miles, a threshold or interval day's notes on the Plan tab and in plan detail ("WU 1.9 mi · 5 × 1600 m @ T …"), run detail's "PACE PER MILE" chart, table and headline ("s/mi"), and "Mile" under Best efforts
 - [ ] PR #75: Profile → Units (Kilometres/Miles menu) and, after switching to Miles: Today (hero, Last 7 days, Last run, Today's run), History rows, Trends (weekly distance, pace and their charts), run detail (distance, pace, speed, elevation axis), the week screen, the Plan tab and plan detail, Profile's goal and prediction line
 - [ ] PR #74: with the phone's region set to the US: Today's hero in miles ("6 mi"), the plan line, the voice line, a push, the widget and Siri all in miles; with a European region, unchanged
@@ -1031,6 +1033,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-15 · F-08a2: the daily screens' text reaches the String Catalog (Today, History, Trends, run detail, the week, readiness, HRV, resting HR, VO₂ max), in whole sentences, with locale decimals (PR #78)
 - 2026-11-14 · F-08a1: String Catalogs in the app and the widget, the compiler extracting their strings, CI exporting the list, and the rule for new copy in CLAUDE.md; F-08 split into F-08a1–a4 and F-08b (PR #77)
 - 2026-11-13 · F-01d: quality-session notes in the runner's unit (in miles, reps under 2 km in metres), run detail's splits per mile with the pace-decay note in s/mi, and the mile as a best effort; F-01 is done (PR #76)
 - 2026-11-13 · F-01c: History, Trends, run detail, the week, the plan screens and Profile show the runner's unit, and Profile has a Kilometres/Miles choice that reworks Today at once (PR #75)

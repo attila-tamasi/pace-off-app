@@ -248,10 +248,11 @@ struct RunDetailView: View {
     }
 
     private struct SummaryItem: Identifiable {
-        let label: String
+        let label: LocalizedStringKey
         let value: String
         let icon: String
-        var id: String { label }
+        /// Every tile has its own symbol.
+        var id: String { icon }
     }
 
     private var summaryItems: [SummaryItem] {
@@ -294,10 +295,10 @@ struct RunDetailView: View {
             items.append(SummaryItem(label: "WEATHER", value: "\(Int(temperature.rounded())) °C\(humidity)", icon: "thermometer.medium"))
         }
         if let indoor = extras?.indoor {
-            items.append(SummaryItem(label: "LOCATION", value: indoor ? "Indoor" : "Outdoor", icon: indoor ? "house.fill" : "tree.fill"))
+            items.append(SummaryItem(label: "LOCATION", value: indoor ? String(localized: "Indoor") : String(localized: "Outdoor"), icon: indoor ? "house.fill" : "tree.fill"))
         }
         if let mets = extras?.averageMETs {
-            items.append(SummaryItem(label: "INTENSITY", value: String(format: "%.1f METs", mets), icon: "bolt.heart.fill"))
+            items.append(SummaryItem(label: "INTENSITY", value: String(localized: "\(mets.formatted(.number.precision(.fractionLength(1)))) METs"), icon: "bolt.heart.fill"))
         }
         return items
     }
@@ -407,8 +408,10 @@ struct RunDetailView: View {
     /// "24 min", "1 h 05 min", "<1 min".
     static func minutesText(_ seconds: TimeInterval) -> String {
         let minutes = Int((seconds / 60).rounded())
-        if seconds > 0 && minutes == 0 { return "<1 min" }
-        return minutes >= 60 ? String(format: "%d h %02d min", minutes / 60, minutes % 60) : "\(minutes) min"
+        if seconds > 0 && minutes == 0 { return String(localized: "<1 min") }
+        return minutes >= 60
+            ? String(localized: "\(minutes / 60) h \(String(format: "%02d", minutes % 60)) min")
+            : String(localized: "\(minutes) min")
     }
 
     // MARK: - Elevation profile
@@ -582,7 +585,8 @@ struct RunDetailView: View {
     /// red above the run's median) and the elapsed time at its end.
     private func splitsTable(showsHR: Bool) -> some View {
         VStack(spacing: 0) {
-            splitRow(km: units.unit.symbol.uppercased(), pace: "PACE", hr: showsHR ? "HR" : nil, time: "TIME", isHeader: true)
+            splitRow(km: units.unit.symbol.uppercased(), pace: String(localized: "PACE"),
+                     hr: showsHR ? String(localized: "HR") : nil, time: String(localized: "TIME"), isHeader: true)
             ForEach(splits) { split in
                 Divider()
                 splitRow(
@@ -636,11 +640,11 @@ struct RunDetailView: View {
     }
 
     /// "PACE PER KM", "PACE PER MILE".
-    private var splitsLabel: String {
+    private var splitsLabel: LocalizedStringKey {
         units.unit == .miles ? "PACE PER MILE" : "PACE PER KM"
     }
 
-    private func sectionLabel(_ text: String) -> some View {
+    private func sectionLabel(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.system(.caption, design: .rounded, weight: .semibold))
             .kerning(1.2)
@@ -666,10 +670,10 @@ struct RunDetailView: View {
                     metric("POWER", value: "\(Int(p)) W", icon: "bolt.fill")
                 }
                 if let s = run.averageStrideLengthMeters {
-                    metric("STRIDE", value: String(format: "%.2f m", s), icon: "ruler")
+                    metric("STRIDE", value: "\(s.formatted(.number.precision(.fractionLength(2)))) m", icon: "ruler")
                 }
                 if let v = run.averageVerticalOscillationCm {
-                    metric("VERTICAL OSC.", value: String(format: "%.1f cm", v), icon: "arrow.up.and.down")
+                    metric("VERTICAL OSC.", value: "\(v.formatted(.number.precision(.fractionLength(1)))) cm", icon: "arrow.up.and.down")
                 }
                 if let g = run.averageGroundContactMs {
                     metric("GROUND CONTACT", value: "\(Int(g)) ms", icon: "shoe")
@@ -681,7 +685,7 @@ struct RunDetailView: View {
         }
     }
 
-    private func metric(_ label: String, value: String, icon: String) -> some View {
+    private func metric(_ label: LocalizedStringKey, value: String, icon: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
                 Image(systemName: icon)

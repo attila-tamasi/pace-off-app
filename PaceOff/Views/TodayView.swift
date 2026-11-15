@@ -122,10 +122,10 @@ struct TodayView: View {
         let days = Calendar.current.dateComponents([.day], from: Date(), to: goalDate).day ?? 0
         if days <= 0 { return nil }
         if days < 14 {
-            return "Race in \(days) day\(days == 1 ? "" : "s")"
+            return days == 1 ? String(localized: "Race in 1 day") : String(localized: "Race in \(days) days")
         }
         let weeks = days / 7
-        return "Race in \(weeks) week\(weeks == 1 ? "" : "s")"
+        return weeks == 1 ? String(localized: "Race in 1 week") : String(localized: "Race in \(weeks) weeks")
     }
 
     // MARK: - Hero (today's target)
@@ -157,7 +157,7 @@ struct TodayView: View {
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text(heroDistance ?? (isPlanRestDay ? "Rest" : "—"))
+                Text(heroDistance ?? (isPlanRestDay ? String(localized: "Rest") : "—"))
                     .scaledFont(size: 76, weight: .heavy, design: .rounded)
                     .foregroundStyle(.white)
                     .contentTransition(.numericText())
@@ -274,20 +274,20 @@ struct TodayView: View {
         guard let plan = planStore.activePlan, let day = plan.todayDay() else { return nil }
         let tick = todayVM.strengthDoneToday ? " ✓" : ""
         if day.workout.kind == .rest {
-            return day.strength.map { "Strength day in your plan · \($0.equipment.displayName)\(tick)" }
-                ?? "Rest day in your plan"
+            return day.strength.map { String(localized: "Strength day in your plan · \($0.equipment.displayName)\(tick)") }
+                ?? String(localized: "Rest day in your plan")
         }
-        var line = "\(plan.goal.displayName) plan · \(day.workout.kind.displayName)"
+        var line = String(localized: "\(plan.goal.displayName) plan · \(day.workout.kind.displayName)")
         switch todayVM.prescription?.adjustment {
-        case .easedForYellow?: line += ", run easy today"
-        case .cutForRed?: line += ", cut to an easy run"
-        case .restForUnwell?: line += ", rest today: you're unwell"
+        case .easedForYellow?: line += String(localized: ", run easy today")
+        case .cutForRed?: line += String(localized: ", cut to an easy run")
+        case .restForUnwell?: line += String(localized: ", rest today: you're unwell")
         case nil: break
         }
         if todayVM.prescription?.cappedAtMeters != nil {
-            line += " (plan: \(units.distanceOneDecimal(day.workout.distanceMeters)))"
+            line += String(localized: " (plan: \(units.distanceOneDecimal(day.workout.distanceMeters)))")
         }
-        return day.strength == nil ? line : "\(line) + strength\(tick)"
+        return day.strength == nil ? line : String(localized: "\(line) + strength\(tick)")
     }
 
     // MARK: - Recovery
@@ -333,7 +333,7 @@ struct TodayView: View {
                         value: todayVM.latestRestingHeartRate.map { "\(Int($0.rounded()))" } ?? "—",
                         unit: "bpm",
                         note: todayVM.yesterdayAvgHeartRate.flatMap { avg in
-                            todayVM.yesterdayValuesDayName.map { "Avg \($0) \(Int(avg.rounded())) bpm" }
+                            todayVM.yesterdayValuesDayName.map { String(localized: "Avg \($0) \(Int(avg.rounded())) bpm") }
                         },
                         layout: .compact
                     ) {
@@ -436,9 +436,9 @@ struct TodayView: View {
 
     private func readinessLabel(_ level: ReadinessLevel) -> String {
         switch level {
-        case .green: return "Ready"
-        case .yellow: return "Ease off"
-        case .red: return "Rest"
+        case .green: return String(localized: "Ready")
+        case .yellow: return String(localized: "Ease off")
+        case .red: return String(localized: "Rest")
         }
     }
 
@@ -507,7 +507,7 @@ struct TodayView: View {
                         systemImage: "lungs.fill",
                         tint: .accentColor,
                         showsChevron: true,
-                        value: todayVM.currentVO2Max.map { String(format: "%.1f", $0) } ?? "—",
+                        value: todayVM.currentVO2Max.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—",
                         layout: .compact
                     ) {
                         if todayVM.vo2Trend.count > 1 {
@@ -550,7 +550,7 @@ struct TodayView: View {
     private var streakLabel: String? {
         let streak = todayVM.currentStreak
         guard streak > 0 else { return nil }
-        return "\(streak)-day streak"
+        return String(localized: "\(streak)-day streak")
     }
 
     /// How long ago the most recent run before today was: "Yesterday",
@@ -564,9 +564,9 @@ struct TodayView: View {
             to: cal.startOfDay(for: Date())
         ).day ?? 0
         switch days {
-        case ..<1: return "Today"
-        case 1: return "Yesterday"
-        default: return "\(days) days ago"
+        case ..<1: return String(localized: "Today")
+        case 1: return String(localized: "Yesterday")
+        default: return String(localized: "\(days) days ago")
         }
     }
 
@@ -587,11 +587,11 @@ struct TodayView: View {
         let label: String
         let color: Color
         if hit {
-            label = "Target hit"; color = .green
+            label = String(localized: "Target hit"); color = .green
         } else if askedKm == 0 {
-            label = "Logged"; color = .accentColor
+            label = String(localized: "Logged"); color = .accentColor
         } else {
-            label = "Short by \(units.distanceOneDecimal((askedKm - actualKm) * 1000))"
+            label = String(localized: "Short by \(units.distanceOneDecimal((askedKm - actualKm) * 1000))")
             color = .orange
         }
 

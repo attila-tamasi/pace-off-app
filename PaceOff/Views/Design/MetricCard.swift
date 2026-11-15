@@ -18,7 +18,9 @@ enum MetricCardLayout {
 
 struct MetricCard<Accessory: View>: View {
 
-    let title: String
+    /// The category, from the String Catalog. The other texts arrive
+    /// already in the runner's language.
+    let title: LocalizedStringKey
     let systemImage: String
     let tint: Color
     var detail: String? = nil
@@ -105,7 +107,7 @@ struct MetricCard<Accessory: View>: View {
 }
 
 extension MetricCard where Accessory == EmptyView {
-    init(title: String,
+    init(title: LocalizedStringKey,
          systemImage: String,
          tint: Color,
          detail: String? = nil,
@@ -125,7 +127,7 @@ extension MetricCard where Accessory == EmptyView {
 /// Section heading in the Health app's style: bold title, optional link
 /// on the right.
 struct MetricSectionHeader: View {
-    let title: String
+    let title: LocalizedStringKey
 
     var body: some View {
         Text(title)
