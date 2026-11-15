@@ -24,8 +24,8 @@ struct TrendsView: View {
                     title: "VO₂ max",
                     systemImage: "lungs.fill",
                     tint: .accentColor,
-                    detail: "Last 28 days",
-                    value: recentVO2.last.map { String(format: "%.1f", $0.value) } ?? "—",
+                    detail: String(localized: "Last 28 days"),
+                    value: recentVO2.last.map { $0.value.formatted(.number.precision(.fractionLength(1))) } ?? "—",
                     unit: "ml/kg/min",
                     layout: .compact
                 ) {
@@ -39,9 +39,9 @@ struct TrendsView: View {
                     title: "Weekly distance",
                     systemImage: "figure.run",
                     tint: BrandPalette.track,
-                    detail: "Last 12 weeks",
+                    detail: String(localized: "Last 12 weeks"),
                     value: units.numberOneDecimal(thisWeekKm * 1000),
-                    unit: "\(units.unit.symbol) this week",
+                    unit: String(localized: "\(units.unit.symbol) this week"),
                     layout: .compact
                 ) {
                     if weeklyDistances.isEmpty {
@@ -54,9 +54,9 @@ struct TrendsView: View {
                     title: "Pace",
                     systemImage: "speedometer",
                     tint: .teal,
-                    detail: "Last 28 days",
+                    detail: String(localized: "Last 28 days"),
                     value: averagePaceLabel,
-                    unit: "/\(units.unit.symbol) avg",
+                    unit: String(localized: "/\(units.unit.symbol) avg"),
                     layout: .compact
                 ) {
                     if recentPacedRuns.isEmpty {
@@ -75,7 +75,7 @@ struct TrendsView: View {
     }
 
     /// What a card shows in place of its chart when there's nothing to draw.
-    private func emptyChart(_ text: String) -> some View {
+    private func emptyChart(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.system(.footnote, design: .rounded))
             .foregroundStyle(.secondary)

@@ -48,7 +48,7 @@ struct HistoryView: View {
 
     private func grouped() -> [(month: String, runs: [RunRecord])] {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM yyyy"
+        formatter.setLocalizedDateFormatFromTemplate("MMMMyyyy")
         let grouped = Dictionary(grouping: runs) { formatter.string(from: $0.startDate) }
         return grouped
             .sorted { ($0.value.first?.startDate ?? .distantPast) > ($1.value.first?.startDate ?? .distantPast) }

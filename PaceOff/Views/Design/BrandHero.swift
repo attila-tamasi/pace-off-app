@@ -9,8 +9,8 @@ import SwiftUI
 
 struct BrandHero<Footer: View>: View {
 
-    let headline: String
-    let subtitle: String
+    let headline: LocalizedStringKey
+    let subtitle: LocalizedStringKey
     /// Bottom-pinned content (CTA buttons, legal links, etc.).
     let footer: () -> Footer
 
@@ -21,8 +21,8 @@ struct BrandHero<Footer: View>: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(
-        headline: String,
-        subtitle: String,
+        headline: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
         @ViewBuilder footer: @escaping () -> Footer
     ) {
         self.headline = headline

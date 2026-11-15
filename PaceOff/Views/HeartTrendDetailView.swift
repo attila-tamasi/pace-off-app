@@ -68,19 +68,20 @@ struct HeartTrendDetailView: View {
     }
 
     private func latestLabel(_ trend: HeartTrend) -> String {
-        guard let latest = trend.latest else { return "NO RECENT READING" }
-        return Calendar.current.isDateInToday(latest.date) ? "TODAY" : "YESTERDAY"
+        guard let latest = trend.latest else { return String(localized: "NO RECENT READING") }
+        return Calendar.current.isDateInToday(latest.date) ? String(localized: "TODAY") : String(localized: "YESTERDAY")
     }
 
     /// "8% below your 30-day baseline of 68 ms", coloured by what the
     /// readiness card makes of it; or how far the baseline still is.
     private func baselineLine(_ trend: HeartTrend) -> (text: String, icon: String, color: Color)? {
-        let window = "\(trend.baselineWindowDays)-day"
+        let window = trend.baselineWindowDays
         if let change = trend.change, let baseline = trend.baseline, let level = trend.level {
             // Rounded toward zero, so the shown percent never crosses a
             // threshold the grade hasn't.
             let percent = Int((abs(change) * 100).rounded(.towardZero))
-            let base = "\(window) baseline of \(Int(baseline.rounded())) \(copy.unit)"
+            let base = Int(baseline.rounded())
+            let unit = copy.unit
             let color: Color
             switch level {
             case .green: color = .green
@@ -88,15 +89,17 @@ struct HeartTrendDetailView: View {
             case .red: color = .red
             }
             if percent == 0 {
-                return ("On your \(base)", "equal", color)
+                return (String(localized: "On your \(window)-day baseline of \(base) \(unit)"), "equal", color)
             }
             return change > 0
-                ? ("\(percent)% above your \(base)", "arrow.up.right", color)
-                : ("\(percent)% below your \(base)", "arrow.down.right", color)
+                ? (String(localized: "\(percent)% above your \(window)-day baseline of \(base) \(unit)"), "arrow.up.right", color)
+                : (String(localized: "\(percent)% below your \(window)-day baseline of \(base) \(unit)"), "arrow.down.right", color)
         }
         guard trend.latest != nil else { return nil }
         let left = max(0, trend.baselineDaysNeeded - trend.baselineDaysSoFar)
-        return ("Your baseline appears after \(left) more day\(left == 1 ? "" : "s") of readings",
+        return (left == 1
+                    ? String(localized: "Your baseline appears after 1 more day of readings")
+                    : String(localized: "Your baseline appears after \(left) more days of readings"),
                 "hourglass", Color.secondary)
     }
 
@@ -212,9 +215,9 @@ struct HeartTrendDetailView: View {
 
     private func rangeLabel(_ range: HeartTrend.Range) -> String {
         switch range {
-        case .week: return "Week"
-        case .month: return "Month"
-        case .threeMonths: return "3 Months"
+        case .week: return String(localized: "Week")
+        case .month: return String(localized: "Month")
+        case .threeMonths: return String(localized: "3 Months")
         }
     }
 
@@ -239,7 +242,14 @@ struct HeartTrendDetailView: View {
     private func readinessCard(_ trend: HeartTrend) -> some View {
         let yellow = Int((trend.yellowThreshold * 100).rounded())
         let red = Int((trend.redThreshold * 100).rounded())
-        let direction = metric == .hrv ? "below" : "above"
+        let cap = Int((PushTargetEngine.redReadinessCapFactor * 100).rounded())
+        let rows: [String] = metric == .hrv
+            ? [String(localized: "Less than \(yellow)% below your baseline"),
+               String(localized: "\(yellow)% or more below: today's target goes no higher than your usual distance"),
+               String(localized: "\(red)% or more below: the target is capped at \(cap)% of your usual distance and the day turns to recovery")]
+            : [String(localized: "Less than \(yellow)% above your baseline"),
+               String(localized: "\(yellow)% or more above: today's target goes no higher than your usual distance"),
+               String(localized: "\(red)% or more above: the target is capped at \(cap)% of your usual distance and the day turns to recovery")]
         return VStack(alignment: .leading, spacing: 12) {
             Text("HOW READINESS USES IT")
                 .font(.system(.caption, design: .rounded, weight: .semibold))
@@ -251,9 +261,9 @@ struct HeartTrendDetailView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 8) {
-                thresholdRow(color: .green, label: "Ready", text: "Less than \(yellow)% \(direction) your baseline")
-                thresholdRow(color: .yellow, label: "Ease off", text: "\(yellow)% or more \(direction): today's target goes no higher than your usual distance")
-                thresholdRow(color: .red, label: "Rest", text: "\(red)% or more \(direction): the target is capped at \(Int((PushTargetEngine.redReadinessCapFactor * 100).rounded()))% of your usual distance and the day turns to recovery")
+                thresholdRow(color: .green, label: "Ready", text: rows[0])
+                thresholdRow(color: .yellow, label: "Ease off", text: rows[1])
+                thresholdRow(color: .red, label: "Rest", text: rows[2])
             }
 
             Text("The other signal counts too: when HRV and resting heart rate are both off, the day turns red.")
@@ -266,7 +276,7 @@ struct HeartTrendDetailView: View {
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
-    private func thresholdRow(color: Color, label: String, text: String) -> some View {
+    private func thresholdRow(color: Color, label: LocalizedStringKey, text: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Circle()
                 .fill(color)
@@ -322,30 +332,30 @@ struct HeartTrendDetailView: View {
         switch metric {
         case .hrv:
             return Copy(
-                title: "Heart Rate Variability",
+                title: String(localized: "Heart Rate Variability"),
                 unit: "ms",
                 symbol: "waveform.path.ecg",
-                readingName: "your latest HRV reading, usually last night's,",
-                emptyTitle: "No HRV readings yet",
-                emptyBody: "Apple Watch records HRV while you sleep. Wear it to bed, and the readings appear here the next morning.",
+                readingName: String(localized: "your latest HRV reading, usually last night's,"),
+                emptyTitle: String(localized: "No HRV readings yet"),
+                emptyBody: String(localized: "Apple Watch records HRV while you sleep. Wear it to bed, and the readings appear here the next morning."),
                 explanation: [
-                    "Heart rate variability is the small variation in time between heartbeats. Health measures it as SDNN, in milliseconds.",
-                    "Above your own normal usually means you've recovered. A drop below it often follows hard training, short sleep, illness or stress.",
-                    "Compare it with your own baseline, not with other people: normal values differ a lot from one person to the next.",
+                    String(localized: "Heart rate variability is the small variation in time between heartbeats. Health measures it as SDNN, in milliseconds."),
+                    String(localized: "Above your own normal usually means you've recovered. A drop below it often follows hard training, short sleep, illness or stress."),
+                    String(localized: "Compare it with your own baseline, not with other people: normal values differ a lot from one person to the next."),
                 ]
             )
         case .restingHeartRate:
             return Copy(
-                title: "Resting Heart Rate",
+                title: String(localized: "Resting Heart Rate"),
                 unit: "bpm",
                 symbol: "heart",
-                readingName: "your latest resting heart rate",
-                emptyTitle: "No resting heart rate yet",
-                emptyBody: "Apple Watch works it out from readings taken while you're still. Wear it through a day, and it appears here.",
+                readingName: String(localized: "your latest resting heart rate"),
+                emptyTitle: String(localized: "No resting heart rate yet"),
+                emptyBody: String(localized: "Apple Watch works it out from readings taken while you're still. Wear it through a day, and it appears here."),
                 explanation: [
-                    "Resting heart rate is how fast your heart beats when you're fully at rest.",
-                    "As your running fitness grows, it tends to drift down over months.",
-                    "A few beats above your normal often comes with fatigue, illness, heat, alcohol or too little sleep: a sign to keep the day easy.",
+                    String(localized: "Resting heart rate is how fast your heart beats when you're fully at rest."),
+                    String(localized: "As your running fitness grows, it tends to drift down over months."),
+                    String(localized: "A few beats above your normal often comes with fatigue, illness, heat, alcohol or too little sleep: a sign to keep the day easy."),
                 ]
             )
         }

@@ -73,13 +73,17 @@ struct ReadinessDetailView: View {
             // Rounded toward zero, so the shown percent never crosses a
             // threshold the grade hasn't.
             let percent = Int((abs(change) * 100).rounded(.towardZero))
-            let direction = percent == 0 ? "on" : (change > 0 ? "\(percent)% above" : "\(percent)% below")
             let window = isHRV ? ReadinessEngine.hrvBaselineWindowDays : ReadinessEngine.rhrBaselineWindowDays
-            note = "\(direction) your \(window)-day baseline of \(Int(baseline.rounded())) \(unit)"
+            let base = Int(baseline.rounded())
+            note = percent == 0
+                ? String(localized: "on your \(window)-day baseline of \(base) \(unit)")
+                : change > 0
+                    ? String(localized: "\(percent)% above your \(window)-day baseline of \(base) \(unit)")
+                    : String(localized: "\(percent)% below your \(window)-day baseline of \(base) \(unit)")
         } else {
             // Readiness keeps a signal's numbers only when it has both a
             // recent reading and a baseline to compare it with.
-            note = "Not counted today: no reading since yesterday, or not enough days yet for a baseline"
+            note = String(localized: "Not counted today: no reading since yesterday, or not enough days yet for a baseline")
         }
 
         return NavigationLink {
@@ -117,10 +121,15 @@ struct ReadinessDetailView: View {
             // Rounded toward zero, so the shown percent never crosses a
             // threshold the grade hasn't.
             let percent = Int((abs(change) * 100).rounded(.towardZero))
-            let direction = percent == 0 ? "on" : (change > 0 ? "\(percent)% above" : "\(percent)% below")
-            note = "\(direction) your \(ReadinessEngine.sleepBaselineWindowDays)-night average of \(ReadinessEngine.sleepText(hours: baseline))"
+            let nights = ReadinessEngine.sleepBaselineWindowDays
+            let average = ReadinessEngine.sleepText(hours: baseline)
+            note = percent == 0
+                ? String(localized: "on your \(nights)-night average of \(average)")
+                : change > 0
+                    ? String(localized: "\(percent)% above your \(nights)-night average of \(average)")
+                    : String(localized: "\(percent)% below your \(nights)-night average of \(average)")
         } else {
-            note = "Not counted today: no night recorded, or fewer than \(ReadinessEngine.minSleepBaselineNights) nights for an average"
+            note = String(localized: "Not counted today: no night recorded, or fewer than \(ReadinessEngine.minSleepBaselineNights) nights for an average")
         }
         return MetricCard(
             title: "Sleep",
@@ -129,7 +138,7 @@ struct ReadinessDetailView: View {
             detail: level.map { label($0) },
             showsChevron: false,
             value: hours.map { ReadinessEngine.sleepText(hours: $0) } ?? "—",
-            unit: "asleep",
+            unit: String(localized: "asleep"),
             note: note
         ) {
             if let level {
@@ -152,10 +161,10 @@ struct ReadinessDetailView: View {
             }
         }
         let note: String = switch feeling {
-        case nil: "Not answered today. Answer on Today, and it joins the watch's signals"
-        case .fresh?, .normal?: "Counts as on track. It never lifts what the watch says"
-        case .tired?, .sore?: "Counts as one signal off: with another one off, the day turns red"
-        case .unwell?: "Unwell turns the day red: rest today"
+        case nil: String(localized: "Not answered today. Answer on Today, and it joins the watch's signals")
+        case .fresh?, .normal?: String(localized: "Counts as on track. It never lifts what the watch says")
+        case .tired?, .sore?: String(localized: "Counts as one signal off: with another one off, the day turns red")
+        case .unwell?: String(localized: "Unwell turns the day red: rest today")
         }
         return MetricCard(
             title: "How you feel",
@@ -218,7 +227,7 @@ struct ReadinessDetailView: View {
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
-    private func ruleRow(_ level: ReadinessLevel, _ title: String, _ text: String) -> some View {
+    private func ruleRow(_ level: ReadinessLevel, _ title: LocalizedStringKey, _ text: LocalizedStringKey) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Circle()
                 .fill(dotColor(level))
@@ -241,9 +250,9 @@ struct ReadinessDetailView: View {
     /// "Worked out at 07:12", with the day when it isn't today's.
     private func workedOut(_ date: Date) -> String {
         if Calendar.current.isDateInToday(date) {
-            return "Worked out at \(date.formatted(date: .omitted, time: .shortened))"
+            return String(localized: "Worked out at \(date.formatted(date: .omitted, time: .shortened))")
         }
-        return "Worked out \(date.formatted(date: .abbreviated, time: .shortened)), not yet refreshed today"
+        return String(localized: "Worked out \(date.formatted(date: .abbreviated, time: .shortened)), not yet refreshed today")
     }
 
     private func percent(_ fraction: Double) -> Int {
@@ -252,9 +261,9 @@ struct ReadinessDetailView: View {
 
     private func label(_ level: ReadinessLevel) -> String {
         switch level {
-        case .green: return "Ready"
-        case .yellow: return "Ease off"
-        case .red: return "Rest"
+        case .green: return String(localized: "Ready")
+        case .yellow: return String(localized: "Ease off")
+        case .red: return String(localized: "Rest")
         }
     }
 

@@ -72,9 +72,9 @@ struct WeekDetailView: View {
 
     /// "4 runs · 3-day streak".
     private func summaryLine(_ week: WeekReview) -> String {
-        var parts = ["\(week.runCount) run\(week.runCount == 1 ? "" : "s")"]
+        var parts = [week.runCount == 1 ? String(localized: "1 run") : String(localized: "\(week.runCount) runs")]
         if week.streak > 0 {
-            parts.append("\(week.streak)-day streak")
+            parts.append(String(localized: "\(week.streak)-day streak"))
         }
         return parts.joined(separator: " · ")
     }
@@ -181,7 +181,7 @@ struct WeekDetailView: View {
 
     private func planCard(_ week: WeekReview) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(planStore.activePlan?.displayName ?? "Training plan", systemImage: "list.bullet.rectangle.portrait")
+            Label(planStore.activePlan?.displayName ?? String(localized: "Training plan"), systemImage: "list.bullet.rectangle.portrait")
                 .font(.system(.subheadline, weight: .semibold))
                 .foregroundStyle(Color.accentColor)
 
@@ -209,7 +209,7 @@ struct WeekDetailView: View {
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
-    private func stat(value: String, label: String) -> some View {
+    private func stat(value: String, label: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
                 .font(.system(.title3, design: .rounded, weight: .bold))
@@ -268,16 +268,16 @@ struct WeekDetailView: View {
 
     /// "Today", "Yesterday", or "Wednesday, 4 Nov".
     private func dayTitle(_ day: WeekReview.Day) -> String {
-        if day.isToday { return "Today" }
-        if Calendar.current.isDateInYesterday(day.date) { return "Yesterday" }
+        if day.isToday { return String(localized: "Today") }
+        if Calendar.current.isDateInYesterday(day.date) { return String(localized: "Yesterday") }
         return day.date.formatted(.dateTime.weekday(.wide).day().month(.abbreviated))
     }
 
     /// "Plan: Easy · 8.0 km · 5:25–5:45/km", or "Plan: rest day".
     private func planLine(_ workout: Workout) -> String {
-        if workout.kind == .rest { return "Plan: rest day" }
-        if workout.kind == .race { return "Plan: \(workout.headline(in: units))" }
-        return "Plan: \(workout.kind.displayName) · \(workout.summary(in: units))"
+        if workout.kind == .rest { return String(localized: "Plan: rest day") }
+        if workout.kind == .race { return String(localized: "Plan: \(workout.headline(in: units))") }
+        return String(localized: "Plan: \(workout.kind.displayName) · \(workout.summary(in: units))")
     }
 
     private func markIcon(_ mark: WeekReview.PlanMark) -> some View {
@@ -286,14 +286,14 @@ struct WeekDetailView: View {
         let label: String
         switch mark {
         case .done:
-            symbol = "checkmark.circle.fill"; color = .green; label = "Plan workout done"
+            symbol = "checkmark.circle.fill"; color = .green; label = String(localized: "Plan workout done")
         case .pending:
-            symbol = "clock.fill"; color = .accentColor; label = "Plan workout still to do"
+            symbol = "clock.fill"; color = .accentColor; label = String(localized: "Plan workout still to do")
         case .missed:
             // Neutral grey: orange means running on these screens.
-            symbol = "xmark.circle.fill"; color = .secondary; label = "Plan workout missed"
+            symbol = "xmark.circle.fill"; color = .secondary; label = String(localized: "Plan workout missed")
         case .rest:
-            symbol = "moon.zzz.fill"; color = .secondary; label = "Planned rest day"
+            symbol = "moon.zzz.fill"; color = .secondary; label = String(localized: "Planned rest day")
         }
         return Image(systemName: symbol)
             .foregroundStyle(color)

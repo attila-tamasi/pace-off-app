@@ -172,7 +172,7 @@ struct VO2MaxDetailView: View {
                 .foregroundStyle(.secondary)
 
             if let value = snapshots.last?.value, let age = userAge {
-                Text("At \(age), a VO₂ max of \(String(format: "%.1f", value)) ml/kg·min sits in the \(band.classification(for: value)) range for your age group.")
+                Text("At \(age), a VO₂ max of \(value.formatted(.number.precision(.fractionLength(1)))) ml/kg·min sits in the \(band.classification(for: value)) range for your age group.")
                     .font(.system(.body, design: .rounded))
             } else {
                 Text("Add your date of birth in the Health app to see how your VO₂ max compares to others your age.")
@@ -193,7 +193,7 @@ struct VO2MaxDetailView: View {
 
     private var latestValueText: String {
         guard let v = snapshots.last?.value else { return "—" }
-        return String(format: "%.1f", v)
+        return v.formatted(.number.precision(.fractionLength(1)))
     }
 
     /// The trend as the push engine reads it. Nil while loading or with no
@@ -202,13 +202,13 @@ struct VO2MaxDetailView: View {
         guard !isLoading, !snapshots.isEmpty else { return nil }
         switch trend {
         case .declining(let slope):
-            return ("Falling \(String(format: "%.2f", abs(slope))) a week over 4 weeks", "arrow.down.right", .orange)
+            return (String(localized: "Falling \(abs(slope).formatted(.number.precision(.fractionLength(2)))) a week over 4 weeks"), "arrow.down.right", .orange)
         case .plateau:
-            return ("Flat over the last 4 weeks", "arrow.right", .secondary)
+            return (String(localized: "Flat over the last 4 weeks"), "arrow.right", .secondary)
         case .improving(let slope):
-            return ("Rising \(String(format: "%.2f", slope)) a week over 4 weeks", "arrow.up.right", .green)
+            return (String(localized: "Rising \(slope.formatted(.number.precision(.fractionLength(2)))) a week over 4 weeks"), "arrow.up.right", .green)
         case nil:
-            return ("No clear trend yet: too few readings, or too scattered", "ellipsis", .secondary)
+            return (String(localized: "No clear trend yet: too few readings, or too scattered"), "ellipsis", .secondary)
         }
     }
 
@@ -260,11 +260,11 @@ private struct AgeBand {
         default:       (poor, fair, good, excellent) = (22, 28, 33, 39)
         }
         switch value {
-        case ..<poor:           return "below average"
-        case poor..<fair:       return "fair"
-        case fair..<good:       return "good"
-        case good..<excellent:  return "excellent"
-        default:                return "elite"
+        case ..<poor:           return String(localized: "below average")
+        case poor..<fair:       return String(localized: "fair")
+        case fair..<good:       return String(localized: "good")
+        case good..<excellent:  return String(localized: "excellent")
+        default:                return String(localized: "elite")
         }
     }
 }
