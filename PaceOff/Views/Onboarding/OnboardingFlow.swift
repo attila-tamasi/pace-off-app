@@ -228,7 +228,7 @@ private struct WelcomeStep: View {
         )
     }
 
-    private func highlightRow(icon: String, title: String, detail: String) -> some View {
+    private func highlightRow(icon: String, title: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 9, style: .continuous)
@@ -465,7 +465,7 @@ private struct HealthPermissionStep: View {
         )
     }
 
-    private func readRow(icon: String, label: String, detail: String) -> some View {
+    private func readRow(icon: String, label: LocalizedStringKey, detail: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
                 .scaledFont(size: 15, weight: .semibold)
@@ -602,7 +602,7 @@ private struct DoneStep: View {
         )
     }
 
-    private func summaryRow(icon: String, label: String, value: String) -> some View {
+    private func summaryRow(icon: String, label: LocalizedStringKey, value: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .scaledFont(size: 14, weight: .semibold)

@@ -57,7 +57,7 @@ struct AuthGateView: View {
             } else if case .failure(let error) = result,
                       (error as? ASAuthorizationError)?.code != .canceled {
                 withAnimation(.easeInOut) {
-                    errorMessage = "Sign in didn't complete. Please try again."
+                    errorMessage = String(localized: "Sign in didn't complete. Please try again.")
                 }
             }
         }

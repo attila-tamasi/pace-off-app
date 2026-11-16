@@ -208,7 +208,7 @@ struct TrainingPlanPickerView: View {
         }
     }
 
-    private func chip(_ text: String, icon: String) -> some View {
+    private func chip(_ text: LocalizedStringKey, icon: String) -> some View {
         HStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.system(.caption2, weight: .semibold))

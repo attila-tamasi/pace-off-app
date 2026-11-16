@@ -57,11 +57,11 @@ struct TrainingPlanDetailView: View {
     private var paceSourceText: String {
         let vdot = Int(plan.vdot.rounded())
         if let source = plan.paceSource {
-            return "\(source.note()). VDOT \(vdot)."
+            return String(localized: "\(source.note()). VDOT \(vdot).")
         }
         return plan.usedBeginnerDefault
-            ? "Paces use a beginner-baseline VDOT (\(vdot)). Add a VO₂ max reading or PB to refine."
-            : "Paces tailored to VDOT \(vdot)."
+            ? String(localized: "Paces use a beginner-baseline VDOT (\(vdot)). Add a VO₂ max reading or PB to refine.")
+            : String(localized: "Paces tailored to VDOT \(vdot).")
     }
 
     private var header: some View {
@@ -71,7 +71,7 @@ struct TrainingPlanDetailView: View {
                 chip("\(plan.tier.runsPerWeek) runs/wk", icon: "figure.run")
                 chip("Long: \(plan.longRunDay.shortName)", icon: "flame.fill")
                 if let kit = plan.crossTraining {
-                    chip(kit.displayName, icon: "dumbbell.fill")
+                    chip("\(kit.displayName)", icon: "dumbbell.fill")
                 }
             }
             HStack(spacing: 6) {
@@ -116,14 +116,12 @@ struct TrainingPlanDetailView: View {
         let longest = units.distance((shortfall.longestLongRunMeters / units.unit.meters).rounded() * units.unit.meters)
         let full = units.distance((shortfall.fullBuildLongRunMeters / units.unit.meters).rounded() * units.unit.meters)
         if shortfall.laterRaceDateHelps {
-            return "Too few weeks to build up from your recent runs: the longest run here is \(longest), "
-                + "where a full plan reaches \(full). A later race date gives it room."
+            return String(localized: "Too few weeks to build up from your recent runs: the longest run here is \(longest), where a full plan reaches \(full). A later race date gives it room.")
         }
-        return "Built up from your recent runs, 10% a week, the longest run here is \(longest), "
-            + "where a full build reaches \(full)."
+        return String(localized: "Built up from your recent runs, 10% a week, the longest run here is \(longest), where a full build reaches \(full).")
     }
 
-    private func chip(_ text: String, icon: String) -> some View {
+    private func chip(_ text: LocalizedStringKey, icon: String) -> some View {
         HStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.system(.caption2, weight: .semibold))
