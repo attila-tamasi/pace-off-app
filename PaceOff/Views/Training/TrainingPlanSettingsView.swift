@@ -21,7 +21,7 @@ struct TrainingPlanSettingsView: View {
                         LabeledContent("Name", value: plan.displayName)
                         LabeledContent("Weeks", value: "\(plan.weekCount)")
                         LabeledContent("Long-run day", value: plan.longRunDay.displayName)
-                        LabeledContent("Cross training", value: plan.crossTraining?.displayName ?? "None")
+                        LabeledContent("Cross training", value: plan.crossTraining?.displayName ?? String(localized: "None"))
                         LabeledContent("VDOT", value: String(format: "%.0f", plan.vdot))
                         LabeledContent(
                             plan.startsLater() ? "Starts" : "Started",

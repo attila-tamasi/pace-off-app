@@ -81,10 +81,10 @@ private struct ActivePlanView: View {
     /// before it begins.
     private var subtitle: String {
         if startsLater {
-            return "\(plan.displayName) · Starts \(plan.firstDayText(today: now))"
+            return String(localized: "\(plan.displayName) · Starts \(plan.firstDayText(today: now))")
         }
         guard let weekIndex else { return plan.displayName }
-        return "\(plan.displayName) · Week \(weekIndex + 1) of \(plan.weekCount)"
+        return String(localized: "\(plan.displayName) · Week \(weekIndex + 1) of \(plan.weekCount)")
     }
 
     // MARK: - Today
@@ -123,7 +123,7 @@ private struct ActivePlanView: View {
             if let strength {
                 // After the run on a run day; the day's whole session on a
                 // strength-only day.
-                Text(workout?.kind == .rest ? strength.notes : "Then strength, \(strength.summary): \(strength.notes)")
+                Text(workout?.kind == .rest ? strength.notes : String(localized: "Then strength, \(strength.summary): \(strength.notes)"))
                     .font(.system(.footnote, design: .rounded))
                     .foregroundStyle(.white.opacity(0.85))
                     .fixedSize(horizontal: false, vertical: true)
@@ -145,23 +145,23 @@ private struct ActivePlanView: View {
     }
 
     private func heroTitle(_ workout: Workout?, strength: StrengthSession?) -> String {
-        if startsLater { return "Starts \(plan.firstDayText(today: now))" }
-        guard let workout else { return "No session" }
-        if workout.kind == .rest { return strength == nil ? "Rest day" : "Strength" }
+        if startsLater { return String(localized: "Starts \(plan.firstDayText(today: now))") }
+        guard let workout else { return String(localized: "No session") }
+        if workout.kind == .rest { return strength == nil ? String(localized: "Rest day") : String(localized: "Strength") }
         return workout.kind.displayName
     }
 
     private func heroDetail(_ workout: Workout?, strength: StrengthSession?) -> String {
         if startsLater {
-            return "Week 1 of \(plan.weekCount) begins on \(plan.firstDayText(long: true, today: now)), so the plan ends on race day. Until then, Today's target keeps you running."
+            return String(localized: "Week 1 of \(plan.weekCount) begins on \(plan.firstDayText(long: true, today: now)), so the plan ends on race day. Until then, Today's target keeps you running.")
         }
         guard let workout else {
             return weekIndex == nil
-                ? "This plan isn't running this week."
-                : "Nothing planned today."
+                ? String(localized: "This plan isn't running this week.")
+                : String(localized: "Nothing planned today.")
         }
         if workout.kind == .rest {
-            return strength.map { "\($0.summary). No run today." } ?? "Recovery is part of the plan."
+            return strength.map { String(localized: "\($0.summary). No run today.") } ?? String(localized: "Recovery is part of the plan.")
         }
         return workout.summary(in: .runner)
     }
@@ -199,7 +199,7 @@ private struct ActivePlanView: View {
                 }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(day.isStrengthOnly ? "Strength" : day.workout.kind.displayName)
+                Text(day.isStrengthOnly ? String(localized: "Strength") : day.workout.kind.displayName)
                     .font(.system(.subheadline, weight: isRest ? .regular : .semibold))
                     .foregroundStyle(isRest ? .secondary : .primary)
                 if day.workout.kind != .rest {
@@ -208,7 +208,7 @@ private struct ActivePlanView: View {
                         .foregroundStyle(.secondary)
                 }
                 if let strength = day.strength {
-                    Label(day.isStrengthOnly ? strength.summary : "Then \(strength.summary)",
+                    Label(day.isStrengthOnly ? strength.summary : String(localized: "Then \(strength.summary)"),
                           systemImage: "dumbbell.fill")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
@@ -285,7 +285,7 @@ private struct ActivePlanView: View {
         .padding(.vertical, 11)
     }
 
-    private func planRow(_ title: String, value: String, showsChevron: Bool = false) -> some View {
+    private func planRow(_ title: LocalizedStringKey, value: String, showsChevron: Bool = false) -> some View {
         HStack {
             Text(title)
                 .foregroundStyle(.primary)

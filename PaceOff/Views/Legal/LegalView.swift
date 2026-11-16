@@ -15,17 +15,17 @@ enum LegalDocument: String, Identifiable, CaseIterable {
 
     var title: String {
         switch self {
-        case .terms:   return "Terms of Service"
-        case .privacy: return "Privacy Policy"
-        case .eula:    return "End User License Agreement"
+        case .terms:   return String(localized: "Terms of Service")
+        case .privacy: return String(localized: "Privacy Policy")
+        case .eula:    return String(localized: "End User License Agreement")
         }
     }
 
     var shortLabel: String {
         switch self {
-        case .terms:   return "Terms"
-        case .privacy: return "Privacy"
-        case .eula:    return "EULA"
+        case .terms:   return String(localized: "Terms")
+        case .privacy: return String(localized: "Privacy")
+        case .eula:    return String(localized: "EULA")
         }
     }
 }
@@ -157,7 +157,7 @@ struct LegalView: View {
         }
     }
 
-    private func section(_ title: String, _ body: String) -> some View {
+    private func section(_ title: LocalizedStringKey, _ body: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.system(.headline, design: .rounded, weight: .semibold))
@@ -169,7 +169,7 @@ struct LegalView: View {
 
     private static var lastUpdated: String {
         // Best-effort static date so the placeholder reads like a real policy.
-        "May 2026"
+        String(localized: "May 2026")
     }
 }
 

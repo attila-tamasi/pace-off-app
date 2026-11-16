@@ -42,14 +42,14 @@ struct OnboardingStepScaffold<Content: View>: View {
 
     /// 0..1 — how far through the flow this step sits.
     let progress: Double
-    let title: String
-    let subtitle: String?
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey?
     /// The main body of the step. Steps hand back their own input control.
     let content: () -> Content
 
     /// Primary CTA label. Nil hides the button (rare — the "you're all
     /// set" step still needs one; usually always set).
-    let primaryTitle: String?
+    let primaryTitle: LocalizedStringKey?
     /// Grays out the primary CTA when false.
     let primaryEnabled: Bool
     /// Called when the CTA is tapped.
@@ -57,7 +57,7 @@ struct OnboardingStepScaffold<Content: View>: View {
 
     /// Optional secondary action shown as a plain-styled button below the
     /// primary — used for "Skip" / "Do this later" on optional steps.
-    let secondaryTitle: String?
+    let secondaryTitle: LocalizedStringKey?
     let onSecondary: (() -> Void)?
 
     /// If set, shows a back chevron in the top bar that calls this closure.
@@ -65,12 +65,12 @@ struct OnboardingStepScaffold<Content: View>: View {
 
     init(
         progress: Double,
-        title: String,
-        subtitle: String? = nil,
-        primaryTitle: String? = "Continue",
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey? = nil,
+        primaryTitle: LocalizedStringKey? = "Continue",
         primaryEnabled: Bool = true,
         onPrimary: @escaping () -> Void,
-        secondaryTitle: String? = nil,
+        secondaryTitle: LocalizedStringKey? = nil,
         onSecondary: (() -> Void)? = nil,
         onBack: (() -> Void)? = nil,
         @ViewBuilder content: @escaping () -> Content

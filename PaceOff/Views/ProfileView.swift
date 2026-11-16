@@ -155,13 +155,13 @@ struct ProfileView: View {
 
     private var displayName: String {
         let name = profileStore.profile?.displayName.trimmingCharacters(in: .whitespaces) ?? ""
-        return name.isEmpty ? "Runner" : name
+        return name.isEmpty ? String(localized: "Runner") : name
     }
 
     /// Age only: the goal, PB and race day each have their one place, in
     /// the goal card below.
     private var identitySubtitle: String? {
-        profileStore.profile?.age().map { "\($0) yrs" }
+        profileStore.profile?.age().map { String(localized: "\($0) yrs") }
     }
 
     /// Everything the prediction depends on. When any of it changes,
@@ -235,7 +235,11 @@ struct ProfileView: View {
                 // PB
                 if let pb {
                     HStack(alignment: .firstTextBaseline) {
-                        cardLabel(pb.distance.map { "PB · \($0.shortName)" } ?? "PB", systemImage: "trophy.fill")
+                        if let distance = pb.distance {
+                            cardLabel("PB · \(distance.shortName)", systemImage: "trophy.fill")
+                        } else {
+                            cardLabel("PB", systemImage: "trophy.fill")
+                        }
                         Spacer()
                         Text(pb.distance == nil
                              ? "\(pb.formattedTime) · set its distance in Edit"
@@ -302,7 +306,7 @@ struct ProfileView: View {
                     annotation(text: training, systemImage: "figure.run", color: .green)
                 }
                 if let ageGraded = p.formattedAgeGradedEquivalent {
-                    annotation(text: "Age-graded equivalent \(ageGraded)",
+                    annotation(text: String(localized: "Age-graded equivalent \(ageGraded)"),
                                systemImage: "person.text.rectangle",
                                color: .secondary)
                 }
@@ -328,16 +332,17 @@ struct ProfileView: View {
     private func predictionBasisDescription(_ basis: GoalPrediction.Basis) -> String {
         switch basis {
         case .recentRun(let distance, _):
-            return "Projected from your recent \(UnitFormatter.runner.distanceOneDecimal(distance)) run."
+            return String(localized: "Projected from your recent \(UnitFormatter.runner.distanceOneDecimal(distance)) run.")
         case .bestEffort(let effort):
-            return "Projected from your \(effort.distance.displayName) best on \(effort.runStart.formatted(.dateTime.day().month(.abbreviated))) (\(BestEffortLog.formatTime(effort.seconds)))."
+            let day = effort.runStart.formatted(.dateTime.day().month(.abbreviated))
+            return String(localized: "Projected from your \(effort.distance.displayName) best on \(day) (\(BestEffortLog.formatTime(effort.seconds))).")
         case .agedPersonalBest(let years):
             if years == 0 {
-                return "Anchored on this year's PB."
+                return String(localized: "Anchored on this year's PB.")
             } else if years == 1 {
-                return "From a 1-year-old PB (light age decay applied)."
+                return String(localized: "From a 1-year-old PB (light age decay applied).")
             } else {
-                return "From a \(years)-year-old PB (decayed for age)."
+                return String(localized: "From a \(years)-year-old PB (decayed for age).")
             }
         }
     }
@@ -392,7 +397,7 @@ struct ProfileView: View {
         }
     }
 
-    private func preferenceSectionHeader(_ text: String) -> some View {
+    private func preferenceSectionHeader(_ text: LocalizedStringKey) -> some View {
         HStack {
             Text(text)
                 .font(.system(.caption, design: .rounded, weight: .semibold))
@@ -454,8 +459,8 @@ struct ProfileView: View {
         } label: {
             preferenceLabel(icon: "bell.badge.fill",
                             color: .red,
-                            title: "Notifications",
-                            value: "Daily pushes")
+                            title: String(localized: "Notifications"),
+                            value: String(localized: "Daily pushes"))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -464,8 +469,8 @@ struct ProfileView: View {
     private var voiceRow: some View {
         preferenceRow(icon: "waveform",
                       color: .purple,
-                      title: "Voice",
-                      value: "Drill Sergeant")
+                      title: String(localized: "Voice"),
+                      value: String(localized: "Drill Sergeant"))
     }
 
     private var healthRow: some View {
@@ -494,8 +499,8 @@ struct ProfileView: View {
         } label: {
             preferenceLabel(icon: "heart.text.square.fill",
                             color: .pink,
-                            title: "Health",
-                            value: health.userAge().map { "Age \($0)" } ?? "Set in Health")
+                            title: String(localized: "Health"),
+                            value: health.userAge().map { String(localized: "Age \($0)") } ?? String(localized: "Set in Health"))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -517,7 +522,7 @@ struct ProfileView: View {
     /// Kilometres or miles for every distance, pace and speed in the app.
     private var unitsRow: some View {
         HStack {
-            preferenceLabel(icon: "ruler", color: .orange, title: "Units", value: nil)
+            preferenceLabel(icon: "ruler", color: .orange, title: String(localized: "Units"), value: nil)
             Picker("Units", selection: $distanceUnit) {
                 Text("Kilometres").tag(DistanceUnit.kilometers)
                 Text("Miles").tag(DistanceUnit.miles)
@@ -535,7 +540,7 @@ struct ProfileView: View {
     private var aboutRow: some View {
         preferenceRow(icon: "info.circle",
                       color: .blue,
-                      title: "About",
+                      title: String(localized: "About"),
                       value: "v\(appVersion) (\(buildNumber))")
     }
 
@@ -649,7 +654,7 @@ struct ProfileView: View {
         }
     }
 
-    private func cardLabel(_ text: String, systemImage: String) -> some View {
+    private func cardLabel(_ text: LocalizedStringKey, systemImage: String) -> some View {
         HStack(spacing: 6) {
             Image(systemName: systemImage)
                 .font(.system(.caption, weight: .semibold))

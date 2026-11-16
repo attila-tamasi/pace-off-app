@@ -339,7 +339,7 @@ struct PersonalBestEditor: View {
             .padding(.bottom, 18)
     }
 
-    private func wheel(value: Binding<Int>, range: ClosedRange<Int>, label: String) -> some View {
+    private func wheel(value: Binding<Int>, range: ClosedRange<Int>, label: LocalizedStringKey) -> some View {
         VStack(spacing: 2) {
             Picker(label, selection: value) {
                 ForEach(Array(range), id: \.self) { n in
