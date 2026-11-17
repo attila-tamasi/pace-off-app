@@ -108,12 +108,12 @@ public struct DayPrescription: Sendable, Equatable {
     public var adjustmentNote: String? {
         switch adjustment {
         case .easedForYellow:
-            let kind = planWorkout?.kind.displayName.lowercased() ?? "session"
-            return "Readiness is yellow, so today's \(kind) runs easy"
+            let kind = planWorkout?.kind.displayName.lowercased() ?? String(localized: "session")
+            return String(localized: "Readiness is yellow, so today's \(kind) runs easy")
         case .cutForRed:
-            return "Readiness is red, so today's run is cut to an easy one"
+            return String(localized: "Readiness is red, so today's run is cut to an easy one")
         case .restForUnwell:
-            return "You said you're unwell, so today is rest"
+            return String(localized: "You said you're unwell, so today is rest")
         case nil:
             return nil
         }

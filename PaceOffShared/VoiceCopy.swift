@@ -129,37 +129,37 @@ public struct VoiceCopy: Sendable {
     public func notification(for state: VoiceState) -> String {
         switch state {
         case .streakDay1(_, let today):
-            return "Yesterday: done. Today: \(format(today)) \(units.unit.symbol)."
+            return String(localized: "Yesterday: done. Today: \(format(today)) \(units.unit.symbol).")
         case .streakDay7Plus(let days):
-            return "Day \(days). Don't waste it."
+            return String(localized: "Day \(days). Don't waste it.")
         case .onTrack(let today):
-            return "On track. \(format(today)) \(units.unit.symbol) today."
+            return String(localized: "On track. \(format(today)) \(units.unit.symbol) today.")
         case .skipOneDay(let today):
-            return "You skipped yesterday. Run \(format(today)) \(units.unit.symbol)."
+            return String(localized: "You skipped yesterday. Run \(format(today)) \(units.unit.symbol).")
         case .skipTwoDays(_):
-            return "Two days. This is the run."
+            return String(localized: "Two days. This is the run.")
         case .skipThreePlusDays(let today):
-            return "Restart. \(format(today)) \(units.unit.symbol). Now."
+            return String(localized: "Restart. \(format(today)) \(units.unit.symbol). Now.")
         case .vo2MaxDeclining(_, let today):
-            return "Fitness dropped. \(format(today)) \(units.unit.symbol) today."
+            return String(localized: "Fitness dropped. \(format(today)) \(units.unit.symbol) today.")
         case .recovery(let today):
-            return "Recovery day. Easy \(format(today)) \(units.unit.symbol), nothing more."
+            return String(localized: "Recovery day. Easy \(format(today)) \(units.unit.symbol), nothing more.")
         case .ranToday:
-            return "Run logged. Recover and go again tomorrow."
+            return String(localized: "Run logged. Recover and go again tomorrow.")
         case .planStillToDo:
-            return "Run logged. The plan's workout is still on."
+            return String(localized: "Run logged. The plan's workout is still on.")
         case .runCompletedHitTarget:
-            return "Done."
+            return String(localized: "Done.")
         case .runCompletedShortfall:
-            return "Short. Tomorrow we close it."
+            return String(localized: "Short. Tomorrow we close it.")
         case .fatigueGuard:
-            return "HR is up. Easy run today."
+            return String(localized: "HR is up. Easy run today.")
         case .planRestDay(let strength):
-            return strength.map { "Strength day: \($0). No run today." } ?? "Rest day. Recovery is training too."
+            return strength.map { String(localized: "Strength day: \($0). No run today.") } ?? String(localized: "Rest day. Recovery is training too.")
         case .raceDay(let km):
-            return "Race day. \(format(km)) \(units.unit.symbol). Start controlled."
+            return String(localized: "Race day. \(format(km)) \(units.unit.symbol). Start controlled.")
         case .unwellRest:
-            return "You said you're unwell. Rest today: getting well comes first."
+            return String(localized: "You said you're unwell. Rest today: getting well comes first.")
         }
     }
 
@@ -167,40 +167,40 @@ public struct VoiceCopy: Sendable {
     public func todayCard(for state: VoiceState) -> String {
         switch state {
         case .streakDay1(let y, let t):
-            return "Yesterday was \(format(y)). Today is \(format(t)). Earn the streak."
+            return String(localized: "Yesterday was \(format(y)). Today is \(format(t)). Earn the streak.")
         case .streakDay7Plus(let days):
-            return "\(days) days. The streak is the product. Protect it."
+            return String(localized: "\(days) days. The streak is the product. Protect it.")
         case .onTrack(let t):
-            return "On track. Keep it rolling. Today: \(format(t)) \(units.unit.symbol)."
+            return String(localized: "On track. Keep it rolling. Today: \(format(t)) \(units.unit.symbol).")
         case .skipOneDay(let t):
-            return "One skip. Two becomes a habit. Today: \(format(t)) \(units.unit.symbol)."
+            return String(localized: "One skip. Two becomes a habit. Today: \(format(t)) \(units.unit.symbol).")
         case .skipTwoDays(let t):
-            return "Two skips. Today is mandatory. Target: \(format(t)) \(units.unit.symbol)."
+            return String(localized: "Two skips. Today is mandatory. Target: \(format(t)) \(units.unit.symbol).")
         case .skipThreePlusDays(let t):
-            return "Restart day. Don't argue. \(format(t)) \(units.unit.symbol). Lace up."
+            return String(localized: "Restart day. Don't argue. \(format(t)) \(units.unit.symbol). Lace up.")
         case .vo2MaxDeclining(let d, let t):
-            return "VO2Max down \(formatDecimal(d, places: 1)) this month. Fix it. \(format(t)) \(units.unit.symbol)."
+            return String(localized: "VO2Max down \(formatDecimal(d, places: 1)) this month. Fix it. \(format(t)) \(units.unit.symbol).")
         case .recovery(let t):
-            return "Recovery day. \(format(t)) \(units.unit.symbol), easy pace. Rest is part of training."
+            return String(localized: "Recovery day. \(format(t)) \(units.unit.symbol), easy pace. Rest is part of training.")
         case .ranToday(let days):
             return days >= 2
-                ? "Run logged. \(days) days straight. Recover and go again tomorrow."
-                : "Run logged. Recover and go again tomorrow."
+                ? String(localized: "Run logged. \(days) days straight. Recover and go again tomorrow.")
+                : String(localized: "Run logged. Recover and go again tomorrow.")
         case .planStillToDo:
-            return "Run logged, but today's plan workout is still to do."
+            return String(localized: "Run logged, but today's plan workout is still to do.")
         case .runCompletedHitTarget(let tomorrow):
-            return "Done. Tomorrow: \(format(tomorrow)) \(units.unit.symbol)."
+            return String(localized: "Done. Tomorrow: \(format(tomorrow)) \(units.unit.symbol).")
         case .runCompletedShortfall(let actual, let target):
-            return "Finished \(format(actual)) of \(format(target)). Tomorrow we close the gap."
+            return String(localized: "Finished \(format(actual)) of \(format(target)). Tomorrow we close the gap.")
         case .fatigueGuard:
-            return "Resting HR is elevated. Easy run today, no hero stuff."
+            return String(localized: "Resting HR is elevated. Easy run today, no hero stuff.")
         case .planRestDay(let strength):
-            return strength.map { "Strength day on your plan: \($0). No run today." }
-                ?? "Rest day on your plan. Recovery is training too."
+            return strength.map { String(localized: "Strength day on your plan: \($0). No run today.") }
+                ?? String(localized: "Rest day on your plan. Recovery is training too.")
         case .raceDay(let km):
-            return "Race day: \(format(km)) \(units.unit.symbol). Start controlled and let the taper work."
+            return String(localized: "Race day: \(format(km)) \(units.unit.symbol). Start controlled and let the taper work.")
         case .unwellRest:
-            return "You said you're unwell, so no run today. Rest and get well."
+            return String(localized: "You said you're unwell, so no run today. Rest and get well.")
         }
     }
 
@@ -210,5 +210,7 @@ public struct VoiceCopy: Sendable {
     private func format(_ km: Double) -> String {
         units.number(km * 1000)
     }
-    private func formatDecimal(_ v: Double, places: Int) -> String { String(format: "%.\(places)f", v) }
+    private func formatDecimal(_ v: Double, places: Int) -> String {
+        v.formatted(.number.precision(.fractionLength(places)).locale(units.locale).grouping(.never))
+    }
 }

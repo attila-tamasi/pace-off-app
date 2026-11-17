@@ -192,33 +192,37 @@ public struct ReadinessEngine: Sendable {
         let hrvOff = (hrvSeverity ?? 0) >= 1
         let rhrOff = (rhrSeverity ?? 0) >= 1
         let sleepOff = (sleepSeverity ?? 0) >= 1
-        if feeling == .unwell { return "You said you're unwell — rest today." }
+        if feeling == .unwell { return String(localized: "You said you're unwell — rest today.") }
         let feelingCause: String? = switch feeling {
-        case .tired?: "you feel tired"
-        case .sore?: "you feel sore"
+        case .tired?: String(localized: "you feel tired")
+        case .sore?: String(localized: "you feel sore")
         default: nil
         }
         switch level {
         case .green:
-            return "Recovery is on baseline — you're clear to push."
+            return String(localized: "Recovery is on baseline — you're clear to push.")
         case .yellow:
-            if hrvOff { return "HRV below your baseline — easy day." }
-            if rhrOff { return "Resting heart rate above your baseline — keep it easy." }
-            if sleepOff { return "Less sleep than usual last night — keep it easy." }
-            if let feeling { return "You said you're \(feeling.displayName.lowercased()) — keep it easy." }
-            return "Recovery is a little off — keep it easy."
+            if hrvOff { return String(localized: "HRV below your baseline — easy day.") }
+            if rhrOff { return String(localized: "Resting heart rate above your baseline — keep it easy.") }
+            if sleepOff { return String(localized: "Less sleep than usual last night — keep it easy.") }
+            if let feeling {
+                return String(localized: "You said you're \(feeling.displayName.lowercased()) — keep it easy.")
+            }
+            return String(localized: "Recovery is a little off — keep it easy.")
         case .red:
-            let causes = [hrvOff ? "HRV down" : nil,
-                          rhrOff ? "resting heart rate up" : nil,
-                          sleepOff ? "short sleep" : nil,
+            let causes = [hrvOff ? String(localized: "HRV down") : nil,
+                          rhrOff ? String(localized: "resting heart rate up") : nil,
+                          sleepOff ? String(localized: "short sleep") : nil,
                           feelingCause].compactMap { $0 }
             if causes.count >= 2 {
-                let list = causes.dropLast().joined(separator: ", ") + " and " + causes[causes.count - 1]
-                return String(list.prefix(1)).uppercased() + String(list.dropFirst()) + " — your body is asking for rest."
+                let head = causes.dropLast().joined(separator: ", ")
+                let list = String(localized: "\(head) and \(causes[causes.count - 1])")
+                let capitalized = String(list.prefix(1)).uppercased() + String(list.dropFirst())
+                return String(localized: "\(capitalized) — your body is asking for rest.")
             }
-            if hrvOff { return "HRV well below your baseline — rest or keep it very easy." }
-            if rhrOff { return "Resting heart rate well above your baseline — rest or keep it very easy." }
-            return "Much less sleep than usual last night — rest or keep it very easy."
+            if hrvOff { return String(localized: "HRV well below your baseline — rest or keep it very easy.") }
+            if rhrOff { return String(localized: "Resting heart rate well above your baseline — rest or keep it very easy.") }
+            return String(localized: "Much less sleep than usual last night — rest or keep it very easy.")
         }
     }
 
