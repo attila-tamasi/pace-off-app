@@ -17,11 +17,11 @@ public enum CheckInFeeling: String, Codable, Sendable, CaseIterable {
 
     public var displayName: String {
         switch self {
-        case .fresh: return "Fresh"
-        case .normal: return "Normal"
-        case .tired: return "Tired"
-        case .sore: return "Sore"
-        case .unwell: return "Unwell"
+        case .fresh: return String(localized: "Fresh")
+        case .normal: return String(localized: "Normal")
+        case .tired: return String(localized: "Tired")
+        case .sore: return String(localized: "Sore")
+        case .unwell: return String(localized: "Unwell")
         }
     }
 

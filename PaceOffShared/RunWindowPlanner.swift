@@ -128,7 +128,7 @@ public enum RunWindowPlanner {
             let note = problemNote(hours: hours, window: best, calendar: calendar)
             reason = "\(capitalized(describe(best))) \(span)" + (note.map { "; \($0)" } ?? "")
         } else {
-            reason = "No clear window today; least bad \(span): \(describe(best))"
+            reason = String(localized: "No clear window today; least bad \(span): \(describe(best))")
         }
         return RunWindow(start: first.date,
                          end: last.date.addingTimeInterval(3_600),
@@ -205,17 +205,19 @@ public enum RunWindowPlanner {
     /// "dry and 12 °C", "rain likely, feels like 28 °C and windy".
     private static func describe(_ window: ArraySlice<HourlyWeather>) -> String {
         let count = Double(window.count)
-        let rain = window.contains(where: isRainy) ? "rain likely"
-            : window.contains(where: isRainPossible) ? "rain possible" : "dry"
+        let rain = window.contains(where: isRainy) ? String(localized: "rain likely")
+            : window.contains(where: isRainPossible) ? String(localized: "rain possible") : String(localized: "dry")
         var parts = [rain]
         if window.contains(where: { isHot($0) || isCold($0) }) {
-            parts.append("feels like \(degrees(window.reduce(0) { $0 + $1.feelsLikeC } / count))")
+            let feelsLike = degrees(window.reduce(0) { $0 + $1.feelsLikeC } / count)
+            parts.append(String(localized: "feels like \(feelsLike)"))
         } else {
             parts.append(degrees(window.reduce(0) { $0 + $1.temperatureC } / count))
         }
-        if window.contains(where: isWindy) { parts.append("windy") }
-        if window.contains(where: { !$0.isDaylight }) { parts.append("dark") }
-        return parts.dropLast().joined(separator: ", ") + " and " + (parts.last ?? "")
+        if window.contains(where: isWindy) { parts.append(String(localized: "windy")) }
+        if window.contains(where: { !$0.isDaylight }) { parts.append(String(localized: "dark")) }
+        let head = parts.dropLast().joined(separator: ", ")
+        return String(localized: "\(head) and \(parts.last ?? "")")
     }
 
     /// What closes in on the window: the first problem after it ("rain from
@@ -228,17 +230,17 @@ public enum RunWindowPlanner {
         guard let start = window.first?.date, let end = window.last?.date.addingTimeInterval(3_600)
         else { return nil }
         let kinds: [(String, (HourlyWeather) -> Bool)] = [
-            ("rain", isRainy),
-            ("over \(degrees(hotC))", isHot),
-            ("below \(degrees(coldC))", isCold),
-            ("strong wind", isWindy),
+            (String(localized: "rain"), isRainy),
+            (String(localized: "over \(degrees(hotC))"), isHot),
+            (String(localized: "below \(degrees(coldC))"), isCold),
+            (String(localized: "strong wind"), isWindy),
         ]
         func kind(of hour: HourlyWeather) -> String? { kinds.first { $0.1(hour) }?.0 }
         if let next = hours.first(where: { $0.date >= end && kind(of: $0) != nil }), let name = kind(of: next) {
-            return "\(name) from \(clock(next.date, calendar))"
+            return String(localized: "\(name) from \(clock(next.date, calendar))")
         }
         if let previous = hours.last(where: { $0.date < start && kind(of: $0) != nil }), let name = kind(of: previous) {
-            return "\(name) until \(clock(previous.date.addingTimeInterval(3_600), calendar))"
+            return String(localized: "\(name) until \(clock(previous.date.addingTimeInterval(3_600), calendar))")
         }
         return nil
     }

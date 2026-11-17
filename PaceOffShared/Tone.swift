@@ -15,13 +15,13 @@ public enum Tone: String, Codable, Sendable, CaseIterable {
 
     public var displayName: String {
         switch self {
-        case .neutral:    return "Neutral"
-        case .firm:       return "Firm"
-        case .aggressive: return "Aggressive"
-        case .restart:    return "Restart"
-        case .recovery:   return "Recovery"
-        case .victory:    return "Done"
-        case .shortfall:  return "Short"
+        case .neutral:    return String(localized: "Neutral")
+        case .firm:       return String(localized: "Firm")
+        case .aggressive: return String(localized: "Aggressive")
+        case .restart:    return String(localized: "Restart")
+        case .recovery:   return String(localized: "Recovery")
+        case .victory:    return String(localized: "Done")
+        case .shortfall:  return String(localized: "Short")
         }
     }
 }

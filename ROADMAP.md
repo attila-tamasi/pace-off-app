@@ -262,7 +262,7 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
   - **F-01d · Session notes, splits and the mile** (M), **done (PR #76)**: quality-session notes ("WU 2 km · 3 × 1.6 km @ T …") written in the runner's unit, run detail's splits per mile, the "s/km" in the pace-decay note, and the mile as a best effort.
 
 ### F-08 · Languages: Hungarian first
-- **Status:** todo (F-08a1 PR #77, F-08a2 PR #78, F-08a2b PR #79 done; F-08a3 next)
+- **Status:** todo (F-08a1 PR #77, F-08a2 PR #78, F-08a2b PR #79, F-08a3 PR #80 done; F-08a3b next)
 - **Size:** L   ·   **Merge:** auto
 - **Problem:** The app is English only. Hungarian is the first target language. The on-device model doesn't write Hungarian as far as the evidence shows, so for a Hungarian runner the canned lines and the templates are the whole product.
 - **Sub-items:**
@@ -270,7 +270,8 @@ These tell the runner the wrong thing, or prescribe a load the evidence warns ag
     - **F-08a1 · The catalogs** (S), **done (PR #77)**: `Localizable.xcstrings` in the app and the widget, the compiler extracting strings (`SWIFT_EMIT_LOC_STRINGS`), CI exporting the list to its log and a "localizations" artifact, `scripts/pbxproj.py` adding catalogs, and the rule in `CLAUDE.md`.
     - **F-08a2 · The daily screens** (M), **done (PR #78)**: Today, History, Trends, run detail, the week, readiness, HRV and resting HR, VO₂ max, and the shared `MetricCard`, `MetricSectionHeader` and `BrandHero`. Helpers that take a label take a `LocalizedStringKey`; text built in a view uses `String(localized:)`, with whole sentences rather than glued fragments where the words move ("8% below your 30-day baseline…"), and "1 day" / "%lld days" as separate keys. Decimals that `String(format:)` wrote with a fixed "." go through the locale; History's month headers use a localized template.
     - **F-08a2b · Onboarding, Profile, the plan screens, sign-in and legal** (M), **done (PR #79)**: the same for `OnboardingFlow`, `OnboardingStepScaffold`, `ProfileView`, `ProfileEditView`, `PlanTabView`, `TrainingPlanDetailView`, `TrainingPlanPickerView`, `TrainingPlanSettingsView`, `AuthGateView`, `SplashView`, `LegalView` and `LegalLinksFooter` (the PR says it touches legal copy).
-    - **F-08a3 · Shared copy** (M): the text `PaceOffShared` writes goes through `String(localized:)`: `VoiceCopy`, `DayPrescription`, `ReadinessEngine`'s sentences, `PaceSource` notes, session notes, `PaceDecayAnalyser.headline`, `WeekReview`, `EasyRunCheck`, `SingleRunCap`, `RunWindowPlanner`. The unit tests keep asserting English.
+    - **F-08a3 · The day's words** (M), **done (PR #80)**: the text `PaceOffShared` writes about the day goes through `String(localized:)`: `VoiceCopy` (its decimal in the runner's locale), `DayPrescription`'s adjustment notes, `ReadinessEngine`'s sentences (the red day's list of causes joined by a localized "and"), the check-in answers, the tone names, `SingleRunCap`'s note and `RunWindowPlanner`'s reason line. The unit tests keep asserting English.
+    - **F-08a3b · Plan and run copy** (M): the same for `TrainingPlan` (workout kinds, tiers, strength sessions, plan names), the generator's session notes (stored in English, said in the runner's language at display: "WU", "CD", "jog" and the fixed sentences), `UserProfile`'s goals, `PaceSource` notes, `GoalPredictionService`'s lines and the countdown (Profile compares it with "today": give it a flag instead), `PaceDecayAnalyser.headline`, `WeekReview`, `EasyRunCheck` and the best-effort names.
     - **F-08a4 · Notifications, the widget and Siri** (M): `DailyPushPlanner`, `BestEffortLog`'s notification, `NotificationScheduler`'s actions, `WidgetCache` and the widget's views, `SiriAnswer`, the App Intents' titles and phrases (`LocalizedStringResource`), and the `Info.plist` strings through an `InfoPlist.xcstrings`.
   - **F-08b · Hungarian** (M): Hungarian added to the project's regions and both catalogs, complete translations, in the informal register a running friend would use. The Apple Intelligence rewrite is skipped when the model doesn't support the app's language (ask `supportsLocale`, don't keep a list).
 
@@ -1034,6 +1035,7 @@ The loop works in a cloud session with no simulator: CI proves a change compiles
 
 Newest first. The loop adds one line per merged item.
 
+- 2026-11-17 · F-08a3: the day's words from `PaceOffShared` reach the String Catalog: voice lines, readiness sentences, adjustment and cap notes, check-in answers, tone names and the run-window reason (PR #80)
 - 2026-11-16 · F-08a2b: onboarding, Profile, the plan screens, sign-in and the legal screens reach the String Catalog; the English legal text is unchanged (PR #79)
 - 2026-11-15 · F-08a2: the daily screens' text reaches the String Catalog (Today, History, Trends, run detail, the week, readiness, HRV, resting HR, VO₂ max), in whole sentences, with locale decimals (PR #78)
 - 2026-11-14 · F-08a1: String Catalogs in the app and the widget, the compiler extracting their strings, CI exporting the list, and the rule for new copy in CLAUDE.md; F-08 split into F-08a1–a4 and F-08b (PR #77)
